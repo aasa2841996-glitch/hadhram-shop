@@ -1,7 +1,16 @@
 {
-  "settings": {"name": "حضرم شوب", "tagline": "منتجات مختارة بأسعار مميزة", "whatsapp": "966560232725", "currency": "ر.س"},
-  "categories": [
-    {"id": "general", "name": "منتجات عامة", "emoji": "🛍️"}
-  ],
-  "products": []
+ "settings": {
+  "name": "حضرم شوب",
+  "tagline": "منتجات مختارة بأسعار مميزة",
+  "whatsapp": "966560232725",
+  "currency": "ر.س"
+ },
+ "categories": [
+  {
+   "id": "general",
+   "name": "منتجات عامة",
+   "emoji": "🛍️"
+  }
+ ],
+ "products": []
 }
