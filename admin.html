@@ -55,7 +55,8 @@ small.h{color:#80705f}
   <div id="t-form" class="card hide">
     <h3 id="formTitle">➕ منتج جديد</h3>
     <label>اسم المنتج</label><input id="f-title">
-    <label>السعر (ر.س)</label><input id="f-price" type="number" inputmode="decimal" step="any">
+    <label>العملة</label><select id="f-cur"><option value="SAR">ريال سعودي (ر.س)</option><option value="YER">ريال يمني (ر.ي)</option></select>
+    <label>السعر</label><input id="f-price" type="number" inputmode="decimal" step="any">
     <label>السعر قبل الخصم (اختياري)</label><input id="f-old" type="number" inputmode="decimal" step="any">
     <label>القسم</label><select id="f-cat"></select>
     <label>الوصف (اختياري)</label><textarea id="f-desc"></textarea>
@@ -66,7 +67,7 @@ small.h{color:#80705f}
 
   <div id="t-import" class="card hide">
     <h3>📥 استيراد من Excel أو CSV</h3>
-    <small class="h">الأعمدة: <b>الاسم، السعر، السعر القديم، القسم، الوصف، الصورة</b> (رابط الصورة اختياري). الصف الأول عناوين الأعمدة.</small>
+    <small class="h">الأعمدة: <b>الاسم، السعر، السعر القديم، القسم، الوصف، الصورة، العملة</b> (الصورة اختيارية؛ العملة: «يمني» أو «سعودي»، والافتراضي سعودي). الصف الأول عناوين الأعمدة.</small>
     <label>اختر الملف (xlsx / csv)</label><input id="xl" type="file" accept=".xlsx,.xls,.csv">
     <div class="row"><button class="sec" id="tpl">⬇️ تنزيل نموذج</button></div>
     <div id="impInfo" style="margin-top:10px"></div>
@@ -124,7 +125,7 @@ function drawList(){
   const q=$("#filter").value.trim();
   const arr=DATA.products.filter(p=>!q||(p.title||"").includes(q));
   $("#cnt").textContent=DATA.products.length;
-  $("#list").innerHTML=arr.map(p=>`<div class="item"><img src="${esc(p.image||"")}" onerror="this.style.opacity=.2"><div class="t">${esc(p.title)}<small>${esc(p.price)} ${esc(DATA.settings.currency||"ر.س")} • ${esc((DATA.categories.find(c=>c.id===p.category)||{}).name||"")} ${p.stock===false?"• نفد":""}</small></div><button class="sec" data-e="${esc(p.id)}">تعديل</button><button class="del" data-d="${esc(p.id)}">حذف</button></div>`).join("")||"<p>لا توجد منتجات بعد. اضغط «منتج جديد».</p>";
+  $("#list").innerHTML=arr.map(p=>`<div class="item"><img src="${esc(p.image||"")}" onerror="this.style.opacity=.2"><div class="t">${esc(p.title)}<small>${esc(p.price)} ${p.currency==="YER"?"ر.ي":"ر.س"} • ${esc((DATA.categories.find(c=>c.id===p.category)||{}).name||"")} ${p.stock===false?"• نفد":""}</small></div><button class="sec" data-e="${esc(p.id)}">تعديل</button><button class="del" data-d="${esc(p.id)}">حذف</button></div>`).join("")||"<p>لا توجد منتجات بعد. اضغط «منتج جديد».</p>";
 }
 function drawCats(){
   $("#f-cat").innerHTML=DATA.categories.map(c=>`<option value="${esc(c.id)}">${esc((c.emoji||"")+" "+c.name)}</option>`).join("");
@@ -133,7 +134,7 @@ function drawCats(){
 function fillSettings(){const s=DATA.settings;$("#s-name").value=s.name||"";$("#s-tag").value=s.tagline||"";$("#s-wa").value=s.whatsapp||"";$("#s-cur").value=s.currency||"ر.س"}
 function tab(t){document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));["prods","form","import","settings"].forEach(x=>$("#t-"+x).classList.toggle("hide",x!==t))}
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="form"&&!editId)resetForm();tab(b.dataset.t)});
-function resetForm(){editId=null;newImg=null;$("#formTitle").textContent="➕ منتج جديد";["title","price","old","desc"].forEach(k=>$("#f-"+k).value="");$("#f-img").value="";$("#prev").classList.add("hide");$("#f-stock").checked=true}
+function resetForm(){editId=null;newImg=null;$("#formTitle").textContent="➕ منتج جديد";["title","price","old","desc"].forEach(k=>$("#f-"+k).value="");$("#f-cur").value="SAR";$("#f-img").value="";$("#prev").classList.add("hide");$("#f-stock").checked=true}
 async function start(){
   try{await loadData()}catch(e){msg(e.message,4000);$("#login").classList.remove("hide");$("#main").classList.add("hide");return}
   $("#login").classList.add("hide");$("#main").classList.remove("hide");drawCats();drawList();fillSettings();
@@ -143,7 +144,7 @@ $("#logout").onclick=()=>{localStorage.removeItem("hs_tok");location.reload()};
 $("#filter").oninput=drawList;
 $("#list").onclick=async e=>{
   const ed=e.target.dataset.e, dl=e.target.dataset.d;
-  if(ed){const p=DATA.products.find(x=>x.id===ed);editId=ed;newImg=null;$("#formTitle").textContent="✏️ تعديل منتج";$("#f-title").value=p.title||"";$("#f-price").value=p.price||"";$("#f-old").value=p.old||"";$("#f-cat").value=p.category||"";$("#f-desc").value=p.desc||"";$("#f-stock").checked=p.stock!==false;$("#f-img").value="";if(p.image){$("#prev").src=p.image;$("#prev").classList.remove("hide")}else $("#prev").classList.add("hide");tab("form")}
+  if(ed){const p=DATA.products.find(x=>x.id===ed);editId=ed;newImg=null;$("#formTitle").textContent="✏️ تعديل منتج";$("#f-title").value=p.title||"";$("#f-price").value=p.price||"";$("#f-cur").value=p.currency||"SAR";$("#f-old").value=p.old||"";$("#f-cat").value=p.category||"";$("#f-desc").value=p.desc||"";$("#f-stock").checked=p.stock!==false;$("#f-img").value="";if(p.image){$("#prev").src=p.image;$("#prev").classList.remove("hide")}else $("#prev").classList.add("hide");tab("form")}
   if(dl&&confirm("حذف هذا المنتج؟")){DATA.products=DATA.products.filter(x=>x.id!==dl);try{await saveData("Delete product");drawList();msg("تم الحذف ✅")}catch(er){msg(er.message,4000);await loadData();drawList()}}
 };
 $("#f-img").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{newImg=await resize(f);$("#prev").src=URL.createObjectURL(newImg);$("#prev").classList.remove("hide")}catch(er){msg(er.message)}};
@@ -156,7 +157,7 @@ $("#saveProd").onclick=async()=>{
   try{
     let p=editId?DATA.products.find(x=>x.id===editId):{id:"p"+Date.now().toString(36),createdAt:new Date().toISOString()};
     if(newImg)p.image=await uploadImage(newImg);
-    Object.assign(p,{title,price,old:parseFloat($("#f-old").value)||0,category:$("#f-cat").value,desc:$("#f-desc").value.trim(),stock:$("#f-stock").checked});
+    Object.assign(p,{title,price,currency:$("#f-cur").value,old:parseFloat($("#f-old").value)||0,category:$("#f-cat").value,desc:$("#f-desc").value.trim(),stock:$("#f-stock").checked});
     if(!editId)DATA.products.unshift(p);
     await saveData(editId?"Edit product":"Add product");
     resetForm();drawList();tab("prods");msg("تم الحفظ ✅ (يظهر في المتجر خلال دقيقة)",3500);
@@ -170,14 +171,14 @@ $("#saveSet").onclick=async()=>{
   try{await saveData("Update settings");msg("تم الحفظ ✅")}catch(er){msg(er.message,4000)}
 };
 /* ===== الاستيراد ===== */
-const K={title:["الاسم","اسم المنتج","title","name"],price:["السعر","price"],old:["السعر القديم","السعر قبل الخصم","old"],cat:["القسم","الفئة","category"],desc:["الوصف","desc","description"],image:["الصورة","رابط الصورة","image"]};
+const K={title:["الاسم","اسم المنتج","title","name"],price:["السعر","price"],old:["السعر القديم","السعر قبل الخصم","old"],cat:["القسم","الفئة","category"],desc:["الوصف","desc","description"],image:["الصورة","رابط الصورة","image"],cur:["العملة","currency"]};
 const pick=(row,keys)=>{for(const k of keys){for(const rk of Object.keys(row)){if(rk.trim().toLowerCase()===k)return row[rk]}}return""};
 $("#xl").onchange=async e=>{
   const f=e.target.files[0];if(!f)return;
   try{
     const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});
     const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});
-    pending=rows.map(r=>({title:String(pick(r,K.title)).trim(),price:parseFloat(pick(r,K.price)),old:parseFloat(pick(r,K.old))||0,cat:String(pick(r,K.cat)).trim(),desc:String(pick(r,K.desc)).trim(),image:String(pick(r,K.image)).trim()})).filter(r=>r.title&&r.price>0);
+    pending=rows.map(r=>({title:String(pick(r,K.title)).trim(),price:parseFloat(pick(r,K.price)),old:parseFloat(pick(r,K.old))||0,cat:String(pick(r,K.cat)).trim(),desc:String(pick(r,K.desc)).trim(),image:String(pick(r,K.image)).trim(),currency:/يمن|YER|ي$/i.test(String(pick(r,K.cur)))?"YER":"SAR"})).filter(r=>r.title&&r.price>0);
     $("#impInfo").innerHTML=pending.length?`✅ تم العثور على <b>${pending.length}</b> منتج جاهز للاستيراد.`:"⚠️ لم أجد صفوفاً صحيحة. تأكد من عناوين الأعمدة (الاسم، السعر).";
     $("#impRow").classList.toggle("hide",!pending.length);
   }catch(er){msg("تعذّر قراءة الملف")}
@@ -188,13 +189,13 @@ $("#impGo").onclick=async()=>{
     for(const r of pending){
       let c=DATA.categories.find(x=>x.name===r.cat);
       if(!c){c={id:"c"+Date.now().toString(36)+Math.random().toString(36).slice(2,4),name:r.cat||"منتجات عامة",emoji:"🛍️"};DATA.categories.push(c)}
-      DATA.products.unshift({id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),title:r.title,price:r.price,old:r.old,category:c.id,desc:r.desc,image:r.image,stock:true,createdAt:new Date().toISOString()});
+      DATA.products.unshift({id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),title:r.title,price:r.price,currency:r.currency,old:r.old,category:c.id,desc:r.desc,image:r.image,stock:true,createdAt:new Date().toISOString()});
     }
     await saveData("Import products");pending=[];$("#impRow").classList.add("hide");$("#impInfo").innerHTML="";$("#xl").value="";drawCats();drawList();tab("prods");msg("تم الاستيراد ✅ (يمكنك إضافة الصور بالتعديل على كل منتج)",4500);
   }catch(er){msg(er.message,4500)}
   $("#impGo").disabled=false;
 };
-$("#tpl").onclick=()=>{const ws=XLSX.utils.aoa_to_sheet([["الاسم","السعر","السعر القديم","القسم","الوصف","الصورة"],["عطر ملكي 100مل",120,150,"العطور","عطر فاخر يدوم طويلاً",""]]);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"منتجات");XLSX.writeFile(wb,"نموذج-المنتجات.xlsx")};
+$("#tpl").onclick=()=>{const ws=XLSX.utils.aoa_to_sheet([["الاسم","السعر","السعر القديم","القسم","الوصف","الصورة","العملة"],["عطر ملكي 100مل",120,150,"العطور","عطر فاخر يدوم طويلاً","","سعودي"]]);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"منتجات");XLSX.writeFile(wb,"نموذج-المنتجات.xlsx")};
 if(TOKEN)start();
 </script>
 </body>

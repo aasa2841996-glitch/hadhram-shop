@@ -114,7 +114,7 @@ async function load(){
     const r=await fetch("products.json?v="+Math.floor(Date.now()/30000),{cache:"no-store"});
     const d=await r.json();
     S={...S,...(d.settings||{})}; CATS=d.categories||[];
-    ALL=(d.products||[]).map(p=>({id:String(p.id),title:p.title||"منتج",price:parseFloat(p.price)||0,old:parseFloat(p.old)||0,image:p.image||"",cat:p.category||"",desc:p.desc||"",stock:p.stock!==false,created:Date.parse(p.createdAt)||0}))
+    ALL=(d.products||[]).map(p=>({id:String(p.id),title:p.title||"منتج",price:parseFloat(p.price)||0,cur:p.currency==="YER"?"ر.ي":"ر.س",old:parseFloat(p.old)||0,image:p.image||"",cat:p.category||"",desc:p.desc||"",stock:p.stock!==false,created:Date.parse(p.createdAt)||0}))
       .filter(p=>p.price>0).sort((a,b)=>b.created-a.created);
     byId=new Map(ALL.map(x=>[x.id,x]));
   }catch(e){console.error(e)}
@@ -127,7 +127,7 @@ function card(p){
     ${disc>=5?`<span class="badge">خصم ${disc}%</span>`:""}${p.stock?"":`<div class="sold">نفد المخزون</div>`}
     <button class="fav ${fav?"on":""}" data-act="fav" data-id="${esc(p.id)}">♥</button></div>
     <div class="pb"><div class="pt">${esc(p.title)}</div>
-    <div class="pp"><b>${nf(p.price)} ${esc(S.currency)}</b>${disc?`<s>${nf(p.old)} ${esc(S.currency)}</s>`:""}</div>
+    <div class="pp"><b>${nf(p.price)} ${esc(p.cur)}</b>${disc?`<s>${nf(p.old)} ${esc(p.cur)}</s>`:""}</div>
     ${p.stock?`<button class="wab" data-act="open" data-id="${esc(p.id)}">💬 اطلب عبر واتساب</button>`:""}</div></article>`;
 }
 const catTile=c=>`<button class="cat" data-act="cat" data-id="${esc(c.id)}"><div class="ci">${esc(c.emoji||"🛍️")}</div><b>${esc(c.name)}</b></button>`;
@@ -155,7 +155,7 @@ function render(){
 }
 function nav(v,push=true){view=v;if(push)history.pushState(v,"");render();scrollTo(0,0)}
 function waLink(p,qty){
-  const msg=`السلام عليكم، أبغى هذا المنتج:\n${p.title}\nالسعر: ${nf(p.price)} ${S.currency}\nالكمية: ${qty}\n${location.origin}${location.pathname}`;
+  const msg=`السلام عليكم، أبغى هذا المنتج:\n${p.title}\nالسعر: ${nf(p.price)} ${p.cur}\nالكمية: ${qty}\n${location.origin}${location.pathname}`;
   return `https://wa.me/${S.whatsapp}?text=${encodeURIComponent(msg)}`;
 }
 function openSheet(id){
@@ -163,7 +163,7 @@ function openSheet(id){
   let qty=1;
   const draw=()=>{ $("#sheet").innerHTML=`${p.image?`<img class="big" src="${esc(safeUrl(p.image))}" alt="">`:""}
     <div class="bd"><h3>${esc(p.title)}</h3>
-    <div class="pp"><b style="font-size:22px">${nf(p.price)} ${esc(S.currency)}</b>${p.old>p.price?`<s>${nf(p.old)} ${esc(S.currency)}</s>`:""}</div>
+    <div class="pp"><b style="font-size:22px">${nf(p.price)} ${esc(p.cur)}</b>${p.old>p.price?`<s>${nf(p.old)} ${esc(p.cur)}</s>`:""}</div>
     ${p.desc?`<p>${esc(p.desc)}</p>`:""}
     <div class="qty">الكمية: <button data-q="-">−</button><span>${qty}</span><button data-q="+">+</button></div>
     ${p.stock?`<button class="wab" id="wsend" style="padding:13px;font-size:16px">💬 اطلب عبر واتساب</button>`:`<div class="empty">نفد المخزون</div>`}
