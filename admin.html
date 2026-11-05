@@ -82,7 +82,10 @@ small.h{color:#80705f}
     <label>العملة</label><input id="s-cur">
     <h3 style="margin-top:18px">🧩 الأقسام</h3>
     <div id="catList"></div>
-    <div class="row"><input id="c-name" placeholder="اسم القسم"><input id="c-emoji" placeholder="إيموجي" style="max-width:90px"><button class="sec" id="addCat" style="flex:0 0 auto">إضافة</button></div>
+    <div class="row"><input id="c-name" placeholder="اسم القسم"><input id="c-emoji" placeholder="إيموجي" style="max-width:90px"></div>
+    <label>صورة القسم (اختياري، وإلا تُستخدم صورة أول منتج فيه)</label><input id="c-img" type="file" accept="image/*">
+    <div class="row"><button class="sec" id="addCat">إضافة القسم</button></div>
+    <input id="c-chg" type="file" accept="image/*" class="hide">
     <div class="row"><button class="pri" id="saveSet">حفظ الإعدادات</button></div>
   </div>
 </div>
@@ -129,7 +132,7 @@ function drawList(){
 }
 function drawCats(){
   $("#f-cat").innerHTML=DATA.categories.map(c=>`<option value="${esc(c.id)}">${esc((c.emoji||"")+" "+c.name)}</option>`).join("");
-  $("#catList").innerHTML=DATA.categories.map(c=>`<div class="item"><div class="t">${esc((c.emoji||"")+" "+c.name)}</div><button class="del" data-dc="${esc(c.id)}">حذف</button></div>`).join("");
+  $("#catList").innerHTML=DATA.categories.map(c=>`<div class="item">${c.image?`<img src="${esc(c.image)}">`:""}<div class="t">${esc((c.emoji||"")+" "+c.name)}</div><button class="sec" data-ci="${esc(c.id)}">صورة</button><button class="del" data-dc="${esc(c.id)}">حذف</button></div>`).join("");
 }
 function fillSettings(){const s=DATA.settings;$("#s-name").value=s.name||"";$("#s-tag").value=s.tagline||"";$("#s-wa").value=s.whatsapp||"";$("#s-cur").value=s.currency||"ر.س"}
 function tab(t){document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));["prods","form","import","settings"].forEach(x=>$("#t-"+x).classList.toggle("hide",x!==t))}
@@ -164,8 +167,13 @@ $("#saveProd").onclick=async()=>{
   }catch(er){msg(er.message,4500);try{await loadData()}catch{}}
   $("#saveProd").disabled=false;
 };
-$("#addCat").onclick=()=>{const n=$("#c-name").value.trim();if(!n)return;DATA.categories.push({id:"c"+Date.now().toString(36),name:n,emoji:$("#c-emoji").value.trim()||"🛍️"});$("#c-name").value="";$("#c-emoji").value="";drawCats()};
-$("#catList").onclick=e=>{const id=e.target.dataset.dc;if(id&&confirm("حذف القسم؟")){DATA.categories=DATA.categories.filter(c=>c.id!==id);drawCats()}};
+$("#addCat").onclick=async()=>{const n=$("#c-name").value.trim();if(!n)return;
+  try{msg("جارٍ الإضافة...",8000);const c={id:"c"+Date.now().toString(36),name:n,emoji:$("#c-emoji").value.trim()||"🛍️"};
+  const f=$("#c-img").files[0];if(f)c.image=await uploadImage(await resize(f,500));
+  DATA.categories.push(c);$("#c-name").value="";$("#c-emoji").value="";$("#c-img").value="";drawCats();msg("أُضيف، اضغط حفظ الإعدادات")}catch(er){msg(er.message,4000)}};
+let chgId=null;
+$("#c-chg").onchange=async e=>{const f=e.target.files[0];if(!f||!chgId)return;try{msg("جارٍ رفع الصورة...",8000);const c=DATA.categories.find(x=>x.id===chgId);c.image=await uploadImage(await resize(f,500));drawCats();msg("تم، اضغط حفظ الإعدادات")}catch(er){msg(er.message,4000)}e.target.value=""};
+$("#catList").onclick=e=>{if(e.target.dataset.ci){chgId=e.target.dataset.ci;$("#c-chg").click();return}const id=e.target.dataset.dc;if(id&&confirm("حذف القسم؟")){DATA.categories=DATA.categories.filter(c=>c.id!==id);drawCats()}};
 $("#saveSet").onclick=async()=>{
   DATA.settings={...DATA.settings,name:$("#s-name").value.trim(),tagline:$("#s-tag").value.trim(),whatsapp:$("#s-wa").value.replace(/\D/g,""),currency:$("#s-cur").value.trim()||"ر.س"};
   try{await saveData("Update settings");msg("تم الحفظ ✅")}catch(er){msg(er.message,4000)}
