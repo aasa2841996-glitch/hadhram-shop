@@ -44,6 +44,18 @@
  ],
  "products": [
   {
+   "id": "pmw663dgi",
+   "title": "موقد غاز أبيض مع رفوف تخزين عملية",
+   "price": 250,
+   "currency": "SAR",
+   "old": 0,
+   "category": "general",
+   "desc": "موقد غاز عملي بلون أبيض مزود بعيون متعددة وغطاء خلفي، مع رفوف سفلية متعددة المستويات لتخزين الأواني وأدوات المطبخ وتنظيمها بشكل مثالي وسهل الوصول.",
+   "image": "images/mw663c6avg22ux.jpg",
+   "stock": true,
+   "createdAt": "2026-11-07T08:54:37.329Z"
+  },
+  {
    "id": "pmw3jgid0",
    "createdAt": "2026-11-05T12:45:26.388Z",
    "image": "images/mw3jgid0tozt.jpg",
