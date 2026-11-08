@@ -89,6 +89,19 @@ textarea{min-height:90px;resize:vertical}
 .sheet h3{margin:0 0 6px;font-size:19px}
 .imgbox{display:grid;place-items:center;height:150px;border:2px dashed var(--line);border-radius:14px;background:var(--bg);overflow:hidden;color:var(--muted);font-weight:800;cursor:pointer}
 .imgbox img{width:100%;height:100%;object-fit:cover}
+.gal{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.gal .th{position:relative;width:78px;height:78px;border-radius:12px;overflow:hidden;border:2px solid var(--line);background:var(--bg)}
+.gal .th.main{border-color:var(--gold,#d4a017)}
+.gal .th img{width:100%;height:100%;object-fit:cover}
+.gal .th button{position:absolute;top:2px;left:2px;border:0;background:#000a;color:#fff;border-radius:50%;width:22px;height:22px;font-size:13px;line-height:22px;padding:0}
+.gal .th i{position:absolute;bottom:0;right:0;left:0;background:#d4a017;color:#000;font-size:10px;font-weight:900;text-align:center;font-style:normal}
+.gal .th u{position:absolute;bottom:0;right:0;left:0;background:#000a;color:#fff;font-size:10px;text-align:center;text-decoration:none;cursor:pointer}
+.gal .add{display:grid;place-items:center;width:78px;height:78px;border:2px dashed var(--line);border-radius:12px;color:var(--muted);font-weight:900;font-size:26px;cursor:pointer;background:none}
+.og{border:1px solid var(--line);border-radius:12px;padding:8px;margin-bottom:8px;background:var(--bg)}
+.og .oh{display:flex;gap:6px;margin-bottom:6px}.og .oh input{flex:1}
+.og .oh button{border:0;background:#c0392b;color:#fff;border-radius:10px;padding:0 12px;font-weight:900}
+.pre{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.pre button{border:1px solid var(--line);background:var(--bg);border-radius:20px;padding:6px 12px;font-weight:800;font-size:13px;cursor:pointer}
 .terms{white-space:pre-wrap;line-height:1.9;font-size:14px;font-weight:600}
 .profile .kv{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);font-weight:800}
 .profile .kv span:first-child{color:var(--muted)}
@@ -193,7 +206,7 @@ function waMsg(o,st){
 }
 function orderCard(o){
   const [lab,col]=ST[o.status]||[o.status,"var(--muted)"];
-  const its=o.items.map(i=>`<div class="it">${i.img?`<img src="${esc(i.img)}" alt="" loading="lazy">`:`<span class="ph">🛍</span>`}<div class="tx">${esc(i.title)}<small>${i.q} × ${nf(i.price)} ${esc(i.cur)}</small></div></div>`).join("");
+  const its=o.items.map(i=>`<div class="it">${i.img?`<img src="${esc(i.img)}" alt="" loading="lazy">`:`<span class="ph">🛍</span>`}<div class="tx">${esc(i.title)}${i.opt?`<small style="color:#b8860b;font-weight:900">🎨 ${esc(i.opt)}</small>`:""}<small>${i.q} × ${nf(i.price)} ${esc(i.cur)}</small></div></div>`).join("");
   const place=[o.city,o.area].filter(Boolean).join(" — ");
   return `<div class="card" style="--c:${col}"><div class="hd"><span class="id">#${o.id}</span><span class="badge">${lab}</span></div><div class="tm">🕒 ${esc(o.time)}</div>
   <div class="bd"><div class="cust"><div class="nm">👤 ${esc(o.name||"—")}</div>${o.phone?`<div><a href="tel:+${esc(o.phone)}" dir="ltr">📞 +${esc(o.phone)}</a></div>`:""}<div>📍 ${esc(place||"—")}${o.addr?"، "+esc(o.addr):""}</div></div>
@@ -239,7 +252,7 @@ function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)
 /* ---------- طباعة بوليصة الشحن (تُلصق على الطرد) ---------- */
 function labelHtml(o,sender){
   const e=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const items=(o.items||[]).map(i=>`<li>${e(i.title)} <b>× ${e(i.q)}</b></li>`).join("");
+  const items=(o.items||[]).map(i=>`<li>${e(i.title)}${i.opt?` <i>(${e(i.opt)})</i>`:""} <b>× ${e(i.q)}</b></li>`).join("");
   const place=[o.city,o.area].filter(Boolean).join(" — ");
   return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>بوليصة #${e(o.id)}</title>
 <style>
@@ -280,24 +293,44 @@ function printLabel(o,sender){
 }
 
 /* ---------- نموذج المنتج ---------- */
-let pimg="";
+let pimgs=[],popts=[],upl=0;
 function productForm(p){
-  p=p||{};pimg="";
+  p=p||{};pimgs=(p.imgs&&p.imgs.length?p.imgs:(p.img?[p.img]:[])).slice();popts=JSON.parse(JSON.stringify(p.opts||[]));
   openSheet(`<h3>${p.id?"تعديل المنتج":"منتج جديد"}</h3>
-  <div class="imgbox" id="pbox">${p.img?`<img src="${API}/img/${esc(p.img)}" alt="">`:"📷 اضغط لاختيار صورة المنتج"}</div><input type="file" id="pfile" accept="image/*" hidden>
+  <label>صور المنتج (حتى 6 — الأولى هي الرئيسية)</label><div class="gal" id="gal"></div><input type="file" id="pfile" accept="image/*" multiple hidden>
   <label>اسم المنتج</label><input id="p-title" value="${esc(p.title||"")}">
   <div class="row"><div><label>السعر</label><input id="p-price" type="number" inputmode="decimal" value="${p.price||""}"></div><div><label>العملة</label><select id="p-cur"><option value="SAR" ${p.cur!=="YER"?"selected":""}>ريال سعودي</option><option value="YER" ${p.cur==="YER"?"selected":""}>ريال يمني</option></select></div></div>
   <div class="row"><div><label>السعر القديم (اختياري)</label><input id="p-old" type="number" inputmode="decimal" value="${p.old||""}"></div><div><label>سعر بالريال اليمني (اختياري)</label><input id="p-yer" type="number" inputmode="decimal" value="${p.price_yer||""}"></div></div>
   <label>القسم</label><select id="p-cat">${CATS.map(c=>`<option value="${esc(c.id)}" ${p.cat===c.id?"selected":""}>${esc((c.emoji||"")+" "+c.name)}</option>`).join("")}</select>
   <label>وصف المنتج (المقاس، الخامة، اللون...)</label><textarea id="p-desc">${esc(p.desc||"")}</textarea>
+  <label>الخيارات المتوفرة (مقاسات، ألوان، أحجام...) — اختياري</label>
+  <div id="opts"></div>
+  <div class="pre"><button type="button" data-addopt="المقاس">+ المقاس</button><button type="button" data-addopt="اللون">+ اللون</button><button type="button" data-addopt="الحجم">+ الحجم</button><button type="button" data-addopt="">+ خيار آخر</button></div>
   <label class="chk"><input type="checkbox" id="p-stock" ${p.stock===false?"":"checked"}><span>متوفر في المخزون</span></label>
   <button class="btn gold" id="p-save" data-id="${esc(p.id||"")}">حفظ المنتج</button><button class="btn dark" data-close>إلغاء</button><div class="msg err" id="p-msg"></div>`);
+  drawGal();drawOpts();
+}
+function drawGal(){
+  const g=$("#gal");if(!g)return;
+  g.innerHTML=pimgs.map((id,n)=>`<div class="th ${n?"":"main"}"><img src="${API}/img/${esc(id)}" alt=""><button type="button" data-rmimg="${n}">×</button>${n?`<u data-mainimg="${n}">رئيسية</u>`:`<i>الرئيسية</i>`}</div>`).join("")+(upl?`<div class="add">…</div>`:"")+(pimgs.length+upl<6?`<button type="button" class="add" id="addimg">＋</button>`:"");
+}
+function drawOpts(){
+  const o=$("#opts");if(!o)return;
+  o.innerHTML=popts.map((g,n)=>`<div class="og"><div class="oh"><input data-on="${n}" placeholder="اسم الخيار (مثال: المقاس)" value="${esc(g.name)}"><button type="button" data-rmopt="${n}">حذف</button></div><input data-ov="${n}" placeholder="القيم مفصولة بفاصلة: S, M, L, XL" value="${esc((g.values||[]).join("، "))}"></div>`).join("");
 }
 function resizeImg(file){
   return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const M=900,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.82))};im.onerror=()=>rej(new Error("تعذّر قراءة الصورة"));im.src=u});
 }
 document.addEventListener("change",async e=>{
-  if(e.target.id==="pfile"&&e.target.files[0]){try{pimg=await resizeImg(e.target.files[0]);$("#pbox").innerHTML=`<img src="${pimg}" alt="">`}catch(err){toast(err.message)}}
+  if(e.target.id==="pfile"&&e.target.files.length){
+    const fs=[...e.target.files].slice(0,6-pimgs.length-upl);e.target.value="";
+    for(const f of fs){upl++;drawGal();try{const d=await resizeImg(f);const r=await api("/m/image",{method:"POST",body:JSON.stringify({image:d})});pimgs.push(r.id)}catch(err){toast("⚠️ "+(err.message||"فشل رفع الصورة"))}upl--;drawGal()}
+  }
+});
+document.addEventListener("input",e=>{
+  const n=e.target.dataset;
+  if(n.on!==undefined)popts[+n.on].name=e.target.value;
+  if(n.ov!==undefined)popts[+n.ov].values=e.target.value.split(/[,،\n]/).map(s=>s.trim()).filter(Boolean);
 });
 document.addEventListener("click",async e=>{
   const t=e.target.closest("[data-tab]");if(t){tab=t.dataset.tab;if(tab==="products")await loadProds();if(tab==="orders")await loadOrders();if(tab==="me"){try{BAL=(await api("/m/balance")).balance}catch(e){}}draw();return}
@@ -305,12 +338,17 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#moreO")){await loadOrders(false);draw();return}
   if(e.target.closest("#logout")){TK="";LS.del("hm_tk");clearInterval(timer);mode="login";authView();return}
   if(e.target.closest("#addP")){productForm();return}
-  if(e.target.closest("#pbox")){$("#pfile").click();return}
+  if(e.target.closest("#addimg")){$("#pfile").click();return}
+  const ri=e.target.closest("[data-rmimg]");if(ri){pimgs.splice(+ri.dataset.rmimg,1);drawGal();return}
+  const mi=e.target.closest("[data-mainimg]");if(mi){const n=+mi.dataset.mainimg;pimgs.unshift(pimgs.splice(n,1)[0]);drawGal();return}
+  const ao=e.target.closest("[data-addopt]");if(ao){if(popts.length>=4){toast("الحد الأقصى 4 خيارات");return}popts.push({name:ao.dataset.addopt,values:[]});drawOpts();return}
+  const ro=e.target.closest("[data-rmopt]");if(ro){popts.splice(+ro.dataset.rmopt,1);drawOpts();return}
   const ed=e.target.closest("[data-ed]");if(ed){productForm(prods.find(p=>p.id===ed.dataset.ed));return}
   const sk=e.target.closest("[data-sk]");if(sk){const p=prods.find(x=>x.id===sk.dataset.sk);try{await api("/m/product/stock",{method:"POST",body:JSON.stringify({id:p.id,stock:!p.stock})});await loadProds();draw()}catch(err){toast("⚠️ "+err.message)}return}
   const dl=e.target.closest("[data-del]");if(dl){if(confirm("حذف هذا المنتج نهائياً؟")){try{await api("/m/product/delete",{method:"POST",body:JSON.stringify({id:dl.dataset.del})});await loadProds();draw();toast("تم الحذف")}catch(err){toast("⚠️ "+err.message)}}return}
   const sv=e.target.closest("#p-save");if(sv){
-    const b={id:sv.dataset.id||undefined,title:$("#p-title").value,price:$("#p-price").value,cur:$("#p-cur").value,old:$("#p-old").value,price_yer:$("#p-yer").value,cat:$("#p-cat").value,desc:$("#p-desc").value,stock:$("#p-stock").checked,image:pimg||undefined};
+    const b={id:sv.dataset.id||undefined,title:$("#p-title").value,price:$("#p-price").value,cur:$("#p-cur").value,old:$("#p-old").value,price_yer:$("#p-yer").value,cat:$("#p-cat").value,desc:$("#p-desc").value,stock:$("#p-stock").checked,imgs:pimgs,opts:popts.filter(g=>g.name.trim()&&g.values.length)};
+    if(upl){$("#p-msg").textContent="انتظر اكتمال رفع الصور";return}
     sv.disabled=true;try{await api("/m/product",{method:"POST",body:JSON.stringify(b)});closeSheet();await loadProds();draw();toast("✅ تم حفظ المنتج")}catch(err){$("#p-msg").textContent=err.message}sv.disabled=false;return}
   const pr=e.target.closest("[data-print]");if(pr){const o=orders.find(x=>x.id===Number(pr.dataset.print));if(o){const inp=$(`[data-ship="${o.id}"]`);printLabel({...o,ship_info:inp?inp.value:o.ship_info},{platform:SHOP,name:ME.name,city:ME.city})}return}
   const s=e.target.closest("[data-st]");if(s){
