@@ -159,6 +159,9 @@ main{padding:0 0 10px}
 .wlc button{width:100%;max-width:420px;border-radius:999px;padding:16px;font-weight:900;font-size:20px;color:var(--deep);background:linear-gradient(180deg,#ffe29a,#f0b13a 55%,#c98a1a);box-shadow:0 0 0 2px rgba(255,226,154,.35),0 8px 24px rgba(240,177,58,.35)}
 .wlc button:active{transform:scale(.98)}
 .wlc small{display:block;color:#b99a6c;font-weight:700;margin-top:10px;font-size:12.5px}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,.pg p{-webkit-user-select:text;user-select:text}
+.pc,.tile,.slide{cursor:pointer}
 /* ثلاثة منتجات في السطر + بانر عروض صغير */
 .grid{grid-template-columns:repeat(3,1fr);gap:8px;padding:0 10px}
 .pc{border-radius:13px}
@@ -264,7 +267,7 @@ function addToCart(id,q=1,quiet){
 const isNew=p=>p.created&&Date.now()-p.created<3*864e5;
 function card(p){
   const d=disc(p), fav=saved().includes(p.id);
-  return `<article class="pc"><div class="pimg" data-act="open" data-id="${esc(p.id)}">
+  return `<article class="pc" data-act="open" data-id="${esc(p.id)}"><div class="pimg">
     ${p.image?`<img loading="lazy" decoding="async" src="${esc(safeUrl(p.image))}" alt="${esc(p.title)}">`:"🛍️"}
     ${d>=5?`<span class="tag">خصم<br>${d}%</span>`:""}${isNew(p)&&!d?`<span class="newb">جديد</span>`:""}${p.stock?"":`<div class="sold">نفد المخزون</div>`}
     <button class="fav ${fav?"on":""}" data-act="fav" data-id="${esc(p.id)}">♥</button></div>
