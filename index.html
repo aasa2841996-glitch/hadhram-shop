@@ -360,10 +360,10 @@ function checkout(items){
   } else Object.assign(cust,LS.get("hs_cust",{}));
   const tot={}; items.forEach(({p,q})=>tot[p.cur]=(tot[p.cur]||0)+p.price*q);
   let m=`السلام عليكم، أبغى أطلب من ${S.name}:\n\n`;
-  items.forEach(({p,q},n)=>{m+=`${n+1}) ${p.title}\n   الكمية: ${q} × ${nf(p.price)} ${p.cur}\n`});
+  items.forEach(({p,q},n)=>{m+=`${n+1}) ${p.title}\n   كود: ${p.id}\n   الكمية: ${q} × ${nf(p.price)} ${p.cur}\n`});
   m+=`\nالإجمالي: ${Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + ")}\n`;
   if(cust.name) m+=`\nالاسم: ${cust.name}`; if(cust.phone) m+=`\nالجوال: ${cust.phone}`; if(cust.addr) m+=`\nالعنوان: ${cust.addr}`; if(cust.note) m+=`\nملاحظات: ${cust.note}`;
-  if(S.orderApi){try{fetch(S.orderApi.replace(/\/$/,"")+"/order",{method:"POST",headers:{"content-type":"text/plain"},keepalive:true,body:JSON.stringify({items:items.map(({p,q})=>({title:p.title,q,price:p.price,cur:p.cur})),total:Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + "),name:cust.name,phone:cust.phone,addr:cust.addr,note:cust.note})}).catch(()=>{})}catch(e){}}
+  if(S.orderApi){try{fetch(S.orderApi.replace(/\/$/,"")+"/order",{method:"POST",headers:{"content-type":"text/plain"},keepalive:true,body:JSON.stringify({items:items.map(({p,q})=>({id:p.id,img:p.image?new URL(p.image,location.href).href:"",title:p.title,q,price:p.price,cur:p.cur})),total:Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + "),name:cust.name,phone:cust.phone,addr:cust.addr,note:cust.note})}).catch(()=>{})}catch(e){}}
   window.open(`https://wa.me/${S.whatsapp}?text=${encodeURIComponent(m)}`,"_blank","noopener");
 }
 function openPage(id){
