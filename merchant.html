@@ -108,7 +108,7 @@ const toast=t=>{const el=$("#toast");el.textContent=t;el.classList.add("show");c
 const ST={new:["جديد","var(--new)"],prep:["قيد التجهيز","var(--prep)"],ship:["في الطريق","var(--ship)"],done:["تم التوصيل","var(--done)"],cancel:["ملغي","var(--cancel)"]};
 const SHOP="حضرم شوب";
 let API="https://hadhram-bot.aasa2841996.workers.dev", TK=LS.get("hm_tk",""), ME=null, CATS=[];
-let tab="orders", ofilter="", orders=[], ocounts={}, omore=false, prods=[], sel=null, maxId=0, timer=null, mode="login";
+let BAL=null, tab="orders", ofilter="", orders=[], ocounts={}, omore=false, prods=[], sel=null, maxId=0, timer=null, mode="login";
 
 const TERMS=`شروط وأحكام التاجر في ${SHOP}
 
@@ -214,8 +214,12 @@ function meBody(){
   return `<div class="profile" style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 14px;margin-top:12px">
   <div class="kv"><span>المتجر</span><span>${esc(ME.name)}</span></div><div class="kv"><span>صاحب الحساب</span><span>${esc(ME.owner)}</span></div><div class="kv"><span>المدينة</span><span>${esc(ME.city)}</span></div>
   <div class="kv"><span>عمولة المنصة</span><span>${ME.commission==null?"—":ME.commission+"%"}</span></div></div>
+  ${BAL?`<div class="profile" style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 14px;margin-top:12px"><div style="font-weight:900;padding:10px 0 2px">💰 مستحقاتي (بعد خصم العمولة)</div>
+  <div class="kv"><span>جاهزة للتحويل (طلبات سُلِّمت)</span><span>${money(BAL.due)}</span></div><div class="kv"><span>قيد التنفيذ</span><span>${money(BAL.pending)}</span></div><div class="kv"><span>تم تحويلها لك</span><span>${money(BAL.settled)}</span></div>
+  <div style="color:var(--muted);font-size:12.5px;font-weight:700;padding:6px 0 10px">تُحوَّل المستحقات بعد تأكيد التسليم. رسوم الشحن تُحصّلها أنت من العميل وليست ضمن المبالغ أعلاه.</div></div>`:""}
   <button class="btn dark" id="showTerms">📄 شروط التاجر</button><a class="btn gold" href="index.html">فتح المتجر</a><button class="btn red" id="logout">تسجيل الخروج</button>`;
 }
+const money=b=>{const t=[b.sar?nf(b.sar)+" ر.س":"",b.yer?nf(b.yer)+" ر.ي":""].filter(Boolean).join(" + ");return t||"0"}
 function draw(){
   shell(tab==="orders"?ordersBody():tab==="products"?prodsBody():meBody());
 }
@@ -251,7 +255,7 @@ document.addEventListener("change",async e=>{
   if(e.target.id==="pfile"&&e.target.files[0]){try{pimg=await resizeImg(e.target.files[0]);$("#pbox").innerHTML=`<img src="${pimg}" alt="">`}catch(err){toast(err.message)}}
 });
 document.addEventListener("click",async e=>{
-  const t=e.target.closest("[data-tab]");if(t){tab=t.dataset.tab;if(tab==="products")await loadProds();if(tab==="orders")await loadOrders();draw();return}
+  const t=e.target.closest("[data-tab]");if(t){tab=t.dataset.tab;if(tab==="products")await loadProds();if(tab==="orders")await loadOrders();if(tab==="me"){try{BAL=(await api("/m/balance")).balance}catch(e){}}draw();return}
   const f=e.target.closest("[data-of]");if(f){ofilter=f.dataset.of;await loadOrders();draw();return}
   if(e.target.closest("#moreO")){await loadOrders(false);draw();return}
   if(e.target.closest("#logout")){TK="";LS.del("hm_tk");clearInterval(timer);mode="login";authView();return}

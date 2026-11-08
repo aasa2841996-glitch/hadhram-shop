@@ -212,6 +212,12 @@ input,textarea,.pg p{-webkit-user-select:text;user-select:text}
 .stp .s.cur i{box-shadow:0 0 0 4px rgba(240,177,58,.3)}
 .ocan{background:#fdecea;color:var(--hot);border-radius:10px;padding:8px;text-align:center;font-weight:900;margin:8px 0}
 .owa{display:block;text-align:center;text-decoration:none;color:#128c4a;font-weight:900;font-size:13.5px;margin-top:8px}
+.paybox{background:#fff7e3;border:1.5px solid var(--gold);border-radius:14px;padding:10px 12px;margin:8px 0;font-size:13.5px;font-weight:700}
+.paybox.rv{background:#eef4ff;border-color:#9db8ff;color:#1d4ed8;font-weight:800}
+.paybox .due{margin:6px 0;font-size:14.5px}.paybox .due b{color:var(--hot);font-size:17px}
+.paybox .pi{white-space:pre-wrap;background:#fff;border:1px dashed var(--gold);border-radius:10px;padding:8px 10px;line-height:1.8;user-select:text;-webkit-user-select:text}
+.paybox .pnote{color:var(--muted);font-size:12px;margin-top:6px}
+.upl{display:block;margin-top:10px;text-align:center;background:linear-gradient(180deg,var(--gold2),var(--gold));color:var(--deep);font-weight:900;border-radius:12px;padding:11px;cursor:pointer}
 .row2{display:flex;gap:8px}.row2>*{flex:1;min-width:0}
 .tkseller{font-weight:900;font-size:13px;margin:8px 0 2px}
 .tkship{background:#eef4ff;color:#1d4ed8;border-radius:10px;padding:7px 10px;font-weight:800;font-size:13px;margin-top:6px}
@@ -398,15 +404,15 @@ function checkout(items){
     CART=[];saveCart();
   }
   window.open(`https://wa.me/${S.whatsapp}?text=${encodeURIComponent(m)}`,"_blank","noopener");
-  if(S.orderApi){toast("تم استلام طلبك ✅ تابعه من «طلباتي»");nav({name:"orders"})}
+  if(S.orderApi){toast("تم استلام طلبك ✅ أكمل الدفع من «طلباتي»");nav({name:"orders"})}
 }
-const TRK={}; let trkAt=0;
+const TRK={}; let trkAt=0, PAYINFO="";
 const OSTEPS=[["new","استلمنا طلبك"],["prep","قيد التجهيز"],["ship","في الطريق"],["done","تم التوصيل"]];
 async function trackOrders(){
   const ol=LS.get("hs_orders",[]); if(!ol.length||!S.orderApi) return;
   try{
     const r=await fetch(S.orderApi.replace(/\/$/,"")+"/track?t="+ol.map(o=>o.tk).join(","),{cache:"no-store"});
-    const j=await r.json(); Object.keys(TRK).forEach(k=>delete TRK[k]); (j.orders||[]).forEach(o=>(TRK[o.tk]=TRK[o.tk]||[]).push(o));
+    const j=await r.json(); PAYINFO=j.payinfo||PAYINFO; Object.keys(TRK).forEach(k=>delete TRK[k]); (j.orders||[]).forEach(o=>(TRK[o.tk]=TRK[o.tk]||[]).push(o));
     if(view.name==="orders") render();
     if(ol.some(o=>!(TRK[o.tk]||[]).length&&Date.now()-o.t<120000)) setTimeout(()=>{trkAt=Date.now();trackOrders()},3500);
   }catch(e){}
@@ -418,15 +424,37 @@ function ordersView(){
   return head+ol.map(o=>{
     const subs=TRK[o.tk]||[];
     const when=new Date(o.t).toLocaleString("ar-SA",{dateStyle:"medium",timeStyle:"short"});
+    const need=subs.filter(t=>t.pay_status==="unpaid"||t.pay_status==="rejected"), rev=subs.filter(t=>t.pay_status==="review");
+    const dueS=need.reduce((a,t)=>a+(t.sar||0),0), dueY=need.reduce((a,t)=>a+(t.yer||0),0);
+    const due=[dueS?nf(dueS)+" ر.س":"",dueY?nf(dueY)+" ر.ي":""].filter(Boolean).join(" + ");
+    const payBox=need.length?`<div class="paybox"><b>💳 ${need.some(t=>t.pay_status==="rejected")?"الإيصال السابق لم يُقبل — ارفع إيصالاً صحيحاً":"أكمل الدفع ليصل طلبك للتاجر"}</b>
+      <div class="due">المبلغ المطلوب: <b>${esc(due)}</b></div><div class="pi">${esc(PAYINFO||"تواصل معنا للحصول على بيانات التحويل.")}</div>
+      <div class="pnote">رسوم الشحن غير مشمولة، يتفق عليها التاجر معك.</div>
+      <label class="upl">📎 ارفع صورة إيصال التحويل<input type="file" accept="image/*" data-pay="${esc(o.tk)}" hidden></label></div>`
+      :rev.length?`<div class="paybox rv">⏳ استلمنا إيصالك وهو قيد المراجعة، سنؤكد الدفع قريباً.</div>`:"";
     const parts=subs.length?subs.map(t=>{const st=t.status,idx=OSTEPS.findIndex(x=>x[0]===st);
       return `<div class="tkpart"><div class="tkseller">🏪 ${esc(t.merchant||S.name)} <span style="color:var(--muted);font-weight:700">· طلب #${t.id}</span></div>
-      ${st==="cancel"?`<div class="ocan">❌ تم إلغاء الطلب</div>`:`<div class="stp">${OSTEPS.map((x,k)=>`<div class="s ${k<=idx?"dn":""} ${k===idx?"cur":""}"><i>${k<=idx?"✓":k+1}</i>${x[1]}</div>`).join("")}</div>`}
+      ${t.pay_status==="unpaid"||t.pay_status==="rejected"?`<div class="od">💳 بانتظار الدفع</div>`:t.pay_status==="review"?`<div class="od">⏳ الإيصال قيد المراجعة</div>`:st==="cancel"?`<div class="ocan">❌ تم إلغاء الطلب</div>`:`<div class="stp">${OSTEPS.map((x,k)=>`<div class="s ${k<=idx?"dn":""} ${k===idx?"cur":""}"><i>${k<=idx?"✓":k+1}</i>${x[1]}</div>`).join("")}</div>`}
       ${t.ship_info?`<div class="tkship">🚚 ${esc(t.ship_info)}</div>`:""}</div>`}).join(""):`<div class="od">جارٍ التحقق من حالة الطلب…</div>`;
     const wa=subs[0];
     return `<div class="ord"><div class="oh"><span>طلب ${subs.length===1?"#"+subs[0].id:""}</span><span style="color:var(--hot)">${esc(o.total)}</span></div><div class="od">${esc(when)}</div>
-    <div class="oi">${o.items.slice(0,6).map(i=>i.image?`<img src="${esc(safeUrl(i.image))}" alt="">`:"").join("")}</div>${parts}
+    <div class="oi">${o.items.slice(0,6).map(i=>i.image?`<img src="${esc(safeUrl(i.image))}" alt="">`:"").join("")}</div>${payBox}${parts}
     ${S.whatsapp?`<a class="owa" target="_blank" rel="noopener" href="https://wa.me/${esc(S.whatsapp)}?text=${encodeURIComponent("بخصوص طلبي"+(wa?" رقم #"+wa.id:""))}">💬 تواصل بخصوص هذا الطلب</a>`:""}</div>`}).join("")+contactBox();
 }
+function resizeImg(file){
+  return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const M=1000,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.8))};im.onerror=()=>rej(new Error("تعذّر قراءة الصورة"));im.src=u});
+}
+document.addEventListener("change",async e=>{
+  const f=e.target.closest&&e.target.closest("[data-pay]"); if(!f||!f.files[0]) return;
+  try{
+    toast("جارٍ إرسال الإيصال…");
+    const image=await resizeImg(f.files[0]);
+    const r=await fetch(S.orderApi.replace(/\/$/,"")+"/pay",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({tk:f.dataset.pay,image})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(j.error||"تعذّر الإرسال");
+    toast("✅ وصل الإيصال، قيد المراجعة"); trkAt=Date.now(); trackOrders();
+  }catch(err){toast("⚠️ "+err.message)}
+});
 const contactBox=()=>`<div class="me">${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 راسلنا على واتساب</a>`:""}<a href="merchant.html">🏪 قسم التاجر — بع منتجاتك معنا</a></div>`;
 function openPage(id){
   const p=byId.get(id); if(!p) return; let q=1; const d=disc(p); const sim=ALL.filter(x=>x.cat===p.cat&&x.id!==p.id).slice(0,6);
