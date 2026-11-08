@@ -3,7 +3,8 @@
   "name": "حضرم شوب",
   "tagline": "منتجات مختارة بأسعار مميزة",
   "whatsapp": "966560232725",
-  "currency": "ر.س"
+  "currency": "ر.س",
+  "orderApi": "https://hadhram-bot.aasa2841996.workers.dev"
  },
  "categories": [
   {
