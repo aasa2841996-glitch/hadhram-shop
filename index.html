@@ -337,22 +337,24 @@ function cartView(){
   if(!CART.length) return `<div class="backbar"><h2>🛒 السلة</h2></div><div class="empty">سلتك فارغة<br><br><button class="btn buy" style="flex:none;padding:12px 26px" data-go="home">ابدأ التسوق</button></div>`;
   const items=CART.map(i=>({p:byId.get(i.id),q:i.q})).filter(x=>x.p);
   const tot={}; items.forEach(({p,q})=>tot[p.cur]=(tot[p.cur]||0)+p.price*q);
-  const f=LS.get("hs_cust",{name:"",addr:"",note:""});
+  const f=LS.get("hs_cust",{name:"",phone:"",addr:"",note:""});
   return `<div class="backbar"><h2>🛒 السلة (${items.length})</h2></div>
   ${items.map(({p,q})=>`<div class="ci"><img src="${esc(safeUrl(p.image))}" alt=""><div class="tt"><b>${esc(p.title)}</b><span class="p">${nf(p.price)} ${esc(p.cur)}</span>
     <div class="ctl"><div class="qty"><button class="qb" data-act="dec" data-id="${esc(p.id)}">−</button><span>${q}</span><button class="qb" data-act="inc" data-id="${esc(p.id)}">+</button></div><button class="rm" data-act="rm" data-id="${esc(p.id)}">🗑 حذف</button></div></div></div>`).join("")}
   <div class="sum"><div class="ln" style="font-size:13px;color:var(--muted)"><span>عدد القطع</span><span>${items.reduce((a,x)=>a+x.q,0)}</span></div>${Object.entries(tot).map(([c,v])=>`<div class="ln t"><span>الإجمالي</span><span style="color:var(--hot)">${nf(v)} ${esc(c)}</span></div>`).join("")}</div>
   <div class="frm"><b>بيانات الطلب</b>
     <label>الاسم</label><input id="c-name" value="${esc(f.name)}" placeholder="اسمك">
+    <label>رقم الجوال (واتساب)</label><input id="c-phone" type="tel" inputmode="tel" value="${esc(f.phone||"")}" placeholder="مثال: 05xxxxxxxx">
     <label>العنوان / المدينة</label><input id="c-addr" value="${esc(f.addr)}" placeholder="المدينة والحي">
     <label>ملاحظات (اختياري)</label><textarea id="c-note" rows="2">${esc(f.note)}</textarea></div>
   <div style="padding:0 10px"><button class="btn wa wide" data-act="checkout">💬 إتمام الطلب عبر واتساب</button><button class="clr" data-act="clear">تفريغ السلة</button></div>`;
 }
 function checkout(items){
   if(!S.whatsapp){toast("رقم واتساب غير مضبوط");return}
-  const cust={name:($("#c-name")||{}).value||"",addr:($("#c-addr")||{}).value||"",note:($("#c-note")||{}).value||""};
+  const cust={name:($("#c-name")||{}).value||"",addr:($("#c-addr")||{}).value||"",phone:($("#c-phone")||{}).value||"",note:($("#c-note")||{}).value||""};
   if($("#c-name")){
     if(!cust.name.trim()){toast("اكتب اسمك أولاً");$("#c-name").focus();return}
+    if(cust.phone.replace(/\D/g,"").length<9){toast("اكتب رقم جوالك (واتساب)");$("#c-phone").focus();return}
     if(!cust.addr.trim()){toast("اكتب العنوان / المدينة");$("#c-addr").focus();return}
     LS.set("hs_cust",cust);
   } else Object.assign(cust,LS.get("hs_cust",{}));
@@ -360,8 +362,8 @@ function checkout(items){
   let m=`السلام عليكم، أبغى أطلب من ${S.name}:\n\n`;
   items.forEach(({p,q},n)=>{m+=`${n+1}) ${p.title}\n   الكمية: ${q} × ${nf(p.price)} ${p.cur}\n`});
   m+=`\nالإجمالي: ${Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + ")}\n`;
-  if(cust.name) m+=`\nالاسم: ${cust.name}`; if(cust.addr) m+=`\nالعنوان: ${cust.addr}`; if(cust.note) m+=`\nملاحظات: ${cust.note}`;
-  if(S.orderApi){try{fetch(S.orderApi.replace(/\/$/,"")+"/order",{method:"POST",headers:{"content-type":"text/plain"},keepalive:true,body:JSON.stringify({items:items.map(({p,q})=>({title:p.title,q,price:p.price,cur:p.cur})),total:Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + "),name:cust.name,addr:cust.addr,note:cust.note})}).catch(()=>{})}catch(e){}}
+  if(cust.name) m+=`\nالاسم: ${cust.name}`; if(cust.phone) m+=`\nالجوال: ${cust.phone}`; if(cust.addr) m+=`\nالعنوان: ${cust.addr}`; if(cust.note) m+=`\nملاحظات: ${cust.note}`;
+  if(S.orderApi){try{fetch(S.orderApi.replace(/\/$/,"")+"/order",{method:"POST",headers:{"content-type":"text/plain"},keepalive:true,body:JSON.stringify({items:items.map(({p,q})=>({title:p.title,q,price:p.price,cur:p.cur})),total:Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + "),name:cust.name,phone:cust.phone,addr:cust.addr,note:cust.note})}).catch(()=>{})}catch(e){}}
   window.open(`https://wa.me/${S.whatsapp}?text=${encodeURIComponent(m)}`,"_blank","noopener");
 }
 function openPage(id){
