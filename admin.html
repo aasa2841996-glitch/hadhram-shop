@@ -79,7 +79,8 @@ small.h{color:#80705f}
     <label>اسم المتجر</label><input id="s-name">
     <label>الوصف القصير</label><input id="s-tag">
     <label>رقم واتساب (بصيغة دولية بدون +)</label><input id="s-wa" inputmode="numeric" placeholder="9665XXXXXXXX">
-    <label>العملة</label><input id="s-cur">
+    <label>العملة الافتراضية</label><input id="s-cur">
+    <label>رابط بوت الطلبات (يُضبط لاحقاً)</label><input id="s-api" placeholder="https://....workers.dev">
     <h3 style="margin-top:18px">🧩 الأقسام</h3>
     <div id="catList"></div>
     <div class="row"><input id="c-name" placeholder="اسم القسم"><input id="c-emoji" placeholder="إيموجي" style="max-width:90px"></div>
@@ -134,7 +135,7 @@ function drawCats(){
   $("#f-cat").innerHTML=DATA.categories.map(c=>`<option value="${esc(c.id)}">${esc((c.emoji||"")+" "+c.name)}</option>`).join("");
   $("#catList").innerHTML=DATA.categories.map(c=>`<div class="item">${c.image?`<img src="${esc(c.image)}">`:""}<div class="t">${esc((c.emoji||"")+" "+c.name)}</div><button class="sec" data-ci="${esc(c.id)}">صورة</button><button class="del" data-dc="${esc(c.id)}">حذف</button></div>`).join("");
 }
-function fillSettings(){const s=DATA.settings;$("#s-name").value=s.name||"";$("#s-tag").value=s.tagline||"";$("#s-wa").value=s.whatsapp||"";$("#s-cur").value=s.currency||"ر.س"}
+function fillSettings(){const s=DATA.settings;$("#s-name").value=s.name||"";$("#s-tag").value=s.tagline||"";$("#s-wa").value=s.whatsapp||"";$("#s-cur").value=s.currency||"ر.س";$("#s-api").value=s.orderApi||""}
 function tab(t){document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));["prods","form","import","settings"].forEach(x=>$("#t-"+x).classList.toggle("hide",x!==t))}
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{if(b.dataset.t==="form"&&!editId)resetForm();tab(b.dataset.t)});
 function resetForm(){editId=null;newImg=null;$("#formTitle").textContent="➕ منتج جديد";["title","price","old","desc"].forEach(k=>$("#f-"+k).value="");$("#f-cur").value="SAR";$("#f-img").value="";$("#prev").classList.add("hide");$("#f-stock").checked=true}
@@ -175,7 +176,7 @@ let chgId=null;
 $("#c-chg").onchange=async e=>{const f=e.target.files[0];if(!f||!chgId)return;try{msg("جارٍ رفع الصورة...",8000);const c=DATA.categories.find(x=>x.id===chgId);c.image=await uploadImage(await resize(f,500));drawCats();msg("تم، اضغط حفظ الإعدادات")}catch(er){msg(er.message,4000)}e.target.value=""};
 $("#catList").onclick=e=>{if(e.target.dataset.ci){chgId=e.target.dataset.ci;$("#c-chg").click();return}const id=e.target.dataset.dc;if(id&&confirm("حذف القسم؟")){DATA.categories=DATA.categories.filter(c=>c.id!==id);drawCats()}};
 $("#saveSet").onclick=async()=>{
-  DATA.settings={...DATA.settings,name:$("#s-name").value.trim(),tagline:$("#s-tag").value.trim(),whatsapp:$("#s-wa").value.replace(/\D/g,""),currency:$("#s-cur").value.trim()||"ر.س"};
+  DATA.settings={...DATA.settings,name:$("#s-name").value.trim(),tagline:$("#s-tag").value.trim(),whatsapp:$("#s-wa").value.replace(/\D/g,""),currency:$("#s-cur").value.trim()||"ر.س",orderApi:$("#s-api").value.trim()};
   try{await saveData("Update settings");msg("تم الحفظ ✅")}catch(er){msg(er.message,4000)}
 };
 /* ===== الاستيراد ===== */
