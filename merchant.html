@@ -100,6 +100,11 @@ textarea{min-height:90px;resize:vertical}
 .og{border:1px solid var(--line);border-radius:12px;padding:8px;margin-bottom:8px;background:var(--bg)}
 .og .oh{display:flex;gap:6px;margin-bottom:6px}.og .oh input{flex:1}
 .og .oh button{border:0;background:#c0392b;color:#fff;border-radius:10px;padding:0 12px;font-weight:900}
+.chs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.chs button{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:6px 11px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+.chs button.on{background:#2b1a08;color:#fff;border-color:#2b1a08}
+.chs .dot{width:12px;height:12px;border-radius:50%;border:1px solid #0003;display:inline-block}
+.av{display:flex;gap:6px}.av input{flex:1}.av button{border:0;background:#d4a017;color:#000;border-radius:10px;padding:0 14px;font-weight:900}
 .pre{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .pre button{border:1px solid var(--line);background:var(--bg);border-radius:20px;padding:6px 12px;font-weight:800;font-size:13px;cursor:pointer}
 .terms{white-space:pre-wrap;line-height:1.9;font-size:14px;font-weight:600}
@@ -305,7 +310,7 @@ function productForm(p){
   <label>وصف المنتج (المقاس، الخامة، اللون...)</label><textarea id="p-desc">${esc(p.desc||"")}</textarea>
   <label>الخيارات المتوفرة (مقاسات، ألوان، أحجام...) — اختياري</label>
   <div id="opts"></div>
-  <div class="pre"><button type="button" data-addopt="المقاس">+ المقاس</button><button type="button" data-addopt="اللون">+ اللون</button><button type="button" data-addopt="الحجم">+ الحجم</button><button type="button" data-addopt="">+ خيار آخر</button></div>
+  <div class="pre"><button type="button" data-addopt="المقاس">+ المقاس</button><button type="button" data-addopt="مقاس الحذاء">+ مقاس الحذاء</button><button type="button" data-addopt="اللون">+ اللون</button><button type="button" data-addopt="العمر">+ العمر (أطفال)</button><button type="button" data-addopt="الحجم">+ الحجم</button><button type="button" data-addopt="">+ خيار آخر</button></div>
   <label class="chk"><input type="checkbox" id="p-stock" ${p.stock===false?"":"checked"}><span>متوفر في المخزون</span></label>
   <button class="btn gold" id="p-save" data-id="${esc(p.id||"")}">حفظ المنتج</button><button class="btn dark" data-close>إلغاء</button><div class="msg err" id="p-msg"></div>`);
   drawGal();drawOpts();
@@ -314,10 +319,24 @@ function drawGal(){
   const g=$("#gal");if(!g)return;
   g.innerHTML=pimgs.map((id,n)=>`<div class="th ${n?"":"main"}"><img src="${API}/img/${esc(id)}" alt=""><button type="button" data-rmimg="${n}">×</button>${n?`<u data-mainimg="${n}">رئيسية</u>`:`<i>الرئيسية</i>`}</div>`).join("")+(upl?`<div class="add">…</div>`:"")+(pimgs.length+upl<6?`<button type="button" class="add" id="addimg">＋</button>`:"");
 }
+const COL={"أحمر":"#d62828","وردي":"#f48fb1","أزرق":"#1565c0","سماوي":"#4fc3f7","أخضر":"#2e7d32","أصفر":"#fdd835","برتقالي":"#fb8c00","بنفسجي":"#7b1fa2","أسود":"#111","أبيض":"#fff","رمادي":"#9e9e9e","بني":"#6d4c41","بيج":"#d7c4a3","ذهبي":"#d4a017","فضي":"#c0c0c0","كحلي":"#0d1b4c","عنابي":"#800020","زيتي":"#6b6b2a"};
+const PRE={
+ "المقاس":["XS","S","M","L","XL","XXL","3XL","4XL","5XL","فري سايز"],
+ "مقاس الحذاء":["35","36","37","38","39","40","41","42","43","44","45","46"],
+ "اللون":Object.keys(COL),
+ "العمر":["0-3 شهور","3-6 شهور","6-12 شهر","1-2 سنة","2-3 سنوات","3-4 سنوات","4-5 سنوات","5-6 سنوات","6-7 سنوات","7-8 سنوات","8-10 سنوات","10-12 سنة","12-14 سنة"],
+ "الحجم":["صغير","وسط","كبير","كبير جداً"]
+};
+const splitVals=s=>String(s).split(/[,،؛;\n|\/]+|\s\.\s|(?<=\D)\.(?=\D)/).map(x=>x.trim()).filter(Boolean);
 function drawOpts(){
   const o=$("#opts");if(!o)return;
-  o.innerHTML=popts.map((g,n)=>`<div class="og"><div class="oh"><input data-on="${n}" placeholder="اسم الخيار (مثال: المقاس)" value="${esc(g.name)}"><button type="button" data-rmopt="${n}">حذف</button></div><input data-ov="${n}" placeholder="القيم مفصولة بفاصلة: S, M, L, XL" value="${esc((g.values||[]).join("، "))}"></div>`).join("");
+  o.innerHTML=popts.map((g,n)=>{
+    const pr=PRE[g.name.trim()]||[];const all=[...pr,...g.values.filter(v=>!pr.includes(v))];
+    return `<div class="og"><div class="oh"><input data-on="${n}" placeholder="اسم الخيار (مثال: المقاس)" value="${esc(g.name)}"><button type="button" data-rmopt="${n}">حذف</button></div>
+    <div class="chs">${all.map(v=>`<button type="button" data-tg="${n}" data-v="${esc(v)}" class="${g.values.includes(v)?"on":""}">${g.name.trim()==="اللون"&&COL[v]?`<span class="dot" style="background:${COL[v]}"></span>`:""}${esc(v)}</button>`).join("")||`<small style="color:var(--muted)">اكتب القيم في الخانة أدناه</small>`}</div>
+    <div class="av"><input data-av="${n}" placeholder="${pr.length?"غير موجود؟ اكتبه هنا":"اكتب قيمة (أو عدة قيم مفصولة بفاصلة)"}"><button type="button" data-addval="${n}">إضافة</button></div></div>`}).join("");
 }
+
 function resizeImg(file){
   return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const M=900,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.82))};im.onerror=()=>rej(new Error("تعذّر قراءة الصورة"));im.src=u});
 }
@@ -330,8 +349,8 @@ document.addEventListener("change",async e=>{
 document.addEventListener("input",e=>{
   const n=e.target.dataset;
   if(n.on!==undefined)popts[+n.on].name=e.target.value;
-  if(n.ov!==undefined)popts[+n.ov].values=e.target.value.split(/[,،\n]/).map(s=>s.trim()).filter(Boolean);
 });
+document.addEventListener("change",e=>{if(e.target.dataset.on!==undefined)drawOpts()});
 document.addEventListener("click",async e=>{
   const t=e.target.closest("[data-tab]");if(t){tab=t.dataset.tab;if(tab==="products")await loadProds();if(tab==="orders")await loadOrders();if(tab==="me"){try{BAL=(await api("/m/balance")).balance}catch(e){}}draw();return}
   const f=e.target.closest("[data-of]");if(f){ofilter=f.dataset.of;await loadOrders();draw();return}
@@ -342,6 +361,8 @@ document.addEventListener("click",async e=>{
   const ri=e.target.closest("[data-rmimg]");if(ri){pimgs.splice(+ri.dataset.rmimg,1);drawGal();return}
   const mi=e.target.closest("[data-mainimg]");if(mi){const n=+mi.dataset.mainimg;pimgs.unshift(pimgs.splice(n,1)[0]);drawGal();return}
   const ao=e.target.closest("[data-addopt]");if(ao){if(popts.length>=4){toast("الحد الأقصى 4 خيارات");return}popts.push({name:ao.dataset.addopt,values:[]});drawOpts();return}
+  const tg=e.target.closest("[data-tg]");if(tg){const g=popts[+tg.dataset.tg],v=tg.dataset.v;g.values=g.values.includes(v)?g.values.filter(x=>x!==v):[...g.values,v];drawOpts();return}
+  const av=e.target.closest("[data-addval]");if(av){const n=+av.dataset.addval,inp=$(`[data-av="${n}"]`);const vs=splitVals(inp.value);vs.forEach(v=>{if(!popts[n].values.includes(v))popts[n].values.push(v)});drawOpts();return}
   const ro=e.target.closest("[data-rmopt]");if(ro){popts.splice(+ro.dataset.rmopt,1);drawOpts();return}
   const ed=e.target.closest("[data-ed]");if(ed){productForm(prods.find(p=>p.id===ed.dataset.ed));return}
   const sk=e.target.closest("[data-sk]");if(sk){const p=prods.find(x=>x.id===sk.dataset.sk);try{await api("/m/product/stock",{method:"POST",body:JSON.stringify({id:p.id,stock:!p.stock})});await loadProds();draw()}catch(err){toast("⚠️ "+err.message)}return}
