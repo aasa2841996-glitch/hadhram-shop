@@ -189,6 +189,15 @@ input,textarea,.pg p{-webkit-user-select:text;user-select:text}
 .slide .off small{font-size:8px}
 .dots{bottom:4px}
 .dots i{width:5px;height:5px}.dots i.on{width:12px}
+.chip .cim{width:22px;height:22px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 1.5px rgba(255,210,122,.8)}
+.chip .cem{font-size:17px;line-height:1}
+.tile .ic.emo{font-size:40px;background:radial-gradient(circle at 50% 35%,#fff,#f6e6c8);border-radius:16px;width:66px;height:66px;margin:0 auto 6px}
+.mq{overflow:hidden;padding:2px 0 8px;direction:ltr}
+.mqt{display:flex;gap:10px;width:max-content;animation:mq var(--d,20s) linear infinite}
+.mqt .tile{direction:rtl}
+.mq:active .mqt{animation-play-state:paused}
+@keyframes mq{to{transform:translateX(calc(-50% - 5px))}}
+@media (prefers-reduced-motion:reduce){.mqt{animation:none}.mq{overflow-x:auto}}
 .toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--deep);color:var(--gold2);padding:10px 18px;border-radius:999px;font-weight:800;font-size:14px;opacity:0;pointer-events:none;transition:.3s;z-index:95;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @keyframes bump{50%{transform:scale(1.35)}}
@@ -287,6 +296,8 @@ function categoryKey(c){
   const n=norm([c.name,c.id,c.slug].filter(Boolean).join(" "));
   const rules=[
     [/عطر|عطور|perfume|fragrance/,"perfume"],
+    [/فستان|فساتين|dress|gown/,"dress"],
+    [/جمال|عنايه|تجميل|مكياج|beauty|care|makeup/,"beauty"],
     [/الكترون|إلكترون|جوال|هاتف|سماعه|سماعات|كمبيوتر|لابتوب|electronic|phone|audio/,"electronics"],
     [/ملابس|لباس|ازياء|أزياء|رجال|نساء|fashion|clothing|apparel/,"clothing"],
     [/شنط|حقائب|حقيبه|شنطة|bags|bag/,"bags"],
@@ -298,13 +309,16 @@ function categoryKey(c){
   for(const [re,key] of rules) if(re.test(n)) return key;
   return "general";
 }
-const catImg=c=>{if(c.image)return c.image;const k=categoryKey(c);if(k!=="general")return CATEGORY_ART[k];return (ALL.find(p=>p.cat===c.id&&p.image)||{}).image||CATEGORY_ART.general};
-const circ=c=>{const im=catImg(c);return `<button class="tile" data-act="cat" data-id="${esc(c.id)}"><div class="ic ${im?"hasimg":""}">${im?`<img loading="lazy" src="${esc(safeUrl(im))}" alt="">`:esc(c.emoji||"🛍️")}</div><b>${esc(c.name)}</b><small>${ALL.filter(p=>p.cat===c.id).length} منتج</small></button>`}
+const EMO={dress:"👗",beauty:"💄",general:"🛍️",perfume:"🧴",electronics:"📱",clothing:"👕",bags:"👜",accessories:"⌚",kitchen:"🍳",home:"🛋️"};
+const catEmo=c=>c.emoji||EMO[categoryKey(c)]||"🛍️";
+const catImg=c=>{if(c.image)return c.image;const k=categoryKey(c);if(k==="dress"||k==="beauty"){const pi=(ALL.find(p=>p.cat===c.id&&p.image)||{}).image;return pi||""}if(k!=="general")return CATEGORY_ART[k];return (ALL.find(p=>p.cat===c.id&&p.image)||{}).image||CATEGORY_ART.general};
+const circ=c=>{const im=catImg(c);return `<button class="tile" data-act="cat" data-id="${esc(c.id)}"><div class="ic ${im?"hasimg":"emo"}">${im?`<img loading="lazy" src="${esc(safeUrl(im))}" alt="">`:esc(catEmo(c))}</div><b>${esc(c.name)}</b><small>${ALL.filter(p=>p.cat===c.id).length} منتج</small></button>`}
 function mini(p){return `<div class="mini" data-act="open" data-id="${esc(p.id)}"><span class="tag">-${disc(p)}%</span><div class="im">${p.image?`<img loading="lazy" src="${esc(safeUrl(p.image))}" alt="">`:""}</div><div class="pr">${nf(p.price)} ${esc(p.cur)}<s>${nf(p.old)} ${esc(p.cur)}</s></div></div>`}
 
+function chipIc(c){const im=catImg(c);return im?`<img class="cim" src="${esc(safeUrl(im))}" alt="">`:`<span class="cem">${esc(catEmo(c))}</span>`}
 function drawChips(){
   const cur=view.name==="cat"?view.id:(view.name==="home"?"":"__");
-  $("#chips").innerHTML=`<button class="chip ${cur===""?"on":""}" data-go="home">الكل</button>`+CATS.map(c=>`<button class="chip ${cur===c.id?"on":""}" data-act="cat" data-id="${esc(c.id)}">${esc((c.emoji||"")+" "+c.name)}</button>`).join("");
+  $("#chips").innerHTML=`<button class="chip ${cur===""?"on":""}" data-go="home">الكل</button>`+CATS.map(c=>`<button class="chip ${cur===c.id?"on":""}" data-act="cat" data-id="${esc(c.id)}">${chipIc(c)}${esc(c.name)}</button>`).join("");
 }
 function home(){
   const deals=ALL.filter(p=>disc(p)>=5&&p.stock).sort((a,b)=>disc(b)-disc(a));
@@ -314,7 +328,7 @@ function home(){
   if(!slides.length) slides.push(`<div class="slide"><div class="tx"><h3>${esc(S.name)}</h3><p>${esc(S.tagline)}</p><button class="cta" data-go="all">تسوّق الآن ‹</button></div><div class="em">🛍️</div></div>`);
   return `<div class="hero"><div class="slides" id="slides">${slides.join("")}</div>${slides.length>1?`<div class="dots" id="dots">${slides.map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}</div>
   <div class="perks"><div><i>⚡</i>طلب سريع<br>عبر واتساب</div><div><i>💰</i>أسعار<br>مميزة</div><div><i>✅</i>منتجات<br>مختارة</div><div><i>💬</i>تواصل<br>مباشر</div></div>
-  ${CATS.length?`<section class="sec"><div class="sec-h"><button data-go="cats">عرض الكل ‹</button><h3>تسوّق حسب القسم</h3></div><div class="tiles">${CATS.map(circ).join("")}</div></section>`:""}
+  ${CATS.length?`<section class="sec"><div class="sec-h"><button data-go="cats">عرض الكل ‹</button><h3>تسوّق حسب القسم</h3></div>${CATS.length>=4?`<div class="mq" dir="ltr"><div class="mqt" style="--d:${CATS.length*3.2}s">${CATS.map(circ).join("")}${CATS.map(circ).join("")}</div></div>`:`<div class="tiles">${CATS.map(circ).join("")}</div>`}</section>`:""}
   ${ALL.length>2?`<section class="sec"><div class="sec-h"><button data-go="all">عرض الكل ‹</button><h3>وصل حديثاً ✨</h3></div></section><div class="hrow">${ALL.slice(0,8).map(card).join("")}</div>`:""}
   ${deals.length?`<section class="sec"><div class="sec-h"><button data-go="deals">عرض الكل ‹</button><h3>عروض اليوم 🔥</h3></div><div class="sub">أسعار مخفّضة على منتجات مختارة</div></section><div class="grid">${deals.slice(0,6).map(card).join("")}</div>`:""}
   <section class="sec"><div class="sec-h"><h3>🛒 جميع المنتجات <small style="color:var(--muted);font-size:13px">(${ALL.length})</small></h3></div></section>${grid(ALL)}`;
