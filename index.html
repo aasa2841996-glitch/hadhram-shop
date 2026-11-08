@@ -212,6 +212,10 @@ input,textarea,.pg p{-webkit-user-select:text;user-select:text}
 .stp .s.cur i{box-shadow:0 0 0 4px rgba(240,177,58,.3)}
 .ocan{background:#fdecea;color:var(--hot);border-radius:10px;padding:8px;text-align:center;font-weight:900;margin:8px 0}
 .owa{display:block;text-align:center;text-decoration:none;color:#128c4a;font-weight:900;font-size:13.5px;margin-top:8px}
+.row2{display:flex;gap:8px}.row2>*{flex:1;min-width:0}
+.tkseller{font-weight:900;font-size:13px;margin:8px 0 2px}
+.tkship{background:#eef4ff;color:#1d4ed8;border-radius:10px;padding:7px 10px;font-weight:800;font-size:13px;margin-top:6px}
+.tkpart{border-top:1px dashed var(--line);margin-top:8px;padding-top:4px}
 .toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--deep);color:var(--gold2);padding:10px 18px;border-radius:999px;font-weight:800;font-size:14px;opacity:0;pointer-events:none;transition:.3s;z-index:95;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @keyframes bump{50%{transform:scale(1.35)}}
@@ -237,7 +241,7 @@ input,textarea,.pg p{-webkit-user-select:text;user-select:text}
 </div></nav>
 <div class="pg" id="pg"></div>
 <div class="toast" id="toast"></div>
-<div class="wlc" id="wlc" style="display:none"><div class="ph"></div><div class="bt"><button id="wgo">👤 تسجيل الدخول</button><small>اضغط للدخول وتصفّح المنتجات</small></div></div>
+<div class="wlc" id="wlc" style="display:none"><div class="ph"></div><div class="bt"><button id="wgo">👤 تسجيل الدخول</button><small>اضغط للدخول وتصفّح المنتجات</small><a href="merchant.html" style="display:inline-block;margin-top:10px;color:var(--gold2);font-weight:900;font-size:14px;text-decoration:underline">🏪 هل أنت تاجر؟ ادخل قسم التاجر</a></div></div>
 <script>
 const $=(s,r=document)=>r.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -255,9 +259,12 @@ const saved=()=>LS.get("hs_saved",[]);
 let CART=LS.get("hs_cart",[]); // [{id,q}]
 const saveCart=()=>{LS.set("hs_cart",CART);drawBadges()};
 
+let MPROD=LS.get("hs_mp",[]);
 function ingest(d){
   S={...S,...(d.settings||{})}; CATS=d.categories||[];
-  ALL=(d.products||[]).map(p=>({id:String(p.id),title:p.title||"منتج",price:parseFloat(p.price)||0,cur:p.currency==="YER"?"ر.ي":"ر.س",old:parseFloat(p.old)||0,image:p.image||"",cat:p.category||"",desc:p.desc||"",yer:parseFloat(p.priceYer)||0,stock:p.stock!==false,created:Date.parse(p.createdAt)||0}))
+  const api=(S.orderApi||"").replace(/\/$/,"");
+  const mp=(MPROD||[]).map(p=>({id:p.id,title:p.title,price:p.price,currency:p.cur,old:p.old,image:p.img?api+"/img/"+p.img:"",category:p.cat,desc:p.desc,priceYer:p.price_yer,stock:p.stock,createdAt:new Date(p.created).toISOString(),merchant:p.merchant}));
+  ALL=[...(d.products||[]),...mp].map(p=>({mn:p.merchant||"",id:String(p.id),title:p.title||"منتج",price:parseFloat(p.price)||0,cur:p.currency==="YER"?"ر.ي":"ر.س",old:parseFloat(p.old)||0,image:p.image||"",cat:p.category||"",desc:p.desc||"",yer:parseFloat(p.priceYer)||0,stock:p.stock!==false,created:Date.parse(p.createdAt)||0}))
     .filter(p=>p.price>0).sort((a,b)=>b.created-a.created);
   byId=new Map(ALL.map(x=>[x.id,x]));
   CART=CART.filter(i=>byId.has(i.id));
@@ -269,8 +276,12 @@ async function boot(){
   if(c){ingest(c);raw=JSON.stringify(c);render();openFromHash()} else app.innerHTML=SKEL;
   try{
     const r=await fetch("products.json?v="+Math.floor(Date.now()/30000),{cache:"no-store"});
-    const d=await r.json(), s=JSON.stringify(d);
-    if(s!==raw){ingest(d);LS.set("hs_cache",d);render();openFromHash()}
+    const d=await r.json();
+    let mraw=JSON.stringify(MPROD||[]);
+    const api=((d.settings||{}).orderApi||"").replace(/\/$/,"");
+    if(api){try{const mr=await fetch(api+"/products");const mj=await mr.json();MPROD=mj.products||[];LS.set("hs_mp",MPROD)}catch(e){}}
+    const s=JSON.stringify(d)+JSON.stringify(MPROD);
+    if(s!==raw+(c?mraw:"")||!c){ingest(d);LS.set("hs_cache",d);render();openFromHash()}
   }catch(e){console.error(e); if(!c){ app.innerHTML='<div class="empty">تعذّر تحميل المنتجات، تحقق من الاتصال وأعد المحاولة</div>' }}
 }
 let hashDone=false;
@@ -351,34 +362,36 @@ function cartView(){
   if(!CART.length) return `<div class="backbar"><h2>🛒 السلة</h2></div><div class="empty">سلتك فارغة<br><br><button class="btn buy" style="flex:none;padding:12px 26px" data-go="home">ابدأ التسوق</button></div>`;
   const items=CART.map(i=>({p:byId.get(i.id),q:i.q})).filter(x=>x.p);
   const tot={}; items.forEach(({p,q})=>tot[p.cur]=(tot[p.cur]||0)+p.price*q);
-  const f=LS.get("hs_cust",{name:"",phone:"",addr:"",note:""});
+  const f=LS.get("hs_cust",{name:"",phone:"",city:"",area:"",addr:"",note:""});
   return `<div class="backbar"><h2>🛒 السلة (${items.length})</h2></div>
   ${items.map(({p,q})=>`<div class="ci"><img src="${esc(safeUrl(p.image))}" alt=""><div class="tt"><b>${esc(p.title)}</b><span class="p">${nf(p.price)} ${esc(p.cur)}</span>
     <div class="ctl"><div class="qty"><button class="qb" data-act="dec" data-id="${esc(p.id)}">−</button><span>${q}</span><button class="qb" data-act="inc" data-id="${esc(p.id)}">+</button></div><button class="rm" data-act="rm" data-id="${esc(p.id)}">🗑 حذف</button></div></div></div>`).join("")}
   <div class="sum"><div class="ln" style="font-size:13px;color:var(--muted)"><span>عدد القطع</span><span>${items.reduce((a,x)=>a+x.q,0)}</span></div>${Object.entries(tot).map(([c,v])=>`<div class="ln t"><span>الإجمالي</span><span style="color:var(--hot)">${nf(v)} ${esc(c)}</span></div>`).join("")}</div>
   <div class="frm"><b>بيانات الطلب</b>
     <label>الاسم</label><input id="c-name" value="${esc(f.name)}" placeholder="اسمك">
+    <div class="row2"><div><label>المدينة</label><input id="c-city" value="${esc(f.city||"")}" placeholder="مثال: سيئون"></div><div><label>المنطقة / الحي</label><input id="c-area" value="${esc(f.area||"")}" placeholder="مثال: الحي الجديد"></div></div>
     <label>رقم الجوال (واتساب)</label><input id="c-phone" type="tel" inputmode="tel" value="${esc(f.phone||"")}" placeholder="مثال: 05xxxxxxxx">
-    <label>العنوان / المدينة</label><input id="c-addr" value="${esc(f.addr)}" placeholder="المدينة والحي">
+    <label>تفاصيل العنوان (اختياري)</label><input id="c-addr" value="${esc(f.addr)}" placeholder="الشارع، أقرب معلم">
     <label>ملاحظات (اختياري)</label><textarea id="c-note" rows="2">${esc(f.note)}</textarea></div>
   <div style="padding:0 10px"><button class="btn wa wide" data-act="checkout">💬 إتمام الطلب عبر واتساب</button><button class="clr" data-act="clear">تفريغ السلة</button></div>`;
 }
 function checkout(items){
   if(!S.whatsapp){toast("رقم واتساب غير مضبوط");return}
-  const cust={name:($("#c-name")||{}).value||"",addr:($("#c-addr")||{}).value||"",phone:($("#c-phone")||{}).value||"",note:($("#c-note")||{}).value||""};
+  const cust={name:($("#c-name")||{}).value||"",addr:($("#c-addr")||{}).value||"",city:($("#c-city")||{}).value||"",area:($("#c-area")||{}).value||"",phone:($("#c-phone")||{}).value||"",note:($("#c-note")||{}).value||""};
   if($("#c-name")){
     if(!cust.name.trim()){toast("اكتب اسمك أولاً");$("#c-name").focus();return}
     if(cust.phone.replace(/\D/g,"").length<9){toast("اكتب رقم جوالك (واتساب)");$("#c-phone").focus();return}
-    if(!cust.addr.trim()){toast("اكتب العنوان / المدينة");$("#c-addr").focus();return}
+    if(!cust.city.trim()){toast("اكتب المدينة");$("#c-city").focus();return}
+    if(!cust.area.trim()){toast("اكتب المنطقة / الحي");$("#c-area").focus();return}
     LS.set("hs_cust",cust);
   } else Object.assign(cust,LS.get("hs_cust",{}));
   const tot={}; items.forEach(({p,q})=>tot[p.cur]=(tot[p.cur]||0)+p.price*q);
   let m=`السلام عليكم، أبغى أطلب من ${S.name}:\n\n`;
   items.forEach(({p,q},n)=>{m+=`${n+1}) ${p.title}\n   كود: ${p.id}\n   الكمية: ${q} × ${nf(p.price)} ${p.cur}\n`});
   m+=`\nالإجمالي: ${Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + ")}\n`;
-  if(cust.name) m+=`\nالاسم: ${cust.name}`; if(cust.phone) m+=`\nالجوال: ${cust.phone}`; if(cust.addr) m+=`\nالعنوان: ${cust.addr}`; if(cust.note) m+=`\nملاحظات: ${cust.note}`;
+  if(cust.name) m+=`\nالاسم: ${cust.name}`; if(cust.phone) m+=`\nالجوال: ${cust.phone}`; if(cust.city) m+=`\nالمدينة: ${cust.city}${cust.area?" - "+cust.area:""}`; if(cust.addr) m+=`\nالعنوان: ${cust.addr}`; if(cust.note) m+=`\nملاحظات: ${cust.note}`;
   const tk=Array.from(crypto.getRandomValues(new Uint8Array(10)),b=>"abcdefghjkmnpqrstuvwxyz23456789"[b%31]).join("");
-  if(S.orderApi){try{fetch(S.orderApi.replace(/\/$/,"")+"/order",{method:"POST",headers:{"content-type":"text/plain"},keepalive:true,body:JSON.stringify({tk,items:items.map(({p,q})=>({id:p.id,img:p.image?new URL(p.image,location.href).href:"",title:p.title,q,price:p.price,cur:p.cur})),total:Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + "),name:cust.name,phone:cust.phone,addr:cust.addr,note:cust.note})}).catch(()=>{})}catch(e){}}
+  if(S.orderApi){try{fetch(S.orderApi.replace(/\/$/,"")+"/order",{method:"POST",headers:{"content-type":"text/plain"},keepalive:true,body:JSON.stringify({tk,items:items.map(({p,q})=>({id:p.id,img:p.image?new URL(p.image,location.href).href:"",title:p.title,q,price:p.price,cur:p.cur})),total:Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + "),name:cust.name,phone:cust.phone,city:cust.city,area:cust.area,addr:cust.addr,note:cust.note})}).catch(()=>{})}catch(e){}}
   if(S.orderApi){
     const ol=LS.get("hs_orders",[]);ol.unshift({tk,t:Date.now(),total:Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + "),items:items.map(({p,q})=>({title:p.title,q,image:p.image||""}))});
     LS.set("hs_orders",ol.slice(0,30));
@@ -393,9 +406,9 @@ async function trackOrders(){
   const ol=LS.get("hs_orders",[]); if(!ol.length||!S.orderApi) return;
   try{
     const r=await fetch(S.orderApi.replace(/\/$/,"")+"/track?t="+ol.map(o=>o.tk).join(","),{cache:"no-store"});
-    const j=await r.json(); (j.orders||[]).forEach(o=>TRK[o.tk]=o);
+    const j=await r.json(); Object.keys(TRK).forEach(k=>delete TRK[k]); (j.orders||[]).forEach(o=>(TRK[o.tk]=TRK[o.tk]||[]).push(o));
     if(view.name==="orders") render();
-    if(ol.some(o=>!TRK[o.tk]&&Date.now()-o.t<120000)) setTimeout(()=>{trkAt=Date.now();trackOrders()},3500);
+    if(ol.some(o=>!(TRK[o.tk]||[]).length&&Date.now()-o.t<120000)) setTimeout(()=>{trkAt=Date.now();trackOrders()},3500);
   }catch(e){}
 }
 function ordersView(){
@@ -403,21 +416,25 @@ function ordersView(){
   const head=`<div class="backbar"><h2>📦 طلباتي</h2></div>`;
   if(!ol.length) return head+`<div class="empty">ما عندك طلبات بعد<br><br><button class="btn buy" style="flex:none;padding:12px 26px" data-go="home">ابدأ التسوق</button></div>`+contactBox();
   return head+ol.map(o=>{
-    const t=TRK[o.tk], st=t&&t.status, idx=OSTEPS.findIndex(x=>x[0]===st);
+    const subs=TRK[o.tk]||[];
     const when=new Date(o.t).toLocaleString("ar-SA",{dateStyle:"medium",timeStyle:"short"});
-    return `<div class="ord"><div class="oh"><span>طلب ${t?"#"+t.id:""}</span><span style="color:var(--hot)">${esc(o.total)}</span></div><div class="od">${esc(when)}</div>
-    <div class="oi">${o.items.slice(0,6).map(i=>i.image?`<img src="${esc(safeUrl(i.image))}" alt="">`:"").join("")}</div>
-    ${st==="cancel"?`<div class="ocan">❌ تم إلغاء الطلب</div>`:t?`<div class="stp">${OSTEPS.map((x,k)=>`<div class="s ${k<=idx?"dn":""} ${k===idx?"cur":""}"><i>${k<=idx?"✓":k+1}</i>${x[1]}</div>`).join("")}</div>`:`<div class="od">جارٍ التحقق من حالة الطلب…</div>`}
-    ${S.whatsapp?`<a class="owa" target="_blank" rel="noopener" href="https://wa.me/${esc(S.whatsapp)}?text=${encodeURIComponent("بخصوص طلبي"+(t?" رقم #"+t.id:""))}">💬 تواصل بخصوص هذا الطلب</a>`:""}</div>`}).join("")+contactBox();
+    const parts=subs.length?subs.map(t=>{const st=t.status,idx=OSTEPS.findIndex(x=>x[0]===st);
+      return `<div class="tkpart"><div class="tkseller">🏪 ${esc(t.merchant||S.name)} <span style="color:var(--muted);font-weight:700">· طلب #${t.id}</span></div>
+      ${st==="cancel"?`<div class="ocan">❌ تم إلغاء الطلب</div>`:`<div class="stp">${OSTEPS.map((x,k)=>`<div class="s ${k<=idx?"dn":""} ${k===idx?"cur":""}"><i>${k<=idx?"✓":k+1}</i>${x[1]}</div>`).join("")}</div>`}
+      ${t.ship_info?`<div class="tkship">🚚 ${esc(t.ship_info)}</div>`:""}</div>`}).join(""):`<div class="od">جارٍ التحقق من حالة الطلب…</div>`;
+    const wa=subs[0];
+    return `<div class="ord"><div class="oh"><span>طلب ${subs.length===1?"#"+subs[0].id:""}</span><span style="color:var(--hot)">${esc(o.total)}</span></div><div class="od">${esc(when)}</div>
+    <div class="oi">${o.items.slice(0,6).map(i=>i.image?`<img src="${esc(safeUrl(i.image))}" alt="">`:"").join("")}</div>${parts}
+    ${S.whatsapp?`<a class="owa" target="_blank" rel="noopener" href="https://wa.me/${esc(S.whatsapp)}?text=${encodeURIComponent("بخصوص طلبي"+(wa?" رقم #"+wa.id:""))}">💬 تواصل بخصوص هذا الطلب</a>`:""}</div>`}).join("")+contactBox();
 }
-const contactBox=()=>S.whatsapp?`<div class="me"><a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 راسلنا على واتساب</a></div>`:"";
+const contactBox=()=>`<div class="me">${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 راسلنا على واتساب</a>`:""}<a href="merchant.html">🏪 قسم التاجر — بع منتجاتك معنا</a></div>`;
 function openPage(id){
   const p=byId.get(id); if(!p) return; let q=1; const d=disc(p); const sim=ALL.filter(x=>x.cat===p.cat&&x.id!==p.id).slice(0,6);
   const draw=()=>{ $("#pg").innerHTML=`<div class="hd"><button data-pgclose>›</button><div class="hb"><button data-act="share" data-id="${esc(p.id)}" aria-label="مشاركة">↗</button><button data-act="fav" data-id="${esc(p.id)}" class="${saved().includes(p.id)?"on":""}" style="color:${saved().includes(p.id)?"var(--hot)":"#b5aa9a"}">♥</button></div></div>
     ${p.image?`<img class="big" src="${esc(safeUrl(p.image))}" alt="">`:""}
     <div class="bd"><div class="price"><b>${nf(p.price)} ${esc(p.cur)}</b>${d?`<s>${nf(p.old)} ${esc(p.cur)}</s><span class="off">-${d}%</span>`:""}${p.yer?`<span class="yer">أو ${nf(p.yer)} ر.ي</span>`:""}</div>
     ${d?`<div><span class="save">وفّرت ${nf(p.old-p.price)} ${esc(p.cur)}</span></div>`:""}
-    <h3>${esc(p.title)}</h3>${p.desc?`<p>${esc(p.desc)}</p>`:""}
+    <h3>${esc(p.title)}</h3>${p.mn?`<div style="font-weight:800;font-size:13.5px;color:var(--muted)">🏪 البائع: <b style="color:var(--ink)">${esc(p.mn)}</b></div>`:""}${p.desc?`<p>${esc(p.desc)}</p>`:""}
     <div class="trust"><span>⚡ طلب سريع عبر واتساب</span><span>💬 تواصل مباشر</span></div>
     ${S.whatsapp?`<a class="btn wa wide" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/${esc(S.whatsapp)}?text=${encodeURIComponent("السلام عليكم، أبغى أستفسر عن: "+p.title+"\n"+location.href.split("#")[0]+"#p="+p.id)}">💬 اسأل عن المنتج</a>`:""}
     ${p.stock?`<div class="qty">الكمية: <button class="qb" data-pq="-">−</button><span>${q}</span><button class="qb" data-pq="+">+</button></div>`:`<div class="empty">نفد المخزون</div>`}</div>
