@@ -57,6 +57,7 @@ header .rf.spin{animation:sp .8s linear infinite}@keyframes sp{to{transform:rota
 .note{background:#fff7e3;color:#6b4a10;border-radius:8px;padding:5px 9px;margin-top:6px;font-size:13px;font-weight:700}
 .act{display:flex;flex-wrap:wrap;gap:6px;padding:4px 12px 12px}
 .act button,.act a{flex:1 1 auto;text-align:center;text-decoration:none;border-radius:10px;padding:9px 8px;font-weight:900;font-size:13px;background:var(--bg);border:1px solid var(--line);color:var(--ink);white-space:nowrap}
+.act .prt{flex-basis:100%;background:var(--deep);border-color:var(--deep);color:var(--gold2)}
 .act .wa{background:#25d366;border-color:#25d366;color:#fff;flex-basis:100%}
 .act .go{background:var(--c);border-color:var(--c);color:#fff}
 .act .cur{opacity:.45;pointer-events:none}
@@ -142,7 +143,7 @@ function card(o){
   <div class="tm">🕒 ${esc(o.time)}</div>
   <div class="bd"><div class="nm">👤 ${esc(o.name||"—")}${o.phone?` <span dir="ltr" style="color:var(--muted);font-weight:700;font-size:13px">+${esc(o.phone)}</span>`:""}</div><div class="ad">📍 ${esc(o.addr||"—")}</div>
   <div class="its">${its}</div><div class="tot"><span>الإجمالي</span><b>${esc(o.total)}</b></div>${o.note?`<div class="note">📝 ${esc(o.note)}</div>`:""}</div>
-  <div class="act">${wa}${btns}</div></div>`;
+  <div class="act">${wa}${btns}<button class="prt" data-print="${o.id}">🖨 طباعة بوليصة الشحن</button></div></div>`;
 }
 function draw(){
   const c=(stats&&stats.counts)||{},t=(stats&&stats.today)||{count:0,sar:0,yer:0};
@@ -160,6 +161,49 @@ function draw(){
   const inp=$("#q");if(document.activeElement!==inp&&draw._focus){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length)}
   inp.onfocus=()=>draw._focus=true;inp.onblur=()=>draw._focus=false;
 }
+/* ---------- طباعة بوليصة الشحن (تُلصق على الطرد) ---------- */
+function labelHtml(o,sender){
+  const e=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const items=(o.items||[]).map(i=>`<li>${e(i.title)} <b>× ${e(i.q)}</b></li>`).join("");
+  const place=[o.city,o.area].filter(Boolean).join(" — ");
+  return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>بوليصة #${e(o.id)}</title>
+<style>
+@page{size:100mm 150mm;margin:0}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.l{width:100mm;height:150mm;padding:4mm;display:flex;flex-direction:column;gap:2.5mm}
+.top{display:flex;justify-content:space-between;align-items:center;border-bottom:.6mm solid #000;padding-bottom:2mm}
+.top .sh{font-weight:900;font-size:15pt}
+.top .no{font-weight:900;font-size:20pt;border:.6mm solid #000;border-radius:2mm;padding:0 3mm}
+.from{font-size:9.5pt;font-weight:700}
+.to{border:.7mm solid #000;border-radius:3mm;padding:3mm;flex:0 0 auto}
+.to .lb{font-size:9pt;font-weight:700;border-bottom:.3mm dashed #000;margin-bottom:1.5mm}
+.to .nm{font-size:17pt;font-weight:900;line-height:1.3}
+.to .ph{font-size:20pt;font-weight:900;direction:ltr;text-align:right;letter-spacing:.3mm}
+.to .pl{font-size:15pt;font-weight:900;margin-top:1mm}
+.to .ad{font-size:11.5pt;font-weight:700;margin-top:.5mm}
+.items{font-size:10.5pt;font-weight:700;flex:1;overflow:hidden}
+.items ul{margin:1mm 0 0;padding:0 5mm}
+.items .t{font-weight:900;border-bottom:.3mm dashed #000}
+.note{font-size:10pt;font-weight:800;border:.4mm solid #000;border-radius:2mm;padding:1.5mm 2.5mm}
+.ft{display:flex;justify-content:space-between;font-size:8.5pt;font-weight:700;border-top:.4mm solid #000;padding-top:1.5mm}
+</style></head><body><div class="l">
+<div class="top"><div class="sh">${e(sender.platform)}</div><div class="no">#${e(o.id)}</div></div>
+<div class="from">المرسل: <b>${e(sender.name)}</b>${sender.city?" — "+e(sender.city):""}</div>
+<div class="to"><div class="lb">إلى المستلم</div><div class="nm">${e(o.name||"—")}</div>${o.phone?`<div class="ph">+${e(o.phone)}</div>`:""}<div class="pl">${e(place||"—")}</div>${o.addr?`<div class="ad">${e(o.addr)}</div>`:""}</div>
+<div class="items"><div class="t">محتويات الطرد</div><ul>${items}</ul></div>
+${o.ship_info?`<div class="note">🚚 ${e(o.ship_info)}</div>`:""}${o.note?`<div class="note">📝 ${e(o.note)}</div>`:""}
+<div class="ft"><span>${e(o.time||"")}</span><span>${e(sender.platform)}</span></div>
+</div><script>window.onload=()=>setTimeout(()=>{window.focus();window.print()},350)<\/script></body></html>`;
+}
+function printLabel(o,sender){
+  const f=document.createElement("iframe");
+  f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+  document.body.appendChild(f);
+  f.contentDocument.open();f.contentDocument.write(labelHtml(o,sender));f.contentDocument.close();
+  setTimeout(()=>f.remove(),60000);
+}
+
 async function setStatus(ids,st){
   try{await api("/api/status",{method:"POST",body:JSON.stringify({ids,status:st})});toast("تم التحديث ✓");sel.clear();await load(true,true)}
   catch(e){toast("⚠️ "+e.message)}
@@ -170,6 +214,7 @@ document.addEventListener("click",e=>{
   if(e.target.closest("#more")){load(false);return}
   if(e.target.closest("#clr")){sel.clear();draw();return}
   const b=e.target.closest("[data-bulk]");if(b){if(confirm(`تغيير حالة ${sel.size} طلب إلى «${ST[b.dataset.bulk][0]}»؟`))setStatus([...sel],b.dataset.bulk);return}
+  const pr=e.target.closest("[data-print]");if(pr){const o=orders.find(x=>x.id===Number(pr.dataset.print));if(o)printLabel(o,{platform:SHOP,name:SHOP,city:""});return}
   const s=e.target.closest("[data-st]");if(s){setStatus([Number(s.dataset.id)],s.dataset.st);return}
 });
 document.addEventListener("change",e=>{const c=e.target.closest("[data-ck]");if(!c)return;const id=Number(c.dataset.ck);c.checked?sel.add(id):sel.delete(id);draw()});

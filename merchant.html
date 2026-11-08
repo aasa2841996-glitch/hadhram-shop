@@ -72,6 +72,7 @@ textarea{min-height:90px;resize:vertical}
 .act button,.act a{flex:1 1 auto;text-align:center;text-decoration:none;border-radius:10px;padding:9px 6px;font-weight:900;font-size:13px;background:var(--bg);border:1px solid var(--line);white-space:nowrap}
 .act .go{background:var(--c);border-color:var(--c);color:#fff}
 .act .cur{opacity:.4;pointer-events:none}
+.act .prt{flex-basis:100%;background:var(--deep);border-color:var(--deep);color:var(--gold2)}
 .act .wa{background:var(--wa);border-color:var(--wa);color:#fff;flex-basis:100%}
 .pl{display:flex;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px;margin-bottom:8px;box-shadow:var(--sh);align-items:center}
 .pl img{width:68px;height:68px;border-radius:10px;object-fit:cover;background:var(--bg)}
@@ -199,7 +200,8 @@ function orderCard(o){
   ${its}<div class="tot"><span>إجمالي المنتجات</span><b>${esc(o.total)}</b></div>${o.note?`<div class="note">📝 ${esc(o.note)}</div>`:""}</div>
   <div class="ship"><label style="margin:0 0 4px">🚚 معلومات الشحن للعميل (الرسوم/شركة النقل/موعد)</label><input data-ship="${o.id}" value="${esc(o.ship_info)}" placeholder="مثال: الشحن 20 ريال، باص الأمان، يصل خلال يومين"></div>
   <div class="act">${o.phone?`<a class="wa" target="_blank" rel="noopener" href="https://wa.me/${esc(o.phone)}?text=${encodeURIComponent(waMsg(o,o.status))}">📲 أبلغ العميل على واتساب (${lab})</a>`:""}
-  ${["prep","ship","done","cancel"].map(s=>`<button class="go ${o.status===s?"cur":""}" style="--c:${ST[s][1]}" data-st="${s}" data-id="${o.id}">${ST[s][0]}</button>`).join("")}</div></div>`;
+  ${["prep","ship","done","cancel"].map(s=>`<button class="go ${o.status===s?"cur":""}" style="--c:${ST[s][1]}" data-st="${s}" data-id="${o.id}">${ST[s][0]}</button>`).join("")}
+  <button class="prt" data-print="${o.id}">🖨 طباعة بوليصة الشحن</button></div></div>`;
 }
 function ordersBody(){
   const tabs=[["","الكل",Object.values(ocounts).reduce((a,b)=>a+b,0),"var(--ink)"],...Object.entries(ST).map(([k,[l,c]])=>[k,l,ocounts[k]||0,c])];
@@ -234,6 +236,49 @@ async function loadOrders(reset=true,silent=false){
 async function loadProds(){try{prods=(await api("/m/products")).products}catch(e){toast("⚠️ "+e.message)}}
 function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.2)}catch{}}
 
+/* ---------- طباعة بوليصة الشحن (تُلصق على الطرد) ---------- */
+function labelHtml(o,sender){
+  const e=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const items=(o.items||[]).map(i=>`<li>${e(i.title)} <b>× ${e(i.q)}</b></li>`).join("");
+  const place=[o.city,o.area].filter(Boolean).join(" — ");
+  return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>بوليصة #${e(o.id)}</title>
+<style>
+@page{size:100mm 150mm;margin:0}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.l{width:100mm;height:150mm;padding:4mm;display:flex;flex-direction:column;gap:2.5mm}
+.top{display:flex;justify-content:space-between;align-items:center;border-bottom:.6mm solid #000;padding-bottom:2mm}
+.top .sh{font-weight:900;font-size:15pt}
+.top .no{font-weight:900;font-size:20pt;border:.6mm solid #000;border-radius:2mm;padding:0 3mm}
+.from{font-size:9.5pt;font-weight:700}
+.to{border:.7mm solid #000;border-radius:3mm;padding:3mm;flex:0 0 auto}
+.to .lb{font-size:9pt;font-weight:700;border-bottom:.3mm dashed #000;margin-bottom:1.5mm}
+.to .nm{font-size:17pt;font-weight:900;line-height:1.3}
+.to .ph{font-size:20pt;font-weight:900;direction:ltr;text-align:right;letter-spacing:.3mm}
+.to .pl{font-size:15pt;font-weight:900;margin-top:1mm}
+.to .ad{font-size:11.5pt;font-weight:700;margin-top:.5mm}
+.items{font-size:10.5pt;font-weight:700;flex:1;overflow:hidden}
+.items ul{margin:1mm 0 0;padding:0 5mm}
+.items .t{font-weight:900;border-bottom:.3mm dashed #000}
+.note{font-size:10pt;font-weight:800;border:.4mm solid #000;border-radius:2mm;padding:1.5mm 2.5mm}
+.ft{display:flex;justify-content:space-between;font-size:8.5pt;font-weight:700;border-top:.4mm solid #000;padding-top:1.5mm}
+</style></head><body><div class="l">
+<div class="top"><div class="sh">${e(sender.platform)}</div><div class="no">#${e(o.id)}</div></div>
+<div class="from">المرسل: <b>${e(sender.name)}</b>${sender.city?" — "+e(sender.city):""}</div>
+<div class="to"><div class="lb">إلى المستلم</div><div class="nm">${e(o.name||"—")}</div>${o.phone?`<div class="ph">+${e(o.phone)}</div>`:""}<div class="pl">${e(place||"—")}</div>${o.addr?`<div class="ad">${e(o.addr)}</div>`:""}</div>
+<div class="items"><div class="t">محتويات الطرد</div><ul>${items}</ul></div>
+${o.ship_info?`<div class="note">🚚 ${e(o.ship_info)}</div>`:""}${o.note?`<div class="note">📝 ${e(o.note)}</div>`:""}
+<div class="ft"><span>${e(o.time||"")}</span><span>${e(sender.platform)}</span></div>
+</div><script>window.onload=()=>setTimeout(()=>{window.focus();window.print()},350)<\/script></body></html>`;
+}
+function printLabel(o,sender){
+  const f=document.createElement("iframe");
+  f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+  document.body.appendChild(f);
+  f.contentDocument.open();f.contentDocument.write(labelHtml(o,sender));f.contentDocument.close();
+  setTimeout(()=>f.remove(),60000);
+}
+
 /* ---------- نموذج المنتج ---------- */
 let pimg="";
 function productForm(p){
@@ -267,6 +312,7 @@ document.addEventListener("click",async e=>{
   const sv=e.target.closest("#p-save");if(sv){
     const b={id:sv.dataset.id||undefined,title:$("#p-title").value,price:$("#p-price").value,cur:$("#p-cur").value,old:$("#p-old").value,price_yer:$("#p-yer").value,cat:$("#p-cat").value,desc:$("#p-desc").value,stock:$("#p-stock").checked,image:pimg||undefined};
     sv.disabled=true;try{await api("/m/product",{method:"POST",body:JSON.stringify(b)});closeSheet();await loadProds();draw();toast("✅ تم حفظ المنتج")}catch(err){$("#p-msg").textContent=err.message}sv.disabled=false;return}
+  const pr=e.target.closest("[data-print]");if(pr){const o=orders.find(x=>x.id===Number(pr.dataset.print));if(o){const inp=$(`[data-ship="${o.id}"]`);printLabel({...o,ship_info:inp?inp.value:o.ship_info},{platform:SHOP,name:ME.name,city:ME.city})}return}
   const s=e.target.closest("[data-st]");if(s){
     const id=Number(s.dataset.id),inp=$(`[data-ship="${id}"]`);
     try{await api("/m/order/status",{method:"POST",body:JSON.stringify({id,status:s.dataset.st,ship_info:inp?inp.value:undefined})});toast("تم التحديث ✓");await loadOrders(true,true);draw()}catch(err){toast("⚠️ "+err.message)}return}
