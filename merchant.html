@@ -137,9 +137,9 @@ let BAL=null, tab="orders", ofilter="new", orders=[], ocounts={}, omore=false, p
 const BK={YE:["الكريمي","البنك الأهلي اليمني","بنك التضامن","بنك سبأ الإسلامي","بنك اليمن الدولي","بنك اليمن والكويت","بنك القطيبي"],SA:["مصرف الراجحي","البنك الأهلي السعودي","بنك الإنماء","بنك الرياض","البنك السعودي الأول (ساب)","بنك البلاد","بنك الجزيرة","STC Pay"]};
 function bankFields(p,v){
   v=v||{};const t=v.acct_type||"";
-  return `<label>نوع الحساب</label><div class="chs" id="${p}-type"><button type="button" data-actype="YE" data-p="${p}" class="${t==="YE"?"on":""}">🇾🇪 حساب يمني (رقم الحساب)</button><button type="button" data-actype="SA" data-p="${p}" class="${t==="SA"?"on":""}">🇸🇦 حساب سعودي (IBAN)</button></div>
+  return `<label>نوع الحساب</label><div class="chs" id="${p}-type"><button type="button" data-actype="YE" data-p="${p}" class="${t==="YE"?"on":""}">🇾🇪 حساب يمني</button><button type="button" data-actype="SA" data-p="${p}" class="${t==="SA"?"on":""}">🇸🇦 حساب سعودي</button></div>
   <label>اسم البنك</label><input id="${p}-bank" list="${p}-bl" value="${esc(v.bank||"")}" placeholder="اختر أو اكتب اسم البنك"><datalist id="${p}-bl">${(BK[t]||[]).map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
-  <label id="${p}-al">${t==="SA"?"رقم الآيبان IBAN (يبدأ بـ SA)":"رقم الحساب"}</label><input id="${p}-acct" dir="ltr" inputmode="${t==="SA"?"text":"numeric"}" value="${esc(v.acct||"")}" placeholder="${t==="SA"?"SA00 0000 0000 0000 0000 0000":t==="YE"?"أرقام فقط":"اختر نوع الحساب أولاً"}">
+  <label id="${p}-al">${"رقم الحساب"}</label><input id="${p}-acct" dir="ltr" inputmode="numeric" value="${esc(v.acct||"")}" placeholder="${t?"أرقام فقط":"اختر نوع الحساب أولاً"}">
   <label>اسم صاحب الحساب</label><input id="${p}-aname" value="${esc(v.acct_name||"")}">`;
 }
 const getType=p=>{const b=document.querySelector(`#${p}-type .on`);return b?b.dataset.actype:""};
@@ -249,7 +249,7 @@ function meBody(){
   <div class="kv"><span>المتجر</span><span>${esc(ME.name)}</span></div><div class="kv"><span>صاحب الحساب</span><span>${esc(ME.owner)}</span></div><div class="kv"><span>المدينة</span><span>${esc(ME.city)}</span></div>
   <div class="kv"><span>عمولة المنصة</span><span>${ME.commission==null?"—":ME.commission+"%"}</span></div></div>
   <div class="profile" style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 14px;margin-top:12px"><div style="font-weight:900;padding:10px 0 2px">🏦 حساب استلام المستحقات</div>
-  ${ME.has_bank?`<div class="kv"><span>النوع</span><span>${ME.acct_type==="SA"?"🇸🇦 سعودي (IBAN)":"🇾🇪 يمني"}</span></div><div class="kv"><span>البنك</span><span>${esc(ME.bank)}</span></div><div class="kv"><span>${ME.acct_type==="SA"?"الآيبان":"رقم الحساب"}</span><span dir="ltr">${esc(ME.acct)}</span></div><div class="kv"><span>باسم</span><span>${esc(ME.acct_name)}</span></div>`:`<div class="nobank" style="margin:6px 0">⚠️ لم تُضِف حسابك البنكي — لن تقدر على نشر منتجات ولن نستطيع تحويل مستحقاتك.</div>`}
+  ${ME.has_bank?`<div class="kv"><span>النوع</span><span>${ME.acct_type==="SA"?"🇸🇦 سعودي":"🇾🇪 يمني"}</span></div><div class="kv"><span>البنك</span><span>${esc(ME.bank)}</span></div><div class="kv"><span>رقم الحساب</span><span dir="ltr">${esc(ME.acct)}</span></div><div class="kv"><span>باسم</span><span>${esc(ME.acct_name)}</span></div>`:`<div class="nobank" style="margin:6px 0">⚠️ لم تُضِف حسابك البنكي — لن تقدر على نشر منتجات ولن نستطيع تحويل مستحقاتك.</div>`}
   <button class="btn dark" id="editBank" style="margin:8px 0 10px">${ME.has_bank?"تعديل الحساب البنكي":"➕ إضافة الحساب البنكي"}</button></div>
   ${BAL?`<div class="profile" style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 14px;margin-top:12px"><div style="font-weight:900;padding:10px 0 2px">💰 مستحقاتي (بعد خصم العمولة)</div>
   <div class="kv"><span>جاهزة للتحويل (طلبات سُلِّمت)</span><span>${money(BAL.due)}</span></div><div class="kv"><span>قيد التنفيذ</span><span>${money(BAL.pending)}</span></div><div class="kv"><span>تم تحويلها لك</span><span>${money(BAL.settled)}</span></div>
@@ -387,7 +387,7 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#moreO")){await loadOrders(false);draw();return}
   if(e.target.closest("#logout")){TK="";LS.del("hm_tk");clearInterval(timer);mode="login";authView();return}
   if(e.target.closest("#addP")){productForm();return}
-  const at=e.target.closest("[data-actype]");if(at){const p=at.dataset.p,t=at.dataset.actype;document.querySelectorAll(`#${p}-type button`).forEach(x=>x.classList.toggle("on",x===at));$(`#${p}-bl`).innerHTML=BK[t].map(x=>`<option value="${esc(x)}">`).join("");$(`#${p}-al`).textContent=t==="SA"?"رقم الآيبان IBAN (يبدأ بـ SA)":"رقم الحساب";const i=$(`#${p}-acct`);i.placeholder=t==="SA"?"SA00 0000 0000 0000 0000 0000":"أرقام فقط";i.inputMode=t==="SA"?"text":"numeric";return}
+  const at=e.target.closest("[data-actype]");if(at){const p=at.dataset.p,t=at.dataset.actype;document.querySelectorAll(`#${p}-type button`).forEach(x=>x.classList.toggle("on",x===at));$(`#${p}-bl`).innerHTML=BK[t].map(x=>`<option value="${esc(x)}">`).join("");$(`#${p}-al`).textContent="رقم الحساب";const i=$(`#${p}-acct`);i.placeholder="أرقام فقط";return}
   if(e.target.closest("#editBank")){bankForm();return}
   if(e.target.closest("#b-save")){try{const r=await api("/m/bank",{method:"POST",body:JSON.stringify({acct_type:getType("b"),bank:$("#b-bank").value,acct:$("#b-acct").value,acct_name:$("#b-aname").value})});Object.assign(ME,{acct_type:r.acct_type,bank:r.bank,acct:r.acct,acct_name:r.acct_name,has_bank:r.has_bank});closeSheet();draw();toast("✅ تم حفظ الحساب البنكي")}catch(err){$("#b-msg").textContent=err.message}return}
   if(e.target.closest("#addimg")){$("#pfile").click();return}
