@@ -151,11 +151,11 @@ main{padding:0 0 10px}
 .clr{display:block;margin:2px auto 8px;color:var(--muted);font-weight:800;font-size:13px;text-decoration:underline}
 .ok{margin:30px 14px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px 16px;box-shadow:var(--sh)}
 .ok b{display:block;font-size:20px;margin:8px 0}
-.wlc{position:fixed;inset:0;z-index:200;background:#1d0f04;display:flex;flex-direction:column;transition:opacity .45s,transform .45s}
+.wlc{position:fixed;inset:0;z-index:200;background:#1d0f04;display:flex;flex-direction:column;justify-content:center;transition:opacity .45s,transform .45s}
 .wlc.out{opacity:0;transform:scale(1.04);pointer-events:none}
-.wlc .ph{flex:1;min-height:0;position:relative;background:#1d0f04 url(welcome.jpg) center top/cover no-repeat}
+.wlc .ph{flex:none;width:100%;max-width:560px;margin:0 auto;aspect-ratio:800/826;max-height:74vh;position:relative;background:url(welcome.jpg) center top/contain no-repeat;-webkit-mask-image:linear-gradient(180deg,transparent,#000 7%);mask-image:linear-gradient(180deg,transparent,#000 7%)}
 .wlc .ph:after{content:"";position:absolute;left:0;right:0;bottom:0;height:14%;background:linear-gradient(180deg,transparent,#1d0f04)}
-.wlc .bt{padding:14px 22px calc(26px + env(safe-area-inset-bottom));background:#1d0f04;text-align:center}
+.wlc .bt{padding:6px 22px calc(26px + env(safe-area-inset-bottom));background:#1d0f04;text-align:center}
 .wlc button{width:100%;max-width:420px;border-radius:999px;padding:16px;font-weight:900;font-size:20px;color:var(--deep);background:linear-gradient(180deg,#ffe29a,#f0b13a 55%,#c98a1a);box-shadow:0 0 0 2px rgba(255,226,154,.35),0 8px 24px rgba(240,177,58,.35)}
 .wlc button:active{transform:scale(.98)}
 .wlc small{display:block;color:#b99a6c;font-weight:700;margin-top:10px;font-size:12.5px}
@@ -184,7 +184,7 @@ main{padding:0 0 10px}
 </div></nav>
 <div class="pg" id="pg"></div>
 <div class="toast" id="toast"></div>
-<div class="wlc" id="wlc" style="display:none"><div class="ph"></div><div class="bt"><button id="wgo">تسوّق الآن ‹</button><small>اطلب بسهولة عبر واتساب</small></div></div>
+<div class="wlc" id="wlc" style="display:none"><div class="ph"></div><div class="bt"><button id="wgo">👤 تسجيل الدخول</button><small>اضغط للدخول وتصفّح المنتجات</small></div></div>
 <script>
 const $=(s,r=document)=>r.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -392,7 +392,7 @@ if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWo
   if(seen||/[#&]p=/.test(location.hash)) return;
   w.style.display="flex";
   const go=()=>{w.classList.add("out");setTimeout(()=>w.remove(),500);try{sessionStorage.setItem("hs_w","1")}catch(e){}};
-  $("#wgo").onclick=go; setTimeout(go,6000);
+  $("#wgo").onclick=go;
 })();
 boot();
 </script>
