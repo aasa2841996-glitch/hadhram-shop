@@ -91,6 +91,9 @@ textarea{min-height:90px;resize:vertical}
 .sheet h3{margin:0 0 6px;font-size:19px}
 .imgbox{display:grid;place-items:center;height:150px;border:2px dashed var(--line);border-radius:14px;background:var(--bg);overflow:hidden;color:var(--muted);font-weight:800;cursor:pointer}
 .imgbox img{width:100%;height:100%;object-fit:cover}
+.bankbox{border:1.5px solid var(--line);border-radius:14px;padding:4px 12px 12px;margin:12px 0;background:var(--bg)}.bankbox b{display:block;margin:8px 0 2px}
+.earn{border:2px solid #d4a017;border-radius:14px;padding:10px 12px;margin:10px 0;background:#fff8e6;color:#2b1a08;font-weight:800;font-size:13.5px;line-height:1.9}.earn .ln{display:flex;justify-content:space-between}.earn .net{font-size:15.5px;color:#12803c;border-top:1px dashed #d4a017;margin-top:4px;padding-top:4px}.earn small{display:block;color:#7a6a50;font-weight:700;line-height:1.6;margin-top:4px}
+.nobank{border:2px solid #d92d20;border-radius:14px;padding:12px;margin:10px 0;background:#fff1f0;font-weight:800}
 .gal{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
 .gal .th{position:relative;width:78px;height:78px;border-radius:12px;overflow:hidden;border:2px solid var(--line);background:var(--bg)}
 .gal .th.main{border-color:var(--gold,#d4a017)}
@@ -172,7 +175,7 @@ function authView(msg,cls){
   <div class="tabs2"><button class="${mode==="login"?"on":""}" data-m="login">تسجيل الدخول</button><button class="${mode==="reg"?"on":""}" data-m="reg">حساب تاجر جديد</button></div>
   ${mode==="login"?`<label>رقم الجوال</label><input id="a-phone" type="tel" inputmode="tel" placeholder="05xxxxxxxx" value="${esc(LS.get("hm_phone",""))}"><label>كلمة السر</label><input id="a-pass" type="password" autocomplete="current-password">
   <button class="btn gold" id="a-go">دخول</button>`
-  :`<label>اسم المتجر</label><input id="r-name" placeholder="مثال: متجر النور"><label>اسمك الكامل</label><input id="r-owner"><div class="row"><div><label>رقم الجوال (واتساب)</label><input id="r-phone" type="tel" inputmode="tel"></div><div><label>المدينة</label><input id="r-city"></div></div><label>كلمة سر (6 أحرف فأكثر)</label><input id="r-pass" type="password" autocomplete="new-password">
+  :`<label>اسم المتجر</label><input id="r-name" placeholder="مثال: متجر النور"><label>اسمك الكامل</label><input id="r-owner"><div class="row"><div><label>رقم الجوال (واتساب)</label><input id="r-phone" type="tel" inputmode="tel"></div><div><label>المدينة</label><input id="r-city"></div></div><div class="bankbox"><b>🏦 حساب استلام مستحقاتك (إلزامي)</b><label>اسم البنك</label><input id="r-bank" list="banks" placeholder="مثال: الكريمي"><label>رقم الحساب / IBAN</label><input id="r-acct" inputmode="text" dir="ltr"><label>اسم صاحب الحساب</label><input id="r-aname"><datalist id="banks"><option value="الكريمي (اليمن)"><option value="الكريمي (السعودية)"><option value="البنك الأهلي اليمني"><option value="بنك التضامن"><option value="بنك سبأ الإسلامي"><option value="بنك اليمن الدولي"><option value="مصرف الراجحي"><option value="البنك الأهلي السعودي"><option value="بنك الإنماء"><option value="STC Pay"></datalist></div><label>كلمة سر (6 أحرف فأكثر)</label><input id="r-pass" type="password" autocomplete="new-password">
   <label class="chk"><input type="checkbox" id="r-terms"><span>قرأت <span class="link" id="showTerms">شروط التاجر</span> (العمولة، التأخير، التغليف، حالة المنتج...) وأوافق عليها.</span></label>
   <button class="btn gold" id="a-reg">إرسال طلب التسجيل</button>`}
   <div class="msg ${cls||""}" id="a-msg">${esc(msg||"")}</div></div></div>`;
@@ -187,7 +190,7 @@ document.addEventListener("click",async e=>{
     catch(err){$("#a-msg").className="msg err";$("#a-msg").textContent=err.message}
     return}
   if(e.target.closest("#a-reg")){
-    const b={name:$("#r-name").value,owner:$("#r-owner").value,phone:$("#r-phone").value,city:$("#r-city").value,pass:$("#r-pass").value,terms:$("#r-terms").checked};
+    const b={name:$("#r-name").value,owner:$("#r-owner").value,phone:$("#r-phone").value,city:$("#r-city").value,pass:$("#r-pass").value,terms:$("#r-terms").checked,bank:$("#r-bank").value,acct:$("#r-acct").value,acct_name:$("#r-aname").value};
     try{await api("/m/register",{method:"POST",body:JSON.stringify(b)});LS.set("hm_phone",b.phone);mode="login";authView("✅ استلمنا طلبك. سنراجعه ونبلغك عند الموافقة (قد يصلك اتصال على واتساب).","ok")}
     catch(err){$("#a-msg").className="msg err";$("#a-msg").textContent=err.message}
     return}
@@ -236,6 +239,9 @@ function meBody(){
   return `<div class="profile" style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 14px;margin-top:12px">
   <div class="kv"><span>المتجر</span><span>${esc(ME.name)}</span></div><div class="kv"><span>صاحب الحساب</span><span>${esc(ME.owner)}</span></div><div class="kv"><span>المدينة</span><span>${esc(ME.city)}</span></div>
   <div class="kv"><span>عمولة المنصة</span><span>${ME.commission==null?"—":ME.commission+"%"}</span></div></div>
+  <div class="profile" style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 14px;margin-top:12px"><div style="font-weight:900;padding:10px 0 2px">🏦 حساب استلام المستحقات</div>
+  ${ME.has_bank?`<div class="kv"><span>البنك</span><span>${esc(ME.bank)}</span></div><div class="kv"><span>رقم الحساب</span><span dir="ltr">${esc(ME.acct)}</span></div><div class="kv"><span>باسم</span><span>${esc(ME.acct_name)}</span></div>`:`<div class="nobank" style="margin:6px 0">⚠️ لم تُضِف حسابك البنكي — لن تقدر على نشر منتجات ولن نستطيع تحويل مستحقاتك.</div>`}
+  <button class="btn dark" id="editBank" style="margin:8px 0 10px">${ME.has_bank?"تعديل الحساب البنكي":"➕ إضافة الحساب البنكي"}</button></div>
   ${BAL?`<div class="profile" style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 14px;margin-top:12px"><div style="font-weight:900;padding:10px 0 2px">💰 مستحقاتي (بعد خصم العمولة)</div>
   <div class="kv"><span>جاهزة للتحويل (طلبات سُلِّمت)</span><span>${money(BAL.due)}</span></div><div class="kv"><span>قيد التنفيذ</span><span>${money(BAL.pending)}</span></div><div class="kv"><span>تم تحويلها لك</span><span>${money(BAL.settled)}</span></div>
   <div style="color:var(--muted);font-size:12.5px;font-weight:700;padding:6px 0 10px">تُحوَّل المستحقات بعد تأكيد التسليم. رسوم الشحن تُحصّلها أنت من العميل وليست ضمن المبالغ أعلاه.</div></div>`:""}
@@ -299,9 +305,22 @@ function printLabel(o,sender){
   setTimeout(()=>f.remove(),60000);
 }
 
+function bankForm(){
+  openSheet(`<h3>🏦 حساب استلام المستحقات</h3><p style="color:var(--muted);font-weight:700;font-size:13px">تأكد أن البيانات صحيحة، فالتحويل يتم إلى هذا الحساب فقط.</p>
+  <label>اسم البنك</label><input id="b-bank" list="banks" value="${esc(ME.bank||"")}"><label>رقم الحساب / IBAN</label><input id="b-acct" dir="ltr" value="${esc(ME.acct||"")}"><label>اسم صاحب الحساب</label><input id="b-name" value="${esc(ME.acct_name||"")}">
+  ${'<datalist id="banks"><option value="الكريمي (اليمن)"><option value="الكريمي (السعودية)"><option value="البنك الأهلي اليمني"><option value="بنك التضامن"><option value="بنك سبأ الإسلامي"><option value="بنك اليمن الدولي"><option value="مصرف الراجحي"><option value="البنك الأهلي السعودي"><option value="بنك الإنماء"><option value="STC Pay"></datalist>'}
+  <button class="btn gold" id="b-save">حفظ الحساب</button><button class="btn dark" data-close>إلغاء</button><div class="msg err" id="b-msg"></div>`);
+}
+const comRate=()=>ME&&ME.commission!=null?Number(ME.commission):10;
+function earnHtml(){
+  const pr=Number(($("#p-price")||{}).value)||0,cur=($("#p-cur")||{}).value==="YER"?"ر.ي":"ر.س",c=comRate(),fee=pr*c/100,net=pr-fee;
+  return `<div class="ln"><span>سعر البيع للعميل</span><span>${nf(pr)} ${cur}</span></div><div class="ln"><span>عمولة التطبيق (${c}%)</span><span>− ${nf(fee)} ${cur}</span></div><div class="ln net"><span>صافي مستحقك لكل قطعة</span><span>${nf(net)} ${cur}</span></div>
+  <small>تُحوَّل مستحقاتك إلى حسابك (${esc(ME.bank||"")} — ${esc((ME.acct||"").slice(-4).padStart((ME.acct||"").length,"•"))}) بعد تأكيد العميل استلام الطلب. رسوم الشحن تتفق عليها مع العميل وليست ضمن العمولة.</small>`;
+}
 /* ---------- نموذج المنتج ---------- */
 let pimgs=[],popts=[],upl=0;
 function productForm(p){
+  if(!ME.has_bank){openSheet(`<h3>أضف حسابك البنكي أولاً</h3><div class="nobank">لازم تُدخل رقم حسابك البنكي قبل نشر أي منتج، حتى نحوّل لك مستحقاتك بعد كل طلب مُسلَّم.</div><button class="btn gold" id="editBank">➕ إضافة الحساب البنكي</button><button class="btn dark" data-close>إلغاء</button>`);return}
   p=p||{};pimgs=(p.imgs&&p.imgs.length?p.imgs:(p.img?[p.img]:[])).slice();popts=JSON.parse(JSON.stringify(p.opts||[]));
   openSheet(`<h3>${p.id?"تعديل المنتج":"منتج جديد"}</h3>
   <label>صور المنتج (حتى 6 — الأولى هي الرئيسية)</label><div class="gal" id="gal"></div><input type="file" id="pfile" accept="image/*" multiple hidden>
@@ -310,12 +329,13 @@ function productForm(p){
   <div class="row"><div><label>السعر القديم (اختياري)</label><input id="p-old" type="number" inputmode="decimal" value="${p.old||""}"></div><div><label>سعر بالريال اليمني (اختياري)</label><input id="p-yer" type="number" inputmode="decimal" value="${p.price_yer||""}"></div></div>
   <label>القسم</label><select id="p-cat">${CATS.map(c=>`<option value="${esc(c.id)}" ${p.cat===c.id?"selected":""}>${esc((c.emoji||"")+" "+c.name)}</option>`).join("")}</select>
   <label>وصف المنتج (المقاس، الخامة، اللون...)</label><textarea id="p-desc">${esc(p.desc||"")}</textarea>
+  <div class="earn" id="earn"></div>
   <label>الخيارات المتوفرة (مقاسات، ألوان، أحجام...) — اختياري</label>
   <div id="opts"></div>
   <div class="pre"><button type="button" data-addopt="المقاس">+ المقاس</button><button type="button" data-addopt="مقاس الحذاء">+ مقاس الحذاء</button><button type="button" data-addopt="اللون">+ اللون</button><button type="button" data-addopt="العمر">+ العمر (أطفال)</button><button type="button" data-addopt="الحجم">+ الحجم</button><button type="button" data-addopt="">+ خيار آخر</button></div>
   <label class="chk"><input type="checkbox" id="p-stock" ${p.stock===false?"":"checked"}><span>متوفر في المخزون</span></label>
   <button class="btn gold" id="p-save" data-id="${esc(p.id||"")}">حفظ المنتج</button><button class="btn dark" data-close>إلغاء</button><div class="msg err" id="p-msg"></div>`);
-  drawGal();drawOpts();
+  drawGal();drawOpts();$("#earn").innerHTML=earnHtml();
 }
 function drawGal(){
   const g=$("#gal");if(!g)return;
@@ -349,16 +369,19 @@ document.addEventListener("change",async e=>{
   }
 });
 document.addEventListener("input",e=>{
+  if(e.target.id==="p-price"&&$("#earn"))$("#earn").innerHTML=earnHtml();
   const n=e.target.dataset;
   if(n.on!==undefined)popts[+n.on].name=e.target.value;
 });
-document.addEventListener("change",e=>{if(e.target.dataset.on!==undefined)drawOpts()});
+document.addEventListener("change",e=>{if(e.target.dataset.on!==undefined)drawOpts();if(e.target.id==="p-cur"&&$("#earn"))$("#earn").innerHTML=earnHtml()});
 document.addEventListener("click",async e=>{
   const t=e.target.closest("[data-tab]");if(t){tab=t.dataset.tab;if(tab==="products")await loadProds();if(tab==="orders")await loadOrders();if(tab==="me"){try{BAL=(await api("/m/balance")).balance}catch(e){}}draw();return}
   const f=e.target.closest("[data-of]");if(f){ofilter=f.dataset.of;await loadOrders();draw();return}
   if(e.target.closest("#moreO")){await loadOrders(false);draw();return}
   if(e.target.closest("#logout")){TK="";LS.del("hm_tk");clearInterval(timer);mode="login";authView();return}
   if(e.target.closest("#addP")){productForm();return}
+  if(e.target.closest("#editBank")){bankForm();return}
+  if(e.target.closest("#b-save")){try{const r=await api("/m/bank",{method:"POST",body:JSON.stringify({bank:$("#b-bank").value,acct:$("#b-acct").value,acct_name:$("#b-name").value})});Object.assign(ME,{bank:r.bank,acct:r.acct,acct_name:r.acct_name,has_bank:r.has_bank});closeSheet();draw();toast("✅ تم حفظ الحساب البنكي")}catch(err){$("#b-msg").textContent=err.message}return}
   if(e.target.closest("#addimg")){$("#pfile").click();return}
   const ri=e.target.closest("[data-rmimg]");if(ri){pimgs.splice(+ri.dataset.rmimg,1);drawGal();return}
   const mi=e.target.closest("[data-mainimg]");if(mi){const n=+mi.dataset.mainimg;pimgs.unshift(pimgs.splice(n,1)[0]);drawGal();return}
