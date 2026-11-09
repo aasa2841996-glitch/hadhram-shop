@@ -709,7 +709,7 @@ function openRate(tk,id){
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-rate]");if(b)openRate(b.dataset.tk,Number(b.dataset.oid))});
 const getTh=()=>{try{return localStorage.getItem("hs_theme")||"auto"}catch(e){return"auto"}};
 function setTh(m){try{localStorage.setItem("hs_theme",m)}catch(e){}const d=m==="dark"||(m==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light"}
-const ACC=()=>LS.get("hs_acct",null);
+const ACC=()=>LS.get("hs_acct",null);let acEdit=false,acDel=false;
 function accountView(){
   const A=ACC(),th=getTh(),isM=(()=>{try{return !!localStorage.getItem("hm_tk")}catch(e){return false}})();
   const seg=(attr,items)=>`<div class="seg2">${items.map(([v,l,on,dis])=>`<button ${dis?"disabled":""} data-${attr}="${v}" class="${on?"on":""}">${l}</button>`).join("")}</div>`;
@@ -719,9 +719,9 @@ function accountView(){
     <label>الاسم (اختياري)</label><input id="ac-name" placeholder="اسمك"><label>رقم الجوال</label><input id="ac-phone" type="tel" inputmode="tel" dir="ltr" placeholder="05xxxxxxxx أو 967xxxxxxxxx"><button class="btn buy" data-acct="login" style="width:100%;margin-top:12px">تسجيل الدخول</button><div class="msg" id="ac-msg"></div></div>
     <div class="accard">${setts}</div><div class="me"><a href="merchant.html">🏪 حساب التاجر</a>${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 تواصل معنا</a>`:""}</div>`;
   return `<div class="backbar"><h2>👤 حسابي</h2></div><div class="accard prof"><div class="av2">${esc((A.name||"👤").trim().charAt(0)||"👤")}</div><div><b>${esc(A.name||"عميل")}</b><div dir="ltr" class="ph2">+${esc(A.phone)}</div><span class="role">عميل${isM?" · تاجر":""}</span></div></div>
-    <div class="accard"><label>الاسم</label><div class="av"><input id="ac-name" value="${esc(A.name||"")}" placeholder="اسمك"><button data-acct="save">حفظ</button></div></div>
+    ${acEdit?`<div class="accard"><label>الاسم</label><div class="av"><input id="ac-name" value="${esc(A.name||"")}" placeholder="اسمك"><button data-acct="save">حفظ</button><button data-acct="cancel" style="background:#eee;color:#111">إلغاء</button></div></div>`:""}
     <div class="accard">${setts}</div>
-    <div class="me"><button class="li" data-go="orders">📦 طلباتي</button><a href="merchant.html">🏪 حساب التاجر${isM?" (مسجّل)":""}</a>${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 تواصل معنا</a>`:""}<button class="li" data-acct="logout" style="color:var(--hot)">🚪 تسجيل الخروج</button></div>`;
+    <div class="me"><button class="li" data-go="orders">📦 طلباتي</button>${acEdit?"":`<button class="li" data-acct="edit">✏️ تعديل الاسم</button>`}<a href="merchant.html">🏪 حساب التاجر${isM?" (مسجّل)":""}</a>${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 تواصل معنا</a>`:""}<button class="li" data-acct="logout" style="color:var(--hot)">🚪 تسجيل الخروج</button>${acDel?`<div class="accard" style="border-color:var(--hot)"><b style="color:var(--hot)">حذف الحساب نهائياً؟</b><small>يُحذف رقمك واسمك وبيانات الطلب المحفوظة من هذا الجهاز. طلباتك السابقة تبقى محفوظة عند المتجر لإتمامها.</small><div class="av"><button data-acct="delyes" style="background:var(--hot);color:#fff;padding:11px 16px">نعم، احذف حسابي</button><button data-acct="delno" style="background:#eee;color:#111;padding:11px 16px">تراجع</button></div></div>`:`<button class="li" data-acct="delask" style="color:var(--hot)">🗑 حذف الحساب</button>`}</div>`;
 }
 document.addEventListener("click",e=>{
   const t=e.target.closest("[data-th]");if(t){setTh(t.dataset.th);if(view.name==="account")render();return}
@@ -729,8 +729,13 @@ document.addEventListener("click",e=>{
   const k=a.dataset.acct,nm=($("#ac-name")||{}).value||"";
   if(k==="login"){const ph=(($("#ac-phone")||{}).value||"").replace(/\D/g,"");if(ph.length<9){const m=$("#ac-msg");if(m){m.textContent="اكتب رقم جوالك الصحيح";m.style.color="var(--hot)"}return}
     LS.set("hs_acct",{phone:ph,name:nm.trim().slice(0,40)});toast("✅ تم تسجيل الدخول");render()}
-  else if(k==="save"){const A=ACC();if(A){A.name=nm.trim().slice(0,40);LS.set("hs_acct",A);toast("✅ تم الحفظ");render()}}
-  else if(k==="logout"){LS.del("hs_acct");toast("تم تسجيل الخروج");render()}
+  else if(k==="save"){const A=ACC();if(A){A.name=nm.trim().slice(0,40);LS.set("hs_acct",A);acEdit=false;toast("✅ تم الحفظ");render()}}
+  else if(k==="edit"){acEdit=true;render();const i=$("#ac-name");if(i)i.focus()}
+  else if(k==="cancel"){acEdit=false;render()}
+  else if(k==="delask"){acDel=true;render()}
+  else if(k==="delno"){acDel=false;render()}
+  else if(k==="delyes"){LS.del("hs_acct");LS.del("hs_cust");acDel=false;acEdit=false;toast("🗑 تم حذف حسابك");render()}
+  else if(k==="logout"){LS.del("hs_acct");acEdit=false;acDel=false;toast("تم تسجيل الخروج");render()}
 });
 function drawRcv(){
   const el=$("#rcv"); if(!el) return;
