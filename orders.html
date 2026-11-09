@@ -160,6 +160,9 @@ header .rf,header button{background:#f2f2f2!important;color:#111!important}
 html[data-theme=dark]{filter:invert(1) hue-rotate(180deg);background:#fff}
 html[data-theme=dark] img,html[data-theme=dark] video,html[data-theme=dark] .wlc .ph,html[data-theme=dark] .slide .im{filter:invert(1) hue-rotate(180deg)}
 html[data-theme=dark] .addw,html[data-theme=dark] .nav button.on,html[data-theme=dark] .dnav .on,html[data-theme=dark] .chip.on,html[data-theme=dark] .btn.cart,html[data-theme=dark] .av2,html[data-theme=dark] .role,html[data-theme=dark] .upl,html[data-theme=dark] .seg2 button.on,html[data-theme=dark] .seg3 button.on,html[data-theme=dark] .rbtn,html[data-theme=dark] .rgo,html[data-theme=dark] .av button,html[data-theme=dark] .fab,html[data-theme=dark] .go,html[data-theme=dark] .btn.gold,html[data-theme=dark] .slide,html[data-theme=dark] .pnav button.on,html[data-theme=dark] .tag,html[data-theme=dark] .dp,html[data-theme=dark] .cnt,html[data-theme=dark] .nb{filter:invert(1) hue-rotate(180deg)}
+.cth{margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.cm{max-width:82%;padding:7px 10px;font-size:13.5px;line-height:1.6}.cm small{display:block;color:#888;font-size:10.5px}
+.cm.c{align-self:flex-start;background:#f2f2f2}.cm.a{align-self:flex-end;background:#ffd500}
 </style>
 </head>
 <body>
@@ -350,20 +353,21 @@ let PRODS=[];
 function findProd(i){return PRODS.find(p=>i.id&&p.id===i.id)||PRODS.find(p=>p.title===i.title)||null}
 async function loadProds(){try{const r=await fetch("products.json?v="+Math.floor(Date.now()/60000));const d=await r.json();PRODS=(d.products||[]).map(p=>({id:String(p.id),title:p.title,abs:p.image?new URL(p.image,location.href).href:""}))}catch(e){}}
 /* ================= أقسام اللوحة: الدفعات / التجار / التسويات / المنتجات ================= */
-let page=LS.get("ho_page","orders"),D={},psrc="store",pq="";
-const PAGES=[["orders","🧾","الطلبات"],["pay","💳","الدفعات"],["merch","🏪","التجار"],["settle","💼","التسويات"],["prods","📦","المنتجات"]];
-const EP={pay:"/api/payments",merch:"/api/merchants",settle:"/api/settle",prods:"/api/products"};
+let page=LS.get("ho_page","orders"),D={},psrc="store",pq="",openC="";
+const PAGES=[["orders","🧾","الطلبات"],["pay","💳","الدفعات"],["merch","🏪","التجار"],["settle","💼","التسويات"],["prods","📦","المنتجات"],["chat","💬","الدردشة"]];
+const EP={pay:"/api/payments",merch:"/api/merchants",settle:"/api/settle",prods:"/api/products",chat:"/api/chats"};
 function drawNav(){
-  const nb={pay:(D.pay&&D.pay.payments||[]).length,merch:((D.merch&&D.merch.merchants)||[]).filter(m=>m.status==="pending").length,settle:(D.settle&&D.settle.settle||[]).length};
+  const nb={pay:(D.pay&&D.pay.payments||[]).length,merch:((D.merch&&D.merch.merchants)||[]).filter(m=>m.status==="pending").length,settle:(D.settle&&D.settle.settle||[]).length,chat:(D.chat&&D.chat.waiting)||0};
   $("#pnav").style.display="flex";
   $("#pnav").innerHTML=PAGES.map(([k,ic,l])=>`<button data-pg="${k}" class="${page===k?"on":""}"><b>${ic}</b>${l}${nb[k]?`<span class="nb">${nb[k]}</span>`:""}</button>`).join("");
 }
 async function loadPage(silent){
   if(page==="orders")return;
   try{D[page]=await api(EP[page])}catch(e){if(e.message==="401")return loginView("كلمة السر غير صحيحة");if(!silent)toast("⚠️ "+e.message)}
+  if(page==="chat"&&[...document.querySelectorAll("[data-cin2]")].some(i=>i.value))return drawNav();
   if(page!==""&&document.querySelector("#app")&&page!=="orders")drawPage();drawNav();
 }
-async function loadBadges(){for(const k of ["pay","merch","settle"]){if(k===page)continue;try{D[k]=await api(EP[k])}catch(e){}}drawNav()}
+async function loadBadges(){for(const k of ["pay","merch","settle","chat"]){if(k===page)continue;try{D[k]=await api(EP[k])}catch(e){}}drawNav()}
 async function setPage(p){page=p;LS.set("ho_page",p);sel.clear();drawNav();window.scrollTo(0,0);if(p==="orders"){await load(true)}else{drawPage();await loadPage()}}
 const phLink=(ph,t)=>ph?`<a href="https://wa.me/${esc(ph)}${t?"?text="+encodeURIComponent(t):""}" target="_blank" rel="noopener">💬 واتساب</a>`:"";
 const imgOf=u=>u?(/^https?:|^data:/.test(u)?u:new URL(u,location.href).href):"";
@@ -387,6 +391,12 @@ function pageBody(){
     ${g.heldIds.length?`<div class="warn">⛔ موقوفة (العميل أبلغ بعدم الاستلام): ${g.heldIds.map(i=>"#"+i).join("، ")}</div>`:""}
     ${g.has_bank?`<div class="bank">🏦 ${g.acct_type==="SA"?"حساب سعودي":"حساب يمني"} — ${esc(g.bank)}<br><b>${esc(g.acct)}</b><br>باسم: ${esc(g.acct_name)}</div>`:`<div class="warn">⚠️ التاجر لم يُدخل حسابه البنكي</div>`}
     <div class="row">${g.has_bank?`<button class="gd" data-copy="${esc(g.acct)}">📋 نسخ رقم الحساب</button>`:""}${g.ids.length?`<button class="ok" data-payout="${g.mid}" data-amt="${esc(g.amount)}" data-name="${esc(g.name)}">✅ تم التحويل</button>`:""}${phLink(g.phone,"السلام عليكم، تم تحويل مستحقاتك من "+SHOP+" ("+g.amount+") 💛")}</div></div>`).join(""):`<div class="empty">لا توجد مستحقات للتسوية الآن ✅</div>`}
+  if(page==="chat"){const L=d.chats||[];return L.length?L.map(c=>{const open=openC===c.cid,last=c.msgs[c.msgs.length-1];return `<div class="pc"><div data-copen="${esc(c.cid)}" style="cursor:pointer"><h3>💬 ${esc(c.name||"عميل")}${c.phone?` <span class="sub" dir="ltr">+${esc(c.phone)}</span>`:""}</h3>
+    <div>${c.waiting?`<span class="tag pending">بانتظار ردّك</span> `:""}${c.complaint?`<span class="tag rejected">شكوى</span> `:""}${c.inquiry?`<span class="tag active">استعلام</span>`:""}</div>
+    ${open?"":`<div class="sub">${last.dir==="a"?"أنت: ":""}${esc(last.txt.slice(0,80))}</div>`}</div>
+    ${open?`<div class="cth">${c.msgs.map(m=>`<div class="cm ${m.dir}"><div>${esc(m.txt).replace(/\n/g,"<br>")}</div><small>${esc(m.time)}</small></div>`).join("")}</div>
+    <textarea data-cin2="${esc(c.cid)}" rows="2" placeholder="اكتب ردّك للعميل…" style="width:100%;box-sizing:border-box;margin-top:8px;padding:9px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px"></textarea>
+    <div class="row"><button class="ok" data-csend="${esc(c.cid)}">إرسال الرد</button>${phLink(c.phone)}</div>`:""}</div>`}).join(""):`<div class="empty">لا توجد رسائل من العملاء بعد</div>`}
   if(page==="prods"){
     const st=(d.store||[]).map(p=>({...p,src:"store",img:imgOf(p.image),cur:p.currency==="YER"?"ر.ي":"ر.س"}));
     const mp=(d.merchant||[]).map(p=>({id:p.id,title:p.title,price:p.price,old:p.old,cat:p.cat,stock:p.stock,src:"merchant",img:p.img?API+"/img/"+p.img:"",cur:p.cur==="YER"?"ر.ي":"ر.س",merchant:p.merchant,hidden:p.status!=="active"}));
@@ -422,6 +432,8 @@ document.addEventListener("click",async e=>{
   const g=e.target.closest("[data-pg]");if(g){setPage(g.dataset.pg);return}
   if(e.target.closest("#rfp")){await loadPage();return}
   let b;
+  if(b=e.target.closest("[data-copen]")){openC=openC===b.dataset.copen?"":b.dataset.copen;drawPage();return}
+  if(b=e.target.closest("[data-csend]")){const cid=b.dataset.csend,ta=document.querySelector(`[data-cin2="${cid}"]`),t=(ta&&ta.value||"").trim();if(!t){toast("اكتب الرد أولاً");return}api("/api/chatreply",{method:"POST",body:JSON.stringify({cid,txt:t})}).then(async()=>{ta.value="";toast("✅ وصل الرد للعميل");await loadPage(true)}).catch(e=>toast("⚠️ "+e.message));return}
   if(b=e.target.closest("[data-payok]")){if(confirm("هل وصل المبلغ فعلاً إلى حسابك؟"))act("/api/pay",{tk:b.dataset.payok,ok:true},"✅ تم تأكيد الدفع");return}
   if(b=e.target.closest("[data-payno]")){if(confirm("رفض الإيصال وطلب إيصال جديد من العميل؟"))act("/api/pay",{tk:b.dataset.payno,ok:false},"رُفض الإيصال");return}
   if(b=e.target.closest("[data-mg]")){const[i,a]=b.dataset.mg.split(":");const msg={ok:"تفعيل هذا التاجر؟",no:"رفض هذا التاجر؟",off:"إيقاف هذا التاجر؟ ستختفي منتجاته من المتجر."}[a];if(confirm(msg))act("/api/merchant",{id:Number(i),action:a},"تم ✓");return}
@@ -438,15 +450,15 @@ document.addEventListener("click",async e=>{
 let AL=null, alPrev=null, swReg=null;
 const alTotal=a=>a?(a.merchants+a.payments+a.complaints.length+a.newOrders):0;
 function paintBell(){
-  const b=$("#bell");if(b){const n=AL?(AL.merchants+AL.payments+AL.complaints.length):0,s=b.querySelector(".nb2");b.classList.toggle("has",n>0);if(s)s.textContent=n}
-  const n=AL?(AL.merchants+AL.payments+AL.complaints.length):0;document.title=(n?`(${n}) `:"")+"طلبات حضرم شوب";
+  const b=$("#bell");if(b){const n=AL?(AL.merchants+AL.payments+AL.complaints.length+(AL.chats||0)):0,s=b.querySelector(".nb2");b.classList.toggle("has",n>0);if(s)s.textContent=n}
+  const n=AL?(AL.merchants+AL.payments+AL.complaints.length+(AL.chats||0)):0;document.title=(n?`(${n}) `:"")+"طلبات حضرم شوب";
 }
 async function pollAlerts(){
   if(!KEY)return;
   try{
     const a=await api("/api/alerts");
     if(alPrev){
-      const more=a.merchants>alPrev.merchants?"🏪 تاجر جديد بانتظار الموافقة":a.payments>alPrev.payments?"💳 إيصال دفع جديد للمراجعة":a.complaints.length>alPrev.complaints.length?"⚠️ عميل أبلغ أنه لم يستلم طلبه":a.newOrders>alPrev.newOrders?"🆕 طلب جديد وصل":"";
+      const more=a.merchants>alPrev.merchants?"🏪 تاجر جديد بانتظار الموافقة":a.payments>alPrev.payments?"💳 إيصال دفع جديد للمراجعة":(a.chats||0)>(alPrev.chats||0)?"💬 رسالة جديدة من عميل":a.complaints.length>alPrev.complaints.length?"⚠️ عميل أبلغ أنه لم يستلم طلبه":a.newOrders>alPrev.newOrders?"🆕 طلب جديد وصل":"";
       if(more){beep();toast(more);try{navigator.vibrate&&navigator.vibrate(200)}catch{}
         if(document.hidden&&"Notification" in window&&Notification.permission==="granted"){try{new Notification("حضرم شوب — الإدارة",{body:more,icon:"icon-192.png",tag:"hs-admin"})}catch{}}
         if(page!=="orders")loadBadges()}
