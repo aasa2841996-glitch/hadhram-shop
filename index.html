@@ -423,6 +423,17 @@ html,body{font-family:"Tajawal",sans-serif!important;font-weight:400}
 .tag{font-family:"Tajawal",sans-serif!important;font-weight:800!important}
 .sn{font-family:"Tajawal",sans-serif!important;font-weight:700}
 @media (min-width:900px){.pr b{font-size:19px!important}}
+.pt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:42px!important}
+.rt{font-size:12px;color:#555;padding:0 2px}.rt .stars{color:#f5a623;font-size:13px}
+.pr{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px}
+.pr .dp{font-size:12px;font-weight:800;color:#fff;background:var(--hot);padding:1px 5px}
+.pr2{font-size:12px;color:#777;padding:0 2px}
+.shp{font-size:12px;font-weight:700;color:#12803c;padding:0 2px}
+.pb>.pr2,.pb>.shp,.pb>.rt{padding:0 2px}
+.pc .tag{display:none!important}
+.pr b{flex-basis:100%}
+.pb{gap:3px!important}
+.pt{min-height:0!important;max-height:42px}
 </style>
 </head>
 <body>
@@ -469,7 +480,7 @@ function ingest(d){
   S={...S,...(d.settings||{})}; CATS=d.categories||[];
   const api=(S.orderApi||"").replace(/\/$/,"");
   const mp=(MPROD||[]).map(p=>({id:p.id,title:p.title,price:p.price,currency:p.cur,old:p.old,image:p.img?api+"/img/"+p.img:"",images:(p.imgs||[]).map(x=>api+"/img/"+x),opts:p.opts||[],category:p.cat,desc:p.desc,priceYer:p.price_yer,stock:p.stock,createdAt:new Date(p.created).toISOString(),merchant:p.merchant}));
-  ALL=[...(d.products||[]),...mp].map(p=>({mn:p.merchant||"",id:String(p.id),title:p.title||"منتج",price:parseFloat(p.price)||0,cur:p.currency==="YER"?"ر.ي":"ر.س",old:parseFloat(p.old)||0,image:p.image||"",imgs:(p.images&&p.images.length?p.images:(p.image?[p.image]:[])),opts:p.opts||[],cat:p.category||"",desc:p.desc||"",yer:parseFloat(p.priceYer)||0,stock:p.stock!==false,created:Date.parse(p.createdAt)||0}))
+  ALL=[...(d.products||[]),...mp].map(p=>({mn:p.merchant||"",rate:parseFloat(p.rating)||0,rc:parseInt(p.reviews)||0,ship:String(p.ship||"").slice(0,40),id:String(p.id),title:p.title||"منتج",price:parseFloat(p.price)||0,cur:p.currency==="YER"?"ر.ي":"ر.س",old:parseFloat(p.old)||0,image:p.image||"",imgs:(p.images&&p.images.length?p.images:(p.image?[p.image]:[])),opts:p.opts||[],cat:p.category||"",desc:p.desc||"",yer:parseFloat(p.priceYer)||0,stock:p.stock!==false,created:Date.parse(p.createdAt)||0}))
     .filter(p=>p.price>0).sort((a,b)=>b.created-a.created);
   byId=new Map(ALL.map(x=>[x.id,x]));
   CART=CART.filter(i=>byId.has(i.id));
@@ -513,8 +524,11 @@ function card(p){
     ${p.image?`<img loading="lazy" decoding="async" src="${esc(safeUrl(p.image))}" alt="${esc(p.title)}">`:"🛍️"}
     ${d>=5?`<span class="tag">خصم<br>${d}%</span>`:""}${isNew(p)&&!d?`<span class="newb">جديد</span>`:""}${p.stock?"":`<div class="sold">نفد المخزون</div>`}
     <button class="fav ${fav?"on":""}" data-act="fav" data-id="${esc(p.id)}">♥</button></div>
-    <div class="pb"><div class="pt">${esc(p.title)}</div>${p.mn?`<div class="sn">${esc(p.mn)}</div>`:""}
-    <div class="pr"><b>${nf(p.price)} ${esc(p.cur)}</b>${d?`<s>${nf(p.old)} ${esc(p.cur)}</s>`:""}${p.yer?`<small class="yer">${nf(p.yer)} ر.ي</small>`:""}</div>
+    <div class="pb"><div class="pt">${esc(p.title)}</div><div class="sn">🏪 ${esc(p.mn||S.name)}</div>
+    ${p.rate>0&&p.rc>0?`<div class="rt"><span class="stars">★</span> ${nf(p.rate)} <span>(${p.rc} مراجعة)</span></div>`:""}
+    <div class="pr"><b>${nf(p.price)} ${esc(p.cur)}</b>${d?`<s>${nf(p.old)} ${esc(p.cur)}</s><span class="dp">-${d}%</span>`:""}</div>
+    ${p.yer?`<div class="pr2">${nf(p.yer)} ر.ي</div>`:""}
+    ${p.ship?`<div class="shp">🚚 ${esc(p.ship)}</div>`:""}
     ${p.stock?`<button class="addw" data-act="${p.opts&&p.opts.length?"open":"add"}" data-id="${esc(p.id)}">${p.opts&&p.opts.length?"اختر":"أضف إلى السلة"} ${ICON_CART2}</button>`:""}</div></article>`;
 }
 const SORTS=[["new","الأحدث"],["low","الأقل سعراً"],["high","الأعلى سعراً"],["disc","الأعلى خصماً"]];
