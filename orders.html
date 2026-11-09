@@ -102,6 +102,11 @@ header .rf.spin{animation:sp .8s linear infinite}@keyframes sp{to{transform:rota
 .sheet label{display:block;font-weight:800;font-size:13px;margin:10px 0 4px}.sheet input,.sheet select{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:11px;font-size:15px;font-family:inherit}
 .sheet .go{width:100%;margin-top:14px;background:linear-gradient(180deg,var(--gold2),var(--gold));color:var(--deep);font-weight:900;border-radius:12px;padding:12px}
 .cin{width:70px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:6px;text-align:center;font-weight:900}
+.bell{position:relative;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.12);font-size:17px;color:#fff}
+.bell .nb2{position:absolute;top:-3px;left:-3px;background:var(--new);color:#fff;font-size:10.5px;min-width:17px;height:17px;border-radius:99px;display:none;place-items:center;padding:0 4px;font-weight:900}
+.bell.has .nb2{display:grid}.bell.has{animation:rg 1.6s ease-in-out infinite}@keyframes rg{0%,100%{transform:rotate(0)}10%{transform:rotate(14deg)}20%{transform:rotate(-12deg)}30%{transform:rotate(8deg)}40%{transform:rotate(0)}}
+.alr{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:8px;font-weight:800;width:100%;text-align:right;font-size:14px}
+.alr b{margin-right:auto;background:var(--new);color:#fff;border-radius:99px;padding:1px 9px;font-size:13px}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--deep);color:var(--gold2);padding:9px 18px;border-radius:999px;font-weight:800;font-size:14px;z-index:90;opacity:0;pointer-events:none;transition:.3s}
 .toast.show{opacity:1}
 </style>
@@ -210,7 +215,7 @@ function draw(){
   const grouped=!q&&!inM&&filter!=="hidden";
   const body=grouped?(groups.length?groups.map(groupCard).join(""):`<div class="empty">لا توجد طلبات «${ST[filter][0]}» عند أي متجر ✅</div>`)
     :(orders.length?orders.map(card).join(""):`<div class="empty">${q?"لا توجد نتائج":"لا توجد طلبات هنا"}</div>`);
-  $("#app").innerHTML=`<header><div class="in">${inM?`<button class="rf" id="bk" aria-label="رجوع">›</button>`:""}<h1>${inM?"🏪 طلبات التاجر":"🧾 طلبات "+SHOP}</h1><button class="rf" id="rf" aria-label="تحديث">⟳</button></div></header>
+  $("#app").innerHTML=`<header><div class="in">${inM?`<button class="rf" id="bk" aria-label="رجوع">›</button>`:""}<h1>${inM?"🏪 طلبات التاجر":"🧾 طلبات "+SHOP}</h1><button class="bell" id="bell" aria-label="التنبيهات">🔔<span class="nb2"></span></button><button class="rf" id="rf" aria-label="تحديث">⟳</button></div></header>
   <div class="wrap">${top}
   ${inM?"":`<div class="search"><input id="q" type="search" placeholder="ابحث برقم الطلب (حتى المخفية)، الاسم، الجوال" value="${esc(q)}"></div>`}
   <div id="list">${body}</div>
@@ -221,6 +226,7 @@ function draw(){
   if(inp){inp.oninput=e=>{clearTimeout(draw._t);const v=e.target.value;draw._t=setTimeout(()=>{q=v.trim();sel.clear();load(true)},350)};
   if(document.activeElement!==inp&&draw._focus){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length)}
   inp.onfocus=()=>draw._focus=true;inp.onblur=()=>draw._focus=false}
+  paintBell();
 }
 /* ---------- طباعة بوليصة الشحن (تُلصق على الطرد) ---------- */
 function labelHtml(o,sender){
@@ -340,8 +346,9 @@ function pageBody(){
 function drawPage(){
   const t=PAGES.find(x=>x[0]===page);
   const keep=$("#pq")&&document.activeElement===$("#pq");
-  $("#app").innerHTML=`<header><div class="in"><h1>${t[1]} ${t[2]}</h1><button class="rf" id="rfp" aria-label="تحديث">⟳</button></div></header><div class="wrap">${pageBody()}</div>`;
+  $("#app").innerHTML=`<header><div class="in"><h1>${t[1]} ${t[2]}</h1><button class="bell" id="bell" aria-label="التنبيهات">🔔<span class="nb2"></span></button><button class="rf" id="rfp" aria-label="تحديث">⟳</button></div></header><div class="wrap">${pageBody()}</div>`;
   if($("#pq")){$("#pq").oninput=e=>{pq=e.target.value.trim();clearTimeout(drawPage._t);drawPage._t=setTimeout(()=>{drawPage();const i=$("#pq");i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)};if(keep){$("#pq").focus()}}
+  paintBell();
 }
 async function act(path,body,okMsg){try{await api(path,{method:"POST",body:JSON.stringify(body)});toast(okMsg||"تم ✓");await loadPage(true)}catch(e){toast("⚠️ "+e.message)}}
 function editSheet(src,id){
@@ -372,13 +379,65 @@ document.addEventListener("click",async e=>{
   if(b=e.target.closest("[data-phide]")){act("/api/product",{src:"merchant",id:b.dataset.phide,action:"hide"},"تم ✓");return}
   if(b=e.target.closest("[data-pdel]")){const[s,...r]=b.dataset.pdel.split(":");if(confirm("حذف هذا المنتج نهائياً؟"))act("/api/product",{src:s,id:r.join(":"),action:"del"},"🗑 تم الحذف");return}
 });
+/* ================= التنبيهات ================= */
+let AL=null, alPrev=null, swReg=null;
+const alTotal=a=>a?(a.merchants+a.payments+a.complaints.length+a.newOrders):0;
+function paintBell(){
+  const b=$("#bell");if(b){const n=AL?(AL.merchants+AL.payments+AL.complaints.length):0,s=b.querySelector(".nb2");b.classList.toggle("has",n>0);if(s)s.textContent=n}
+  const n=AL?(AL.merchants+AL.payments+AL.complaints.length):0;document.title=(n?`(${n}) `:"")+"طلبات حضرم شوب";
+}
+async function pollAlerts(){
+  if(!KEY)return;
+  try{
+    const a=await api("/api/alerts");
+    if(alPrev){
+      const more=a.merchants>alPrev.merchants?"🏪 تاجر جديد بانتظار الموافقة":a.payments>alPrev.payments?"💳 إيصال دفع جديد للمراجعة":a.complaints.length>alPrev.complaints.length?"⚠️ عميل أبلغ أنه لم يستلم طلبه":a.newOrders>alPrev.newOrders?"🆕 طلب جديد وصل":"";
+      if(more){beep();toast(more);try{navigator.vibrate&&navigator.vibrate(200)}catch{}
+        if(document.hidden&&"Notification" in window&&Notification.permission==="granted"){try{new Notification("حضرم شوب — الإدارة",{body:more,icon:"icon-192.png",tag:"hs-admin"})}catch{}}
+        if(page!=="orders")loadBadges()}
+    }
+    alPrev=a;AL=a;paintBell();
+  }catch(e){}
+}
+function b64uToArr(s){s=s.replace(/-/g,"+").replace(/_/g,"/");const p="=".repeat((4-s.length%4)%4),r=atob(s+p);return Uint8Array.from(r,c=>c.charCodeAt(0))}
+async function enablePush(){
+  if(!("serviceWorker" in navigator)||!("PushManager" in window))return toast("جوالك لا يدعم الإشعارات هنا (على الآيفون أضف اللوحة للشاشة الرئيسية أولاً)");
+  const perm=await Notification.requestPermission();if(perm!=="granted")return toast("لم يتم السماح بالإشعارات");
+  try{
+    const reg=swReg||await navigator.serviceWorker.register("sw.js");await navigator.serviceWorker.ready;
+    const {key}=await api("/api/vapid");
+    const sub=(await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uToArr(key)});
+    await api("/api/push/sub",{method:"POST",body:JSON.stringify({subscription:sub.toJSON()})});
+    LS.set("ho_push","1");toast("✅ تم تفعيل إشعارات الجوال");closeAlerts();
+  }catch(e){toast("⚠️ تعذّر التفعيل: "+e.message)}
+}
+function closeAlerts(){document.querySelectorAll(".sheetbg").forEach(x=>x.remove())}
+function alertsSheet(){
+  const a=AL||{merchants:0,payments:0,complaints:[],newOrders:0,settle:0};
+  const rows=[["merch",`🏪 تجار جدد بانتظار الموافقة`,a.merchants],["pay",`💳 إيصالات دفع للمراجعة`,a.payments],["settle",`💼 تجار مستحقاتهم جاهزة للتحويل`,a.settle],["orders",`🆕 طلبات جديدة`,a.newOrders]].filter(r=>r[2]);
+  const bg=document.createElement("div");bg.className="sheetbg";
+  bg.innerHTML=`<div class="sheet"><h3 style="margin:0 0 10px">🔔 التنبيهات</h3>
+  ${rows.map(([k,l,n])=>`<button class="alr" data-goto="${k}">${l}<b>${n}</b></button>`).join("")}
+  ${a.complaints.length?`<button class="alr" data-goto="cmp" style="border-color:var(--new)">⚠️ عميل أبلغ بعدم الاستلام: ${a.complaints.map(i=>"#"+i).join("، ")}<b>${a.complaints.length}</b></button>`:""}
+  ${!rows.length&&!a.complaints.length?`<div class="empty" style="padding:18px">لا توجد تنبيهات الآن ✅</div>`:""}
+  <button class="go" id="al-push" style="${LS.get("ho_push","")?"opacity:.6":""}">${LS.get("ho_push","")?"✅ إشعارات الجوال مفعّلة (اضغط لإعادة التفعيل)":"🔔 تفعيل إشعارات الجوال"}</button>
+  <div style="color:var(--muted);font-size:12px;font-weight:700;margin-top:8px;line-height:1.6">الإشعارات تصل لجوالك حتى والتطبيق مغلق (تاجر جديد، إيصال دفع، عميل لم يستلم). على الآيفون يجب أولاً إضافة اللوحة إلى الشاشة الرئيسية.</div>
+  <button class="go" style="background:var(--bg);color:var(--ink);margin-top:8px" id="al-x">إغلاق</button></div>`;
+  document.body.appendChild(bg);
+  bg.onclick=e=>{if(e.target===bg)bg.remove()};
+  bg.querySelector("#al-x").onclick=()=>bg.remove();
+  bg.querySelector("#al-push").onclick=enablePush;
+  bg.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>{const k=b.dataset.goto;bg.remove();if(k==="cmp"){q=String(a.complaints[0]);filter="new";curMid=null;setPage("orders");return}if(k==="orders"){filter="new";curMid=null;q=""}setPage(k)});
+}
+document.addEventListener("click",e=>{if(e.target.closest("#bell")){pollAlerts().then(alertsSheet)}});
 async function boot(){
   if(!KEY)return loginView();
   clearInterval(timer);
   await loadProds();
+  try{if("serviceWorker" in navigator)swReg=await navigator.serviceWorker.register("sw.js")}catch(e){}
   drawNav();
   if(page==="orders")await load(true);else{drawPage();await loadPage()}
-  loadBadges();
+  loadBadges();pollAlerts();clearInterval(boot._al);boot._al=setInterval(()=>{if(KEY)pollAlerts()},20000);
   timer=setInterval(()=>{if(document.hidden||!KEY)return;if(page==="orders"){if(!sel.size)load(true,true);loadBadges()}else if(!document.querySelector(".sheetbg"))loadPage(true)},30000);
 }
 boot();
