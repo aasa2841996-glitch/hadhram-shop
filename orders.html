@@ -152,6 +152,9 @@ header .rf,header button{background:#f2f2f2!important;color:#111!important}
 .pc .row .gd,.gd,.btn.gold,.fab,.sheet .go,.login .go,.nav button.on,.pnav button.on,.st.on{border-color:transparent!important}
 .pc .row .gd,.btn.gold,.sheet .go,.login .go{border:0!important}
 .fab{border:0!important}
+.slist{margin:8px 0}.so{border:1px solid #ececec;padding:8px 10px;margin-bottom:6px;background:#fafafa}.so.held{opacity:.65;background:#fff1f0}
+.soh{display:flex;justify-content:space-between;margin-bottom:4px}.si{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:2px 0}.si small{color:#777}
+.sn{display:flex;justify-content:space-between;gap:8px;border-top:1px dashed #ddd;margin-top:4px;padding-top:4px;font-size:13px}.sn b{color:#12803c}
 </style>
 </head>
 <body>
@@ -166,6 +169,7 @@ const ST={new:["جديد","var(--new)"],prep:["قيد التجهيز","var(--pre
 const nf=n=>(Math.round(n*100)/100).toLocaleString("en-US");
 const SHOP="حضرم شوب";
 let API=LS.get("ho_api","https://hadhram-bot.aasa2841996.workers.dev"), KEY=LS.get("ho_key","");
+{const mk=location.hash.match(/[#&]k=([A-Za-z0-9]{24,40})/);if(mk){KEY=mk[1];LS.set("ho_key",KEY);try{history.replaceState(null,"",location.pathname)}catch(e){}}}
 if(/[?&]reset/.test(location.search)){LS.del("ho_key");KEY="";try{history.replaceState(null,"",location.pathname)}catch(e){}}
 let filter="new", curMid=null, curG=null, mf="", groups=[], q="", orders=[], stats=null, more=false, sel=new Set(), maxId=0, timer=null, busy=false;
 const toast=t=>{const el=$("#toast");el.textContent=t;el.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("show"),1800)};
@@ -372,7 +376,9 @@ function pageBody(){
     <div class="row" style="align-items:center"><span class="sub">العمولة %</span><input class="cin" type="number" inputmode="decimal" value="${m.commission}" data-cin="${m.id}"><button data-csave="${m.id}">حفظ</button>${phLink(m.phone)}</div>
     <div class="row">${m.status==="pending"?`<button class="ok" data-mg="${m.id}:ok">✅ موافقة</button><button class="no" data-mg="${m.id}:no">❌ رفض</button>`:m.status==="active"?`<button class="no" data-mg="${m.id}:off">⏸ إيقاف التاجر</button>`:`<button class="ok" data-mg="${m.id}:ok">✅ تفعيل</button>`}</div></div>`).join(""):`<div class="empty">لا يوجد تجار بعد</div>`}
   if(page==="settle"){const L=d.settle||[];return L.length?L.map(g=>`<div class="pc"><h3>💼 ${esc(g.name)}</h3><div class="sub">👤 ${esc(g.owner)} · +${esc(g.phone)}</div>
-    <div class="big">${esc(g.amount)}</div><div class="sub">الطلبات المسلّمة: ${g.ids.map(i=>"#"+i).join("، ")||"—"}</div>
+    <div class="sub" style="margin-top:6px">إجمالي المبيعات: <b>${esc(g.gross)}</b> · عمولة التطبيق: <b>${esc(g.fee)}</b></div>
+    <div class="sub">💰 المستحق للتاجر بعد الخصم:</div><div class="big">${esc(g.amount)}</div>
+    <div class="slist">${(g.list||[]).map(o=>`<div class="so${o.held?" held":""}"><div class="soh"><b>طلب #${o.id}</b>${o.held?`<span class="warn" style="padding:1px 6px">⛔ موقوف</span>`:""}</div>${o.items.map(i=>`<div class="si"><span>${esc(i.t)}${i.o?` <small>(${esc(i.o)})</small>`:""} × ${i.q}</span><span>${nf(i.p*i.q)} ${esc(i.c)}</span></div>`).join("")}<div class="sn"><span>المبلغ: ${esc(o.gross)} − عمولة ${o.com}%</span><b>صافي ${esc(o.net)}</b></div></div>`).join("")}</div>
     ${g.heldIds.length?`<div class="warn">⛔ موقوفة (العميل أبلغ بعدم الاستلام): ${g.heldIds.map(i=>"#"+i).join("، ")}</div>`:""}
     ${g.has_bank?`<div class="bank">🏦 ${g.acct_type==="SA"?"حساب سعودي":"حساب يمني"} — ${esc(g.bank)}<br><b>${esc(g.acct)}</b><br>باسم: ${esc(g.acct_name)}</div>`:`<div class="warn">⚠️ التاجر لم يُدخل حسابه البنكي</div>`}
     <div class="row">${g.has_bank?`<button class="gd" data-copy="${esc(g.acct)}">📋 نسخ رقم الحساب</button>`:""}${g.ids.length?`<button class="ok" data-payout="${g.mid}" data-amt="${esc(g.amount)}" data-name="${esc(g.name)}">✅ تم التحويل</button>`:""}${phLink(g.phone,"السلام عليكم، تم تحويل مستحقاتك من "+SHOP+" ("+g.amount+") 💛")}</div></div>`).join(""):`<div class="empty">لا توجد مستحقات للتسوية الآن ✅</div>`}
