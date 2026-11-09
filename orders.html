@@ -76,6 +76,32 @@ header .rf.spin{animation:sp .8s linear infinite}@keyframes sp{to{transform:rota
 .login input{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:11px;font-size:15px}
 .login .go{width:100%;margin-top:16px;background:linear-gradient(180deg,var(--gold2),var(--gold));color:var(--deep);font-weight:900;font-size:16px;border-radius:12px;padding:13px}
 .err{color:var(--new);font-weight:800;font-size:13px;margin-top:10px;min-height:18px}
+.pnav{position:fixed;left:0;right:0;bottom:0;z-index:35;background:linear-gradient(180deg,var(--brown),var(--deep));padding:6px 6px calc(6px + env(safe-area-inset-bottom));display:flex;gap:3px;border-radius:18px 18px 0 0;box-shadow:0 -6px 20px rgba(0,0,0,.3)}
+.pnav button{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;gap:0;font-size:10.5px;font-weight:800;color:#d9c7ad;padding:6px 0;border-radius:12px}
+.pnav button b{font-size:18px;line-height:1.25}
+.pnav button.on{background:linear-gradient(180deg,var(--gold2),var(--gold));color:var(--deep)}
+.pnav .nb{position:absolute;top:0;left:14%;background:var(--new);color:#fff;font-size:10px;min-width:16px;height:16px;border-radius:99px;display:grid;place-items:center;padding:0 4px}
+.bulk{bottom:calc(58px + env(safe-area-inset-bottom))!important}
+.pc{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:10px;padding:12px;box-shadow:0 2px 10px rgba(36,20,6,.07);font-size:14px;line-height:1.7}
+.pc h3{margin:0 0 2px;font-size:16px}.pc .sub{color:var(--muted);font-weight:700;font-size:13px}
+.pc .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pc .row button,.pc .row a{flex:1 1 auto;text-align:center;text-decoration:none;border-radius:10px;padding:9px 8px;font-weight:900;font-size:13px;background:var(--bg);border:1px solid var(--line);color:var(--ink)}
+.pc .row .ok{background:#12803c;border-color:#12803c;color:#fff}.pc .row .no{background:#d92d20;border-color:#d92d20;color:#fff}.pc .row .gd{background:var(--deep);border-color:var(--deep);color:var(--gold2)}
+.pc .bank{background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:6px 10px;margin-top:6px;font-weight:800;font-size:13px}
+.pc .bank b{direction:ltr;unicode-bidi:plaintext;font-size:15px}
+.pc .big{font-size:20px;font-weight:900;color:#12803c}
+.pc img.rc{width:100%;max-height:300px;object-fit:contain;background:#000;border-radius:10px;margin:6px 0}
+.pc .tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:900;color:#fff;background:var(--cancel)}
+.pc .tag.active{background:var(--done)}.pc .tag.pending{background:var(--prep)}
+.pc .warn{background:#fff1f0;color:#b3261e;border-radius:8px;padding:5px 9px;margin-top:6px;font-weight:800;font-size:13px}
+.pr{display:flex;gap:10px;align-items:center}.pr img,.pr .ph{width:64px;height:64px;border-radius:12px;object-fit:cover;background:var(--bg);flex:none;display:grid;place-items:center;font-size:24px}
+.pr .t{flex:1;min-width:0}.pr .t b{display:block;font-size:14px;line-height:1.35}
+.seg{display:flex;gap:6px;margin:12px 0 8px}.seg button{flex:1;padding:10px;border-radius:12px;font-weight:900;font-size:13.5px;background:var(--card);border:1px solid var(--line)}.seg button.on{background:var(--deep);color:var(--gold2);border-color:var(--deep)}
+.sheetbg{position:fixed;inset:0;background:#0007;z-index:80;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
+.sheet label{display:block;font-weight:800;font-size:13px;margin:10px 0 4px}.sheet input,.sheet select{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:11px;font-size:15px;font-family:inherit}
+.sheet .go{width:100%;margin-top:14px;background:linear-gradient(180deg,var(--gold2),var(--gold));color:var(--deep);font-weight:900;border-radius:12px;padding:12px}
+.cin{width:70px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:6px;text-align:center;font-weight:900}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--deep);color:var(--gold2);padding:9px 18px;border-radius:999px;font-weight:800;font-size:14px;z-index:90;opacity:0;pointer-events:none;transition:.3s}
 .toast.show{opacity:1}
 </style>
@@ -83,6 +109,7 @@ header .rf.spin{animation:sp .8s linear infinite}@keyframes sp{to{transform:rota
 <body>
 <div id="app"></div>
 <div class="toast" id="toast"></div>
+<nav class="pnav" id="pnav" style="display:none"></nav>
 <script>
 const $=(s,r=document)=>r.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -95,6 +122,7 @@ let filter="", q="", orders=[], stats=null, more=false, sel=new Set(), maxId=0, 
 const toast=t=>{const el=$("#toast");el.textContent=t;el.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("show"),1800)};
 
 function loginView(msg){
+  $("#pnav").style.display="none";
   $("#app").innerHTML=`<div class="login"><h2>🧾 لوحة الطلبات</h2><p>${SHOP} — أدخل بيانات الدخول مرة واحدة</p>
   <label>رابط البوت</label><input id="l-api" value="${esc(API)}" dir="ltr">
   <label>كلمة سر اللوحة (ADMIN_KEY)</label><input id="l-key" type="password" autocomplete="off">
@@ -146,6 +174,7 @@ function card(o){
   <div class="act">${wa}${btns}<button class="prt" data-print="${o.id}">🖨 طباعة بوليصة الشحن</button></div></div>`;
 }
 function draw(){
+  if(page!=="orders")return drawPage();
   const c=(stats&&stats.counts)||{},t=(stats&&stats.today)||{count:0,sar:0,yer:0};
   const tabs=[["","الكل",Object.values(c).reduce((a,b)=>a+b,0),"var(--ink)"],...Object.entries(ST).map(([k,[l,col]])=>[k,l,c[k]||0,col])];
   $("#app").innerHTML=`<header><div class="in"><h1>🧾 طلبات ${SHOP}</h1><button class="rf" id="rf" aria-label="تحديث">⟳</button></div></header>
@@ -221,12 +250,96 @@ document.addEventListener("change",e=>{const c=e.target.closest("[data-ck]");if(
 let PRODS=[];
 function findProd(i){return PRODS.find(p=>i.id&&p.id===i.id)||PRODS.find(p=>p.title===i.title)||null}
 async function loadProds(){try{const r=await fetch("products.json?v="+Math.floor(Date.now()/60000));const d=await r.json();PRODS=(d.products||[]).map(p=>({id:String(p.id),title:p.title,abs:p.image?new URL(p.image,location.href).href:""}))}catch(e){}}
+/* ================= أقسام اللوحة: الدفعات / التجار / التسويات / المنتجات ================= */
+let page=LS.get("ho_page","orders"),D={},psrc="store",pq="";
+const PAGES=[["orders","🧾","الطلبات"],["pay","💳","الدفعات"],["merch","🏪","التجار"],["settle","💼","التسويات"],["prods","📦","المنتجات"]];
+const EP={pay:"/api/payments",merch:"/api/merchants",settle:"/api/settle",prods:"/api/products"};
+function drawNav(){
+  const nb={pay:(D.pay&&D.pay.payments||[]).length,merch:((D.merch&&D.merch.merchants)||[]).filter(m=>m.status==="pending").length,settle:(D.settle&&D.settle.settle||[]).length};
+  $("#pnav").style.display="flex";
+  $("#pnav").innerHTML=PAGES.map(([k,ic,l])=>`<button data-pg="${k}" class="${page===k?"on":""}"><b>${ic}</b>${l}${nb[k]?`<span class="nb">${nb[k]}</span>`:""}</button>`).join("");
+}
+async function loadPage(silent){
+  if(page==="orders")return;
+  try{D[page]=await api(EP[page])}catch(e){if(e.message==="401")return loginView("كلمة السر غير صحيحة");if(!silent)toast("⚠️ "+e.message)}
+  if(page!==""&&document.querySelector("#app")&&page!=="orders")drawPage();drawNav();
+}
+async function loadBadges(){for(const k of ["pay","merch","settle"]){if(k===page)continue;try{D[k]=await api(EP[k])}catch(e){}}drawNav()}
+async function setPage(p){page=p;LS.set("ho_page",p);sel.clear();drawNav();window.scrollTo(0,0);if(p==="orders"){await load(true)}else{drawPage();await loadPage()}}
+const phLink=(ph,t)=>ph?`<a href="https://wa.me/${esc(ph)}${t?"?text="+encodeURIComponent(t):""}" target="_blank" rel="noopener">💬 واتساب</a>`:"";
+const imgOf=u=>u?(/^https?:|^data:/.test(u)?u:new URL(u,location.href).href):"";
+function pageBody(){
+  const d=D[page];
+  if(!d)return `<div class="empty">جارٍ التحميل…</div>`;
+  if(page==="pay"){const L=d.payments||[];return L.length?L.map(p=>`<div class="pc"><h3>💳 إيصال من ${esc(p.name||"—")}</h3><div class="sub">${p.phone?"+"+esc(p.phone)+" · ":""}${p.orders.map(o=>"#"+o.id+(o.merchant?" ("+esc(o.merchant)+")":"")).join("، ")}</div>
+    <div class="big">${esc(p.amount)}</div>${p.img?`<a href="${API}/img/${esc(p.img)}" target="_blank" rel="noopener"><img class="rc" src="${API}/img/${esc(p.img)}" alt="إيصال"></a>`:""}
+    <div class="sub">تحقق من وصول المبلغ في حسابك ثم أكّد.</div>
+    <div class="row"><button class="ok" data-payok="${esc(p.tk)}">✅ تأكيد الدفع</button><button class="no" data-payno="${esc(p.tk)}">❌ رفض</button>${phLink(p.phone)}</div></div>`).join(""):`<div class="empty">لا توجد إيصالات بانتظار المراجعة ✅</div>`}
+  if(page==="merch"){const L=d.merchants||[];const lab={pending:"بانتظار الموافقة",active:"نشط",rejected:"مرفوض",suspended:"موقوف"};return L.length?L.map(m=>`<div class="pc"><h3>🏪 ${esc(m.name)} <span class="tag ${m.status}">${lab[m.status]||m.status}</span></h3>
+    <div class="sub">👤 ${esc(m.owner)} · +${esc(m.phone)} · 📍 ${esc(m.city)} · 📦 ${m.products} منتج</div>
+    ${m.has_bank?`<div class="bank">🏦 ${m.acct_type==="SA"?"سعودي":"يمني"} — ${esc(m.bank)}<br><b>${esc(m.acct)}</b><br>باسم: ${esc(m.acct_name)}</div>`:`<div class="warn">⚠️ لم يُدخل حسابه البنكي بعد</div>`}
+    <div class="sub" style="margin-top:6px">💰 جاهز للتحويل: <b>${esc(m.due)}</b> · قيد التنفيذ: ${esc(m.pending)} · محوّل: ${esc(m.settled)}</div>
+    <div class="row" style="align-items:center"><span class="sub">العمولة %</span><input class="cin" type="number" inputmode="decimal" value="${m.commission}" data-cin="${m.id}"><button data-csave="${m.id}">حفظ</button>${phLink(m.phone)}</div>
+    <div class="row">${m.status==="pending"?`<button class="ok" data-mg="${m.id}:ok">✅ موافقة</button><button class="no" data-mg="${m.id}:no">❌ رفض</button>`:m.status==="active"?`<button class="no" data-mg="${m.id}:off">⏸ إيقاف التاجر</button>`:`<button class="ok" data-mg="${m.id}:ok">✅ تفعيل</button>`}</div></div>`).join(""):`<div class="empty">لا يوجد تجار بعد</div>`}
+  if(page==="settle"){const L=d.settle||[];return L.length?L.map(g=>`<div class="pc"><h3>💼 ${esc(g.name)}</h3><div class="sub">👤 ${esc(g.owner)} · +${esc(g.phone)}</div>
+    <div class="big">${esc(g.amount)}</div><div class="sub">الطلبات المسلّمة: ${g.ids.map(i=>"#"+i).join("، ")||"—"}</div>
+    ${g.heldIds.length?`<div class="warn">⛔ موقوفة (العميل أبلغ بعدم الاستلام): ${g.heldIds.map(i=>"#"+i).join("، ")}</div>`:""}
+    ${g.has_bank?`<div class="bank">🏦 ${g.acct_type==="SA"?"حساب سعودي":"حساب يمني"} — ${esc(g.bank)}<br><b>${esc(g.acct)}</b><br>باسم: ${esc(g.acct_name)}</div>`:`<div class="warn">⚠️ التاجر لم يُدخل حسابه البنكي</div>`}
+    <div class="row">${g.has_bank?`<button class="gd" data-copy="${esc(g.acct)}">📋 نسخ رقم الحساب</button>`:""}${g.ids.length?`<button class="ok" data-payout="${g.mid}" data-amt="${esc(g.amount)}" data-name="${esc(g.name)}">✅ تم التحويل</button>`:""}${phLink(g.phone,"السلام عليكم، تم تحويل مستحقاتك من "+SHOP+" ("+g.amount+") 💛")}</div></div>`).join(""):`<div class="empty">لا توجد مستحقات للتسوية الآن ✅</div>`}
+  if(page==="prods"){
+    const st=(d.store||[]).map(p=>({...p,src:"store",img:imgOf(p.image),cur:p.currency==="YER"?"ر.ي":"ر.س"}));
+    const mp=(d.merchant||[]).map(p=>({id:p.id,title:p.title,price:p.price,old:p.old,cat:p.cat,stock:p.stock,src:"merchant",img:p.img?API+"/img/"+p.img:"",cur:p.cur==="YER"?"ر.ي":"ر.س",merchant:p.merchant,hidden:p.status!=="active"}));
+    const L=(psrc==="store"?st:mp).filter(p=>!pq||(p.title+" "+(p.merchant||"")).includes(pq));
+    return `<div class="seg"><button data-psrc="store" class="${psrc==="store"?"on":""}">🏬 منتجات المتجر (${st.length})</button><button data-psrc="merchant" class="${psrc==="merchant"?"on":""}">🏪 منتجات التجار (${mp.length})</button></div>
+    <div class="search"><input id="pq" type="search" placeholder="ابحث في المنتجات" value="${esc(pq)}"></div>
+    ${L.length?L.map(p=>`<div class="pc"><div class="pr">${p.img?`<img src="${esc(p.img)}" alt="" loading="lazy">`:`<span class="ph">🛍</span>`}<div class="t"><b>${esc(p.title)}</b><span class="sub">${nf(p.price)} ${p.cur}${p.old?` · قبل: ${nf(p.old)}`:""}${p.merchant?` · 🏪 ${esc(p.merchant)}`:""}</span><br><span class="sub">${p.stock===false?"⛔ نفد المخزون":"✅ متوفر"}${p.hidden?" · 🙈 مخفي":""}</span></div></div>
+    <div class="row"><button data-pedit="${p.src}:${esc(p.id)}">✏️ تعديل</button><button data-pstk="${p.src}:${esc(p.id)}">${p.stock===false?"✅ متوفر":"⛔ نفد"}</button>${p.src==="merchant"?`<button data-phide="${esc(p.id)}">${p.hidden?"👁 إظهار":"🙈 إخفاء"}</button>`:""}<button class="no" data-pdel="${p.src}:${esc(p.id)}">🗑 حذف</button></div></div>`).join(""):`<div class="empty">لا توجد منتجات</div>`}`;
+  }
+  return "";
+}
+function drawPage(){
+  const t=PAGES.find(x=>x[0]===page);
+  const keep=$("#pq")&&document.activeElement===$("#pq");
+  $("#app").innerHTML=`<header><div class="in"><h1>${t[1]} ${t[2]}</h1><button class="rf" id="rfp" aria-label="تحديث">⟳</button></div></header><div class="wrap">${pageBody()}</div>`;
+  if($("#pq")){$("#pq").oninput=e=>{pq=e.target.value.trim();clearTimeout(drawPage._t);drawPage._t=setTimeout(()=>{drawPage();const i=$("#pq");i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)};if(keep){$("#pq").focus()}}
+}
+async function act(path,body,okMsg){try{await api(path,{method:"POST",body:JSON.stringify(body)});toast(okMsg||"تم ✓");await loadPage(true)}catch(e){toast("⚠️ "+e.message)}}
+function editSheet(src,id){
+  const d=D.prods,p=(src==="store"?d.store:d.merchant).find(x=>String(x.id)===id);if(!p)return;
+  const cats=d.cats||[];
+  const bg=document.createElement("div");bg.className="sheetbg";
+  bg.innerHTML=`<div class="sheet"><h3 style="margin:0 0 4px">✏️ تعديل المنتج</h3><label>الاسم</label><input id="e-t" value="${esc(p.title)}"><label>السعر</label><input id="e-p" type="number" inputmode="decimal" value="${esc(p.price)}"><label>السعر القديم (اختياري، 0 لإلغاء الخصم)</label><input id="e-o" type="number" inputmode="decimal" value="${esc(p.old||0)}">
+  <label>القسم</label><select id="e-c">${cats.map(c=>`<option value="${esc(c.id)}" ${c.id===(p.cat||"")?"selected":""}>${esc(c.name)}</option>`).join("")}</select>
+  <button class="go" id="e-save">حفظ</button><button class="go" style="background:var(--bg);color:var(--ink);margin-top:8px" id="e-x">إلغاء</button></div>`;
+  document.body.appendChild(bg);
+  bg.querySelector("#e-x").onclick=()=>bg.remove();
+  bg.onclick=e=>{if(e.target===bg)bg.remove()};
+  bg.querySelector("#e-save").onclick=async()=>{const F={title:$("#e-t",bg).value.trim(),price:$("#e-p",bg).value,old:$("#e-o",bg).value,cat:$("#e-c",bg).value};bg.remove();await act("/api/product",{src,id,action:"edit",fields:F},"تم حفظ التعديل ✓")};
+}
+document.addEventListener("click",async e=>{
+  const g=e.target.closest("[data-pg]");if(g){setPage(g.dataset.pg);return}
+  if(e.target.closest("#rfp")){await loadPage();return}
+  let b;
+  if(b=e.target.closest("[data-payok]")){if(confirm("هل وصل المبلغ فعلاً إلى حسابك؟"))act("/api/pay",{tk:b.dataset.payok,ok:true},"✅ تم تأكيد الدفع");return}
+  if(b=e.target.closest("[data-payno]")){if(confirm("رفض الإيصال وطلب إيصال جديد من العميل؟"))act("/api/pay",{tk:b.dataset.payno,ok:false},"رُفض الإيصال");return}
+  if(b=e.target.closest("[data-mg]")){const[i,a]=b.dataset.mg.split(":");const msg={ok:"تفعيل هذا التاجر؟",no:"رفض هذا التاجر؟",off:"إيقاف هذا التاجر؟ ستختفي منتجاته من المتجر."}[a];if(confirm(msg))act("/api/merchant",{id:Number(i),action:a},"تم ✓");return}
+  if(b=e.target.closest("[data-csave]")){const v=document.querySelector(`[data-cin="${b.dataset.csave}"]`).value;act("/api/merchant",{id:Number(b.dataset.csave),action:"commission",commission:Number(v)},"تم حفظ العمولة ✓");return}
+  if(b=e.target.closest("[data-copy]")){try{await navigator.clipboard.writeText(b.dataset.copy);toast("📋 تم نسخ رقم الحساب")}catch{toast(b.dataset.copy)}return}
+  if(b=e.target.closest("[data-payout]")){if(confirm(`هل حوّلت ${b.dataset.amt} إلى ${b.dataset.name}؟ سيُسجَّل كمُسوّى.`))act("/api/payout",{mid:Number(b.dataset.payout)},"✅ سُجّلت التسوية");return}
+  if(b=e.target.closest("[data-psrc]")){psrc=b.dataset.psrc;drawPage();return}
+  if(b=e.target.closest("[data-pedit]")){const[s,...r]=b.dataset.pedit.split(":");editSheet(s,r.join(":"));return}
+  if(b=e.target.closest("[data-pstk]")){const[s,...r]=b.dataset.pstk.split(":");act("/api/product",{src:s,id:r.join(":"),action:"stk"},"تم ✓");return}
+  if(b=e.target.closest("[data-phide]")){act("/api/product",{src:"merchant",id:b.dataset.phide,action:"hide"},"تم ✓");return}
+  if(b=e.target.closest("[data-pdel]")){const[s,...r]=b.dataset.pdel.split(":");if(confirm("حذف هذا المنتج نهائياً؟"))act("/api/product",{src:s,id:r.join(":"),action:"del"},"🗑 تم الحذف");return}
+});
 async function boot(){
   if(!KEY)return loginView();
   clearInterval(timer);
   await loadProds();
-  await load(true);
-  timer=setInterval(()=>{if(!document.hidden&&!sel.size&&KEY)load(true,true)},30000);
+  drawNav();
+  if(page==="orders")await load(true);else{drawPage();await loadPage()}
+  loadBadges();
+  timer=setInterval(()=>{if(document.hidden||!KEY)return;if(page==="orders"){if(!sel.size)load(true,true);loadBadges()}else if(!document.querySelector(".sheetbg"))loadPage(true)},30000);
 }
 boot();
 </script>
