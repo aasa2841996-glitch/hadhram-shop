@@ -543,7 +543,7 @@ function card(p){
     <div class="pr"><b>${nf(p.price)} ${esc(p.cur)}</b>${d?`<s>${nf(p.old)} ${esc(p.cur)}</s><span class="dp">-${d}%</span>`:""}</div>
     ${p.yer?`<div class="pr2">${nf(p.yer)} ر.ي</div>`:""}
     ${p.ship?`<div class="shp">🚚 ${esc(p.ship)}</div>`:""}
-    ${p.stock?`<button class="addw" data-act="${p.opts&&p.opts.length?"open":"add"}" data-id="${esc(p.id)}">${p.opts&&p.opts.length?"اختر":"أضف إلى السلة"} ${ICON_CART2}</button>`:""}</div></article>`;
+    ${p.stock?`<button class="addw" data-act="${p.opts&&p.opts.length?"open":"add"}" data-id="${esc(p.id)}">${p.opts&&p.opts.length?"أضف إلى السلة":"أضف إلى السلة"} ${ICON_CART2}</button>`:""}</div></article>`;
 }
 const SORTS=[["new","الأحدث"],["low","الأقل سعراً"],["high","الأعلى سعراً"],["disc","الأعلى خصماً"]];
 function sorted(a){const r=[...a];({new:()=>r.sort((x,y)=>y.created-x.created),low:()=>r.sort((x,y)=>x.price-y.price),high:()=>r.sort((x,y)=>y.price-x.price),disc:()=>r.sort((x,y)=>disc(y)-disc(x))})[SORT]();return r}
@@ -701,7 +701,7 @@ document.addEventListener("change",async e=>{
   }catch(err){toast("⚠️ "+err.message)}
 });
 const contactBox=()=>`<div class="me">${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 راسلنا على واتساب</a>`:""}<a href="merchant.html">🏪 قسم التاجر — بع منتجاتك معنا</a></div>`;
-function fixOpts(o){return (Array.isArray(o)?o:[]).map(g=>{const vs=[];(g.values||[]).forEach(v=>{String(v).split(/\s+[.،,]\s+|\s*[،,]\s*|(?<=[A-Za-z\u0600-\u06FF])\.(?=[A-Za-z\u0600-\u06FF])/).forEach(x=>{x=x.trim();if(x&&!vs.includes(x))vs.push(x)})});return {...g,values:vs}})}
+function fixOpts(o){return (Array.isArray(o)?o:[]).map(g=>{const vs=[];(g.values||[]).forEach(v=>{String(v).split(/\s+\.\s*|\s*\.\s+|\s*[،,]\s*|(?<=[A-Za-z؀-ۿ])\.(?=[A-Za-z؀-ۿ])/).forEach(x=>{x=x.trim();if(x&&!vs.includes(x))vs.push(x)})});return {...g,values:vs}})}
 function openPage(id){
   const p=byId.get(id); if(!p) return; let q=1, sel={}, gi=0, need=false; const d=disc(p); const sim=ALL.filter(x=>x.cat===p.cat&&x.id!==p.id).slice(0,6);
   const draw=()=>{ $("#pg").innerHTML=`<div class="hd"><button data-pgclose>›</button><div class="hb"><button data-act="share" data-id="${esc(p.id)}" aria-label="مشاركة">↗</button><button data-act="fav" data-id="${esc(p.id)}" class="${saved().includes(p.id)?"on":""}" style="color:${saved().includes(p.id)?"var(--hot)":"#b5aa9a"}">♥</button></div></div>
