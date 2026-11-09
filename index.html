@@ -808,7 +808,7 @@ async function chSend(txt){
   txt=String(txt||"").trim();if(!txt)return false;
   if(!apiBase()){toast("الدردشة غير متاحة الآن");return false}
   const A=ACC()||{};CH.msgs.push({id:0,tmp:1,dir:"c",txt});CH.fresh=true;chDraw();
-  try{const r=await fetch(apiBase()+"/chat",{method:"POST",headers:{"content-type":"text/plain"},body:JSON.stringify({cid:chId(),name:A.name||"",phone:A.phone||"",txt})});const j=await r.json();if(!j.ok)throw new Error(j.error||"");
+  try{const r=await fetch(apiBase()+"/chat",{method:"POST",headers:{"content-type":"text/plain"},body:JSON.stringify({cid:chId(),name:A.name||"",phone:A.phone||"",txt,tks:LS.get("hs_orders",[]).map(o=>o.tk).filter(Boolean).slice(0,30)})});const j=await r.json();if(!j.ok)throw new Error(j.error||"");
     CH.msgs=CH.msgs.filter(x=>!x.tmp);await chPoll();return true}
   catch(e){CH.msgs=CH.msgs.filter(x=>!x.tmp);chDraw();toast("تعذّر الإرسال: "+(e.message||"حاول لاحقاً"));return false}
 }
