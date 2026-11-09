@@ -118,7 +118,7 @@ const ST={new:["جديد","var(--new)"],prep:["قيد التجهيز","var(--pre
 const nf=n=>(Math.round(n*100)/100).toLocaleString("en-US");
 const SHOP="حضرم شوب";
 let API=LS.get("ho_api","https://hadhram-bot.aasa2841996.workers.dev"), KEY=LS.get("ho_key","");
-let filter="", q="", orders=[], stats=null, more=false, sel=new Set(), maxId=0, timer=null, busy=false;
+let filter="new", curMid=null, curG=null, mf="", groups=[], q="", orders=[], stats=null, more=false, sel=new Set(), maxId=0, timer=null, busy=false;
 const toast=t=>{const el=$("#toast");el.textContent=t;el.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("show"),1800)};
 
 function loginView(msg){
@@ -148,15 +148,20 @@ async function load(reset=true,silent=false){
   if(busy)return;busy=true;
   const rf=$(".rf");if(rf&&!silent)rf.classList.add("spin");
   try{
-    const off=reset?0:orders.length;
-    const j=await api(`/api/orders?limit=30&offset=${off}&status=${encodeURIComponent(filter)}&q=${encodeURIComponent(q)}`);
-    if(reset){
-      const top=Math.max(0,...j.orders.map(o=>o.id));
-      if(maxId&&silent&&!q&&!filter&&top>maxId){beep();toast("🆕 طلب جديد")}
-      if(!q&&!filter)maxId=Math.max(maxId,top);
-      orders=j.orders;if(j.stats)stats=j.stats;
-    }else orders=orders.concat(j.orders);
-    more=j.more;
+    const grouped=!q&&curMid==null&&filter!=="hidden";
+    if(grouped){
+      const [s,g]=await Promise.all([api("/api/orders?limit=1"),api("/api/groups?status="+filter)]);
+      const top=Math.max(0,...(s.orders||[]).map(o=>o.id));
+      if(maxId&&silent&&top>maxId){beep();toast("🆕 طلب جديد")}
+      maxId=Math.max(maxId,top);stats=s.stats;groups=g.groups||[];orders=[];more=false;
+    }else{
+      const off=reset?0:orders.length;
+      const st=curMid!=null?mf:(q||filter==="hidden"?"":filter);
+      const j=await api(`/api/orders?limit=30&offset=${off}&status=${encodeURIComponent(st)}&q=${encodeURIComponent(q)}${curMid!=null?"&mid="+curMid:""}${filter==="hidden"&&curMid==null?"&hidden=1":""}`);
+      if(reset){orders=j.orders;if(j.stats)stats=j.stats}else orders=orders.concat(j.orders);
+      more=j.more;
+      if(curMid!=null){const g=await api(`/api/groups?mid=${curMid}`);curG=(g.groups||[])[0]||curG}
+    }
   }catch(e){busy=false;if(e.message==="401")return loginView("كلمة السر غير صحيحة");toast("⚠️ "+e.message);if(!stats)return loginView(e.message);}
   busy=false;draw();
 }
@@ -168,27 +173,54 @@ function card(o){
   const wa=o.phone?`<a class="wa" target="_blank" rel="noopener" href="https://wa.me/${esc(o.phone)}?text=${encodeURIComponent(msgFor(o,o.status))}">📲 أبلغ الزبون على واتساب (${esc(lab)})</a>`:"";
   const btns=["prep","ship","done","cancel"].map(s=>`<button class="go ${o.status===s?"cur":""}" style="--c:${ST[s][1]}" data-st="${s}" data-id="${o.id}">${ST[s][0]}</button>`).join("");
   return `<div class="card ${sel.has(o.id)?"sel":""}" style="--c:${col}"><div class="hd"><input class="ck" type="checkbox" data-ck="${o.id}" ${sel.has(o.id)?"checked":""}><span class="id">#${o.id}</span><span class="badge">${lab}</span></div>
-  <div class="tm">🕒 ${esc(o.time)}</div>
+  <div class="tm">🕒 ${esc(o.time)}${o.hidden?" · 🙈 مخفي":""}${o.recv==="yes"?" · ✅ العميل أكّد الاستلام":o.recv==="no"?" · ⚠️ العميل لم يستلم":""}</div>
   <div class="bd"><div class="nm">👤 ${esc(o.name||"—")}${o.phone?` <span dir="ltr" style="color:var(--muted);font-weight:700;font-size:13px">+${esc(o.phone)}</span>`:""}</div><div class="ad">📍 ${esc(o.addr||"—")}</div>
   <div class="its">${its}</div><div class="tot"><span>الإجمالي</span><b>${esc(o.total)}</b></div>${o.note?`<div class="note">📝 ${esc(o.note)}</div>`:""}</div>
-  <div class="act">${wa}${btns}<button class="prt" data-print="${o.id}">🖨 طباعة بوليصة الشحن</button></div></div>`;
+  <div class="act">${wa}${btns}<button class="prt" data-print="${o.id}">🖨 طباعة بوليصة الشحن</button><button style="flex-basis:100%" data-${o.hidden?"unhide":"hide"}="${o.id}">${o.hidden?"👁 إظهار الطلب":"🙈 إخفاء الطلب (يبقى محفوظاً)"}</button></div></div>`;
+}
+const ago=t=>{if(!t)return"—";const m=Math.max(0,Math.round((Date.now()-t)/6e4));if(m<60)return m+" دقيقة";const h=Math.round(m/60);if(h<48)return h+" ساعة";return Math.round(h/24)+" يوم"};
+const REM={new:(g)=>`عندك ${g.n} طلب جديد لم يتم تجهيزه بعد (${g.ids.map(i=>"#"+i).join("، ")}). نرجو البدء بالتجهيز وتحديث الحالة من التطبيق 🙏`,prep:(g)=>`عندك ${g.n} طلب قيد التجهيز ولم يُشحن بعد (${g.ids.map(i=>"#"+i).join("، ")}). متى سيتم شحنها؟ 🙏`,ship:(g)=>`عندك ${g.n} طلب في الطريق ولم يتأكد توصيله (${g.ids.map(i=>"#"+i).join("، ")}). نرجو تأكيد التوصيل من التطبيق بعد وصوله 🙏`};
+function groupCard(g){
+  const c=g.counts||{},col=ST[filter]?ST[filter][1]:"var(--ink)";
+  const rem=REM[filter]&&g.phone?`<a href="https://wa.me/${esc(g.phone)}?text=${encodeURIComponent("السلام عليكم "+(g.owner||"")+"، من إدارة "+SHOP+":\n"+REM[filter](g))}" target="_blank" rel="noopener" style="background:#25d366;border-color:#25d366;color:#fff">💬 تذكير واتساب</a>`:"";
+  return `<div class="pc" style="border-right:5px solid ${col}"><h3>🏪 ${esc(g.name)} <span class="tag" style="background:${col}">${g.n} ${ST[filter][0]}</span></h3>
+  <div class="sub">${g.owner?"👤 "+esc(g.owner)+" · ":""}${g.phone?"<span dir=ltr>+"+esc(g.phone)+"</span> · ":""}${g.city?"📍 "+esc(g.city):""}</div>
+  <div class="sub">⏱ أقدم طلب منذ <b>${ago(g.oldest)}</b> · ${g.ids.map(i=>"#"+i).join("، ")}</div>
+  <div class="sub">جديد ${c.new||0} · قيد التجهيز ${c.prep||0} · للتوصيل ${c.ship||0} · تم التوصيل ${c.done||0}</div>
+  <div class="row"><button class="gd" data-open="${g.mid}">📂 فتح طلبات المتجر</button>${g.phone?`<a href="tel:+${esc(g.phone)}">📞 اتصال</a>`:""}${rem}</div></div>`;
 }
 function draw(){
   if(page!=="orders")return drawPage();
   const c=(stats&&stats.counts)||{},t=(stats&&stats.today)||{count:0,sar:0,yer:0};
-  const tabs=[["","الكل",Object.values(c).reduce((a,b)=>a+b,0),"var(--ink)"],...Object.entries(ST).map(([k,[l,col]])=>[k,l,c[k]||0,col])];
-  $("#app").innerHTML=`<header><div class="in"><h1>🧾 طلبات ${SHOP}</h1><button class="rf" id="rf" aria-label="تحديث">⟳</button></div></header>
-  <div class="wrap">
-  <div class="stats" style="margin-top:12px">${tabs.map(([k,l,n,col])=>`<button class="st ${filter===k?"on":""}" data-f="${k}"><i style="background:${col}"></i><b>${n}</b>${l}</button>`).join("")}</div>
-  <div class="today"><span>📅 اليوم: <b>${t.count}</b> طلب</span><span>💰 <b>${nf(t.sar)}</b> ر.س${t.yer?` + <b>${nf(t.yer)}</b> ر.ي`:""}</span></div>
-  <div class="search"><input id="q" type="search" placeholder="ابحث: رقم الطلب، الاسم، الجوال، العنوان" value="${esc(q)}"></div>
-  <div id="list">${orders.length?orders.map(card).join(""):`<div class="empty">لا توجد طلبات هنا</div>`}</div>
+  const tabs=[...Object.entries(ST).map(([k,[l,col]])=>[k,l,c[k]||0,col]),["hidden","🙈 مخفية",c.hidden||0,"var(--muted)"]];
+  const inM=curMid!=null;
+  let top="";
+  if(inM){
+    const g=curG||{name:"المتجر",counts:{},owner:"",phone:""},cc=g.counts||{};
+    const rems=["new","prep","ship"].filter(k=>cc[k]).map(k=>`${cc[k]} ${ST[k][0]}`).join(" · ");
+    const wa=g.phone?`https://wa.me/${esc(g.phone)}?text=${encodeURIComponent("السلام عليكم "+(g.owner||"")+"، من إدارة "+SHOP+":\nمتابعة طلبات متجركم — "+(rems||"لا توجد طلبات معلّقة")+". نرجو تحديث الحالات من التطبيق 🙏")}`:"";
+    top=`<div class="pc" style="margin-top:12px"><h3>🏪 ${esc(g.name)}</h3><div class="sub">${g.owner?"👤 "+esc(g.owner)+" · ":""}${g.phone?"<span dir=ltr>+"+esc(g.phone)+"</span> · ":""}${g.city?"📍 "+esc(g.city):""}</div>
+    <div class="sub" style="margin-top:4px">⚠️ المعلّق: <b>${rems||"لا يوجد"}</b></div>
+    <div class="row">${g.phone?`<a href="tel:+${esc(g.phone)}">📞 اتصال بالتاجر</a><a href="${wa}" target="_blank" rel="noopener" style="background:#25d366;border-color:#25d366;color:#fff">💬 تذكير واتساب</a>`:""}</div></div>
+    <div class="stats" style="grid-template-columns:repeat(6,1fr);margin-top:10px">${[["","الكل",(cc.new||0)+(cc.prep||0)+(cc.ship||0)+(cc.done||0)+(cc.cancel||0),"var(--ink)"],...Object.entries(ST).map(([k,[l,col]])=>[k,l,cc[k]||0,col])].map(([k,l,n,col])=>`<button class="st ${mf===k?"on":""}" data-mf="${k}"><i style="background:${col}"></i><b>${n}</b>${l}</button>`).join("")}</div>`;
+  }else{
+    top=`<div class="stats" style="grid-template-columns:repeat(6,1fr);margin-top:12px">${tabs.map(([k,l,n,col])=>`<button class="st ${filter===k&&!q?"on":""}" data-f="${k}"><i style="background:${col}"></i><b>${n}</b>${l}</button>`).join("")}</div>
+    <div class="today"><span>📅 اليوم: <b>${t.count}</b> طلب</span><span>💰 <b>${nf(t.sar)}</b> ر.س${t.yer?` + <b>${nf(t.yer)}</b> ر.ي`:""}</span></div>`;
+  }
+  const grouped=!q&&!inM&&filter!=="hidden";
+  const body=grouped?(groups.length?groups.map(groupCard).join(""):`<div class="empty">لا توجد طلبات «${ST[filter][0]}» عند أي متجر ✅</div>`)
+    :(orders.length?orders.map(card).join(""):`<div class="empty">${q?"لا توجد نتائج":"لا توجد طلبات هنا"}</div>`);
+  $("#app").innerHTML=`<header><div class="in">${inM?`<button class="rf" id="bk" aria-label="رجوع">›</button>`:""}<h1>${inM?"🏪 طلبات التاجر":"🧾 طلبات "+SHOP}</h1><button class="rf" id="rf" aria-label="تحديث">⟳</button></div></header>
+  <div class="wrap">${top}
+  ${inM?"":`<div class="search"><input id="q" type="search" placeholder="ابحث برقم الطلب (حتى المخفية)، الاسم، الجوال" value="${esc(q)}"></div>`}
+  <div id="list">${body}</div>
   ${more?`<button class="more" id="more">عرض المزيد</button>`:""}</div>
   <div class="bulk ${sel.size?"show":""}"><div class="in"><div class="t"><span>محدد: ${sel.size} طلب</span><button id="clr" style="color:var(--gold2);font-weight:900">إلغاء التحديد</button></div>
-  <div class="r">${["prep","ship","done","cancel"].map(s=>`<button style="--c:${ST[s][1]}" data-bulk="${s}">${ST[s][0]}</button>`).join("")}</div></div></div>`;
-  $("#q").oninput=e=>{clearTimeout(draw._t);const v=e.target.value;draw._t=setTimeout(()=>{q=v.trim();sel.clear();load(true)},350)};
-  const inp=$("#q");if(document.activeElement!==inp&&draw._focus){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length)}
-  inp.onfocus=()=>draw._focus=true;inp.onblur=()=>draw._focus=false;
+  <div class="r">${["prep","ship","done","cancel"].map(s=>`<button style="--c:${ST[s][1]}" data-bulk="${s}">${ST[s][0]}</button>`).join("")}<button style="--c:#6b5a45" data-bulkhide="1">🙈 إخفاء</button></div></div></div>`;
+  const inp=$("#q");
+  if(inp){inp.oninput=e=>{clearTimeout(draw._t);const v=e.target.value;draw._t=setTimeout(()=>{q=v.trim();sel.clear();load(true)},350)};
+  if(document.activeElement!==inp&&draw._focus){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length)}
+  inp.onfocus=()=>draw._focus=true;inp.onblur=()=>draw._focus=false}
 }
 /* ---------- طباعة بوليصة الشحن (تُلصق على الطرد) ---------- */
 function labelHtml(o,sender){
@@ -237,8 +269,16 @@ async function setStatus(ids,st){
   try{await api("/api/status",{method:"POST",body:JSON.stringify({ids,status:st})});toast("تم التحديث ✓");sel.clear();await load(true,true)}
   catch(e){toast("⚠️ "+e.message)}
 }
+async function hideOrders(ids,h){try{await api("/api/hide",{method:"POST",body:JSON.stringify({ids,hidden:h})});toast(h?"🙈 تم الإخفاء — ابحث برقم الطلب لإرجاعه":"👁 تم إظهار الطلب");sel.clear();await load(true,true)}catch(e){toast("⚠️ "+e.message)}}
 document.addEventListener("click",e=>{
-  const f=e.target.closest("[data-f]");if(f){filter=f.dataset.f;sel.clear();load(true);return}
+  if(page!=="orders")return;
+  const op=e.target.closest("[data-open]");if(op){curMid=Number(op.dataset.open);curG=groups.find(g=>g.mid===curMid)||null;mf="";sel.clear();window.scrollTo(0,0);load(true);return}
+  if(e.target.closest("#bk")){curMid=null;curG=null;sel.clear();load(true);return}
+  const mfb=e.target.closest("[data-mf]");if(mfb){mf=mfb.dataset.mf;sel.clear();load(true);return}
+  const hb=e.target.closest("[data-hide]");if(hb){hideOrders([Number(hb.dataset.hide)],true);return}
+  const uh=e.target.closest("[data-unhide]");if(uh){hideOrders([Number(uh.dataset.unhide)],false);return}
+  if(e.target.closest("[data-bulkhide]")){if(confirm(`إخفاء ${sel.size} طلب؟ (تبقى محفوظة ويمكن إرجاعها بالبحث برقم الطلب)`))hideOrders([...sel],true);return}
+  const f=e.target.closest("[data-f]");if(f){filter=f.dataset.f;q="";sel.clear();load(true);return}
   if(e.target.closest("#rf")){load(true);return}
   if(e.target.closest("#more")){load(false);return}
   if(e.target.closest("#clr")){sel.clear();draw();return}
