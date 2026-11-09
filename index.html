@@ -448,6 +448,18 @@ html,body{font-family:"Tajawal",sans-serif!important;font-weight:400}
 .pb>.pr2:last-of-type{margin-bottom:8px}
 .pr{flex-direction:row!important;justify-content:flex-start!important;min-height:0!important}
 @media (min-width:900px){.pg .bd{width:100%;margin:0!important;box-sizing:border-box}}
+.revs{border-top:1px solid #ececec;margin-top:6px;padding-top:10px}
+.rvh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.rvh .stars,.rv .stars{color:#f5a623}
+.rv{padding:10px 0;border-bottom:1px solid #f0f0f0}.rvt{display:flex;gap:8px;align-items:center;font-size:13px}.rvt small{color:#888;margin-right:auto}.rv p{margin:6px 0 0;font-size:14px;line-height:1.6}.rv img{margin-top:8px;max-width:120px;max-height:120px;object-fit:cover}.rvn{color:#777;font-size:13.5px;padding:6px 0}
+.rbtn{margin-top:8px;width:100%;background:#ffd500;color:#111;font-weight:800;padding:11px;border:0}
+.rsheet{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
+.rin{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow:auto;padding:14px 14px calc(16px + env(safe-area-inset-bottom))}
+.rhd{display:flex;justify-content:space-between;align-items:center;font-size:17px;margin-bottom:6px}.rhd button{font-size:20px;padding:4px 10px}
+.rit{border-top:1px solid #eee;padding:12px 0}.rtt{font-weight:800;font-size:14.5px;margin-bottom:6px}
+.rst{display:flex;gap:4px;direction:ltr;justify-content:flex-end}.rst button{font-size:34px;line-height:1;color:#d5d5d5;padding:0 2px}.rst button.on{color:#f5a623}
+.rit textarea{width:100%;min-height:62px;border:1px solid #ddd;padding:8px;font-family:inherit;font-size:14px;margin-top:6px;box-sizing:border-box;resize:vertical}
+.rph{display:inline-block;margin-top:6px;padding:8px 12px;background:#f4f4f4;font-weight:700;font-size:13px;cursor:pointer}
+.rgo{width:100%;margin-top:8px;background:#ffd500;color:#111;font-weight:800;padding:14px;font-size:16px;border:0}.rgo:disabled{opacity:.6}
 </style>
 </head>
 <body>
@@ -493,9 +505,10 @@ let MPROD=LS.get("hs_mp",[]);
 function ingest(d){
   S={...S,...(d.settings||{})}; CATS=d.categories||[];
   const api=(S.orderApi||"").replace(/\/$/,"");
-  const mp=(MPROD||[]).map(p=>({id:p.id,title:p.title,price:p.price,currency:p.cur,old:p.old,image:p.img?api+"/img/"+p.img:"",images:(p.imgs||[]).map(x=>api+"/img/"+x),opts:fixOpts(p.opts),category:p.cat,desc:p.desc,priceYer:p.price_yer,stock:p.stock,createdAt:new Date(p.created).toISOString(),merchant:p.merchant}));
-  ALL=[...(d.products||[]),...mp].map(p=>({mn:p.merchant||"",rate:parseFloat(p.rating)||0,rc:parseInt(p.reviews)||0,ship:String(p.ship||"").slice(0,40),id:String(p.id),title:p.title||"منتج",price:parseFloat(p.price)||0,cur:p.currency==="YER"?"ر.ي":"ر.س",old:parseFloat(p.old)||0,image:p.image||"",imgs:(p.images&&p.images.length?p.images:(p.image?[p.image]:[])),opts:fixOpts(p.opts),cat:p.category||"",desc:p.desc||"",yer:parseFloat(p.priceYer)||0,stock:p.stock!==false,created:Date.parse(p.createdAt)||0}))
+  const mp=(MPROD||[]).map(p=>({id:p.id,title:p.title,price:p.price,currency:p.cur,old:p.old,image:p.img?api+"/img/"+p.img:"",images:(p.imgs||[]).map(x=>api+"/img/"+x),opts:fixOpts(p.opts),category:p.cat,desc:p.desc,priceYer:p.price_yer,stock:p.stock,createdAt:new Date(p.created).toISOString(),merchant:p.merchant,mid:p.mid||0}));
+  ALL=[...(d.products||[]),...mp].map(p=>({mn:p.merchant||"",mid:p.mid||0,rate:parseFloat(p.rating)||0,rc:parseInt(p.reviews)||0,ship:String(p.ship||"").slice(0,40),id:String(p.id),title:p.title||"منتج",price:parseFloat(p.price)||0,cur:p.currency==="YER"?"ر.ي":"ر.س",old:parseFloat(p.old)||0,image:p.image||"",imgs:(p.images&&p.images.length?p.images:(p.image?[p.image]:[])),opts:fixOpts(p.opts),cat:p.category||"",desc:p.desc||"",yer:parseFloat(p.priceYer)||0,stock:p.stock!==false,created:Date.parse(p.createdAt)||0}))
     .filter(p=>p.price>0).sort((a,b)=>b.created-a.created);
+  applyRat(); setTimeout(loadRatings,0);
   byId=new Map(ALL.map(x=>[x.id,x]));
   CART=CART.filter(i=>byId.has(i.id));
   $("#shopName").textContent=S.name; document.title=S.name;
@@ -638,6 +651,49 @@ function checkout(items){
   if(S.orderApi){toast("تم استلام طلبك ✅ أكمل الدفع من «طلباتي»");nav({name:"orders"})}
 }
 const TRK={}; let trkAt=0, PAYINFO="";
+let RAT=LS.get("hs_rat",{p:{},m:{}}), REVC={};
+function applyRat(){ALL.forEach(p=>{const r=RAT.p[p.id];p.rate=r?r.a:0;p.rc=r?r.n:0;p.mr=p.mid&&RAT.m[p.mid]?RAT.m[p.mid]:null})}
+async function loadRatings(){
+  const api=(S.orderApi||"").replace(/\/$/,""); if(!api) return;
+  try{const r=await fetch(api+"/ratings");const j=await r.json();RAT={p:j.p||{},m:j.m||{}};LS.set("hs_rat",RAT);applyRat();if(!$("#pg").classList.contains("show")&&!$("#rsheet"))render()}catch(e){}
+}
+const starsTxt=n=>"★".repeat(Math.round(n))+"☆".repeat(5-Math.round(n));
+async function loadRevs(p){
+  const box=$("#revs"); if(!box) return;
+  const api=(S.orderApi||"").replace(/\/$/,"");
+  const paint=list=>{const b=$("#revs");if(!b)return;const r=RAT.p[p.id];
+    b.innerHTML=`<div class="rvh"><b>⭐ التقييمات</b>${r?`<span><b>${nf(r.a)}</b> ${starsTxt(r.a)} (${r.n})</span>`:""}</div>`+(list.length?list.map(x=>`<div class="rv"><div class="rvt"><b>${esc(x.n)}</b><span class="stars">${starsTxt(x.s)}</span><small>${esc(x.d)}</small></div>${x.t?`<p>${esc(x.t)}</p>`:""}${x.img?`<img src="${esc(api+"/img/"+x.img)}" alt="" loading="lazy">`:""}</div>`).join(""):`<div class="rvn">لا توجد تقييمات بعد — كن أول من يقيّم بعد استلام طلبك</div>`)};
+  if(REVC[p.id]){paint(REVC[p.id]);return}
+  paint([]);
+  try{const r=await fetch(api+"/reviews?pid="+encodeURIComponent(p.id));const j=await r.json();REVC[p.id]=j.reviews||[];paint(REVC[p.id])}catch(e){}
+}
+function openRate(tk,id){
+  const t=(TRK[tk]||[]).find(x=>x.id===id); if(!t||t.recv!=="yes"||t.rated) return;
+  const items=(t.items||[]).filter(i=>i.id), st={}, ph={}, api=(S.orderApi||"").replace(/\/$/,"");
+  const sh=document.createElement("div"); sh.id="rsheet"; sh.className="rsheet";
+  const star=(k,v)=>[1,2,3,4,5].map(n=>`<button type="button" data-rs="${esc(k)}" data-n="${n}" class="${(st[k]||0)>=n?"on":""}">★</button>`).join("");
+  const draw=()=>{sh.innerHTML=`<div class="rin"><div class="rhd"><b>⭐ قيّم طلبك #${t.id}</b><button data-rx>✕</button></div>
+    ${items.map((i,x)=>`<div class="rit"><div class="rtt">${esc(i.title)}</div><div class="rst" data-k="p${x}">${star("p"+x)}</div><textarea data-rt="p${x}" maxlength="300" placeholder="رأيك في المنتج (اختياري)"></textarea><label class="rph">📷 ${ph["p"+x]?"تم اختيار صورة ✅":"أضف صورة (اختياري)"}<input type="file" accept="image/*" data-rp="p${x}" hidden></label></div>`).join("")}
+    ${t.merchant?`<div class="rit"><div class="rtt">🏪 التاجر: ${esc(t.merchant)}</div><div class="rst" data-k="m">${star("m")}</div><textarea data-rt="m" maxlength="300" placeholder="رأيك في التاجر والتعامل (اختياري)"></textarea></div>`:""}
+    <button class="rgo" data-rgo>إرسال التقييم</button></div>`};
+  const keep={};
+  draw(); document.body.appendChild(sh);
+  sh.addEventListener("input",e=>{const k=e.target.dataset&&e.target.dataset.rt;if(k)keep[k]=e.target.value});
+  sh.addEventListener("change",async e=>{const k=e.target.dataset&&e.target.dataset.rp;if(!k||!e.target.files[0])return;try{ph[k]=await resizeImg(e.target.files[0]);draw();Object.entries(keep).forEach(([a,b])=>{const ta=sh.querySelector(`[data-rt="${a}"]`);if(ta)ta.value=b})}catch(err){toast("تعذّر قراءة الصورة")}});
+  sh.addEventListener("click",async e=>{
+    if(e.target.closest("[data-rx]")||e.target===sh){sh.remove();return}
+    const s=e.target.closest("[data-rs]"); if(s){st[s.dataset.rs]=+s.dataset.n;const row=s.parentElement;row.innerHTML=star(s.dataset.rs);return}
+    if(e.target.closest("[data-rgo]")){
+      const body={tk,id,items:items.map((i,x)=>({pid:i.id,stars:st["p"+x]||0,txt:(sh.querySelector(`[data-rt="p${x}"]`)||{}).value||"",image:ph["p"+x]||""})).filter(i=>i.stars),m:{stars:st.m||0,txt:(sh.querySelector('[data-rt="m"]')||{}).value||""}};
+      if(!body.items.length&&!body.m.stars){toast("اختر عدد النجوم أولاً");return}
+      const b=e.target.closest("[data-rgo]");b.disabled=true;b.textContent="جارٍ الإرسال…";
+      try{const r=await fetch(api+"/rate",{method:"POST",headers:{"content-type":"text/plain"},body:JSON.stringify(body)});const j=await r.json();if(!r.ok||!j.ok)throw new Error(j.error||"");
+        (TRK[tk]||[]).forEach(x=>{if(x.id===id)x.rated=1});sh.remove();toast("شكراً لتقييمك 🌹");Object.keys(REVC).forEach(k=>delete REVC[k]);loadRatings();if(view.name==="orders")render()}
+      catch(err){toast("⚠️ "+(err.message||"تعذّر الإرسال"));b.disabled=false;b.textContent="إرسال التقييم"}
+    }
+  });
+}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-rate]");if(b)openRate(b.dataset.tk,Number(b.dataset.oid))});
 function drawRcv(){
   const el=$("#rcv"); if(!el) return;
   const pend=[]; Object.values(TRK).forEach(a=>a.forEach(t=>{if(t.status==="done"&&t.pay_status==="paid"&&!t.recv)pend.push(t)}));
@@ -648,7 +704,7 @@ function drawRcv(){
 }
 async function sendRecv(tk,id,ans){
   try{const r=await fetch(S.orderApi.replace(/\/$/,"")+"/recv",{method:"POST",headers:{"content-type":"text/plain"},body:JSON.stringify({tk,id,ans})});const j=await r.json();if(!j.ok)throw new Error(j.error||"");
-    Object.values(TRK).forEach(a=>a.forEach(t=>{if(t.id===id)t.recv=ans}));drawRcv();toast(ans==="yes"?"شكراً لك 🌹 تم تسجيل الاستلام":"سجّلنا بلاغك وسنتواصل معك قريباً");if(view.name==="orders")render()}
+    Object.values(TRK).forEach(a=>a.forEach(t=>{if(t.id===id)t.recv=ans}));drawRcv();toast(ans==="yes"?"شكراً لك 🌹 تم تسجيل الاستلام":"سجّلنا بلاغك وسنتواصل معك قريباً");if(view.name==="orders")render();if(ans==="yes"){trkAt=0;await trackOrders();openRate(tk,id)}}
   catch(e){toast("تعذّر الإرسال، حاول مرة أخرى")}
 }
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-rcv]");if(b)sendRecv(b.dataset.tk,Number(b.dataset.oid),b.dataset.rcv)});
@@ -680,7 +736,7 @@ function ordersView(){
     const parts=subs.length?subs.map(t=>{const st=t.status,idx=OSTEPS.findIndex(x=>x[0]===st);
       return `<div class="tkpart"><div class="tkseller">🏪 ${esc(t.merchant||S.name)} <span style="color:var(--muted);font-weight:700">· طلب #${t.id}</span></div>
       ${t.pay_status==="unpaid"||t.pay_status==="rejected"?`<div class="od">💳 بانتظار الدفع</div>`:t.pay_status==="review"?`<div class="od">⏳ الإيصال قيد المراجعة</div>`:st==="cancel"?`<div class="ocan">❌ تم إلغاء الطلب</div>`:`<div class="stp">${OSTEPS.map((x,k)=>`<div class="s ${k<=idx?"dn":""} ${k===idx?"cur":""}"><i>${k<=idx?"✓":k+1}</i>${x[1]}</div>`).join("")}</div>`}
-      ${t.ship_info?`<div class="tkship">🚚 ${esc(t.ship_info)}</div>`:""}${t.recv==="yes"?`<div class="rcvd">✅ أكّدت استلام الطلب</div>`:t.recv==="no"?`<div class="rcvd no">⚠️ أبلغت أنك لم تستلم الطلب — سنتواصل معك</div>`:""}</div>`}).join(""):`<div class="od">جارٍ التحقق من حالة الطلب…</div>`;
+      ${t.ship_info?`<div class="tkship">🚚 ${esc(t.ship_info)}</div>`:""}${t.recv==="yes"?`<div class="rcvd">✅ أكّدت استلام الطلب</div>${t.rated?`<div class="rcvd">⭐ شكراً لتقييمك</div>`:`<button class="rbtn" data-rate data-tk="${esc(t.tk)}" data-oid="${t.id}">⭐ قيّم الطلب</button>`}`:t.recv==="no"?`<div class="rcvd no">⚠️ أبلغت أنك لم تستلم الطلب — سنتواصل معك</div>`:""}</div>`}).join(""):`<div class="od">جارٍ التحقق من حالة الطلب…</div>`;
     const wa=subs[0];
     return `<div class="ord"><div class="oh"><span>طلب ${subs.length===1?"#"+subs[0].id:""}</span><span style="color:var(--hot)">${esc(o.total)}</span></div><div class="od">${esc(when)}</div>
     <div class="oi">${o.items.slice(0,6).map(i=>i.image?`<img src="${esc(safeUrl(i.image))}" alt="">`:"").join("")}</div>${payBox}${parts}
@@ -708,13 +764,15 @@ function openPage(id){
     ${p.imgs.length?`<div class="gwrap"><div class="gal2" id="gal2">${p.imgs.map(u=>`<img src="${esc(safeUrl(u))}" alt="">`).join("")}</div>${p.imgs.length>1?`<div class="gdots">${p.imgs.map((u,n)=>`<i class="${n===gi?"on":""}"></i>`).join("")}</div>`:""}</div>${p.imgs.length>1?`<div class="gth">${p.imgs.map((u,n)=>`<img data-gi="${n}" class="${n===gi?"on":""}" src="${esc(safeUrl(u))}" alt="">`).join("")}</div>`:""}`:""}
     <div class="bd"><div class="price"><b>${nf(p.price)} ${esc(p.cur)}</b>${d?`<s>${nf(p.old)} ${esc(p.cur)}</s><span class="off">-${d}%</span>`:""}${p.yer?`<span class="yer">أو ${nf(p.yer)} ر.ي</span>`:""}</div>
     ${d?`<div><span class="save">وفّرت ${nf(p.old-p.price)} ${esc(p.cur)}</span></div>`:""}
-    <h3>${esc(p.title)}</h3>${p.mn?`<div style="font-weight:800;font-size:13.5px;color:var(--muted)">🏪 البائع: <b style="color:var(--ink)">${esc(p.mn)}</b></div>`:""}${p.desc?`<p>${esc(p.desc)}</p>`:""}
+    <h3>${esc(p.title)}</h3>${p.mn?`<div style="font-weight:800;font-size:13.5px;color:var(--muted)">🏪 البائع: <b style="color:var(--ink)">${esc(p.mn)}</b>${p.mr?` <span style="color:#f5a623">★</span> ${nf(p.mr.a)} <small>(${p.mr.n} تقييم)</small>`:""}</div>`:""}${p.desc?`<p>${esc(p.desc)}</p>`:""}
     <div class="trust"><span>⚡ طلب سريع عبر واتساب</span><span>💬 تواصل مباشر</span></div>
     ${S.whatsapp?`<a class="btn wa wide" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/${esc(S.whatsapp)}?text=${encodeURIComponent("السلام عليكم، أبغى أستفسر عن: "+p.title+"\n"+location.href.split("#")[0]+"#p="+p.id)}">💬 اسأل عن المنتج</a>`:""}
     ${p.stock&&p.opts.length?p.opts.map(g=>`<div class="optg"><b>${esc(g.name)}${sel[g.name]?`: <span style="color:var(--hot)">${esc(sel[g.name])}</span>`:""}</b><div class="optv ${need&&!sel[g.name]?"need":""}">${g.values.map(v=>`<button data-opt="${esc(g.name)}" data-v="${esc(v)}" class="${sel[g.name]===v?"on":""}">${esc(v)}</button>`).join("")}</div></div>`).join(""):""}
+    <div id="revs" class="revs"></div>
     ${p.stock?`<div class="qty">الكمية: <button class="qb" data-pq="-">−</button><span>${q}</span><button class="qb" data-pq="+">+</button></div>`:`<div class="empty">نفد المخزون</div>`}</div>
     ${sim.length?`<div class="simh">منتجات مشابهة</div><div class="grid" style="max-width:560px;margin:0 auto">${sim.map(card).join("")}</div>`:""}
     ${p.stock?`<div class="actbar"><button class="btn cart" id="pAdd">🛒 أضف للسلة</button><button class="btn buy" id="pBuy">⚡ اشترِ الآن</button></div>`:""}`;
+    loadRevs(p);
     $("#pg").querySelectorAll("[data-pq]").forEach(b=>b.onclick=()=>{q=Math.max(1,q+(b.dataset.pq==="+"?1:-1));draw()});
     const gl=$("#gal2"); if(gl){if(gi)gl.scrollLeft=(gl.scrollWidth/p.imgs.length)*gi*(getComputedStyle(gl).direction==="rtl"?-1:1); gl.onscroll=()=>{const n=Math.round(Math.abs(gl.scrollLeft)/gl.clientWidth);if(n!==gi){gi=n;$("#pg").querySelectorAll(".gdots i").forEach((e,k)=>e.classList.toggle("on",k===n));$("#pg").querySelectorAll("[data-gi]").forEach((e,k)=>e.classList.toggle("on",k===n))}}}
     $("#pg").querySelectorAll("[data-gi]").forEach(t=>t.onclick=()=>{const n=+t.dataset.gi;gl.scrollTo({left:(gl.scrollWidth/p.imgs.length)*n*(getComputedStyle(gl).direction==="rtl"?-1:1),behavior:"smooth"})});
