@@ -473,6 +473,15 @@ html[data-theme=dark] img,html[data-theme=dark] video,html[data-theme=dark] .wlc
 .seg2{display:flex}.seg2 button{padding:7px 12px;border:1px solid #ddd;margin-right:-1px;font-size:13px;font-weight:700;background:#fff;color:#111}.seg2 button.on{background:#ffd500;border-color:#ffd500}.seg2 button:disabled{opacity:.5}
 .av{display:flex;gap:6px}.av input{flex:1}.av button{background:#ffd500;color:#111;font-weight:800;padding:0 16px}
 html[data-theme=dark] .addw,html[data-theme=dark] .nav button.on,html[data-theme=dark] .dnav .on,html[data-theme=dark] .chip.on,html[data-theme=dark] .btn.cart,html[data-theme=dark] .av2,html[data-theme=dark] .role,html[data-theme=dark] .upl,html[data-theme=dark] .seg2 button.on,html[data-theme=dark] .seg3 button.on,html[data-theme=dark] .rbtn,html[data-theme=dark] .rgo,html[data-theme=dark] .av button,html[data-theme=dark] .fab,html[data-theme=dark] .go,html[data-theme=dark] .btn.gold,html[data-theme=dark] .slide,html[data-theme=dark] .pnav button.on,html[data-theme=dark] .tag,html[data-theme=dark] .dp,html[data-theme=dark] .cnt,html[data-theme=dark] .nb{filter:invert(1) hue-rotate(180deg)}
+.ic{width:22px;height:22px;flex:none}
+.mgt{font-size:12.5px;font-weight:700;color:#777;margin:16px 14px 6px}
+.mg{background:#fff;border-top:1px solid #ececec;border-bottom:1px solid #ececec}
+.mr{display:flex;align-items:center;gap:14px;width:100%;padding:14px;border:0;border-bottom:1px solid #f1f1f1;background:#fff;color:#111;text-align:right;text-decoration:none;font-family:inherit;box-sizing:border-box}
+.mr:last-child{border-bottom:0}.mr .mt{flex:1;min-width:0}.mr b{display:block;font-size:15px;font-weight:700}.mr small{display:block;color:#777;font-size:12.5px;margin-top:1px;font-weight:400}
+.mr .ic:last-child{color:#999;width:18px}.mr.st{cursor:default}
+.av2 .ic{width:28px;height:28px}
+.fq{border-bottom:1px solid #f1f1f1}.fq summary{display:flex;align-items:center;gap:14px;padding:14px;cursor:pointer;list-style:none}.fq summary::-webkit-details-marker{display:none}.fq summary b{font-size:14.5px;font-weight:700}.fq p{margin:0;padding:0 14px 14px 14px;color:#444;font-size:14px;line-height:1.7}
+.btn .ic{width:18px;height:18px;vertical-align:-3px}
 </style>
 </head>
 <body>
@@ -710,27 +719,74 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
 const getTh=()=>{try{return localStorage.getItem("hs_theme")||"auto"}catch(e){return"auto"}};
 function setTh(m){try{localStorage.setItem("hs_theme",m)}catch(e){}const d=m==="dark"||(m==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light"}
 const ACC=()=>LS.get("hs_acct",null);let acEdit=false,acDel=false;
+const IC={
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+ mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+ phone:'<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+ edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+ box:'<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
+ heart:'<path d="M12 21s-8-5.2-8-11a4.5 4.5 0 018-2.7A4.5 4.5 0 0120 10c0 5.8-8 11-8 11z"/>',
+ store:'<path d="M4 9l1.5-5h13L20 9M4 9v11h16V9M4 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3"/><path d="M10 20v-5h4v5"/>',
+ plus:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
+ help:'<path d="M4 14v-2a8 8 0 0116 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/><path d="M19 20c0 1.2-1.3 2-3 2h-2"/>',
+ chat:'<path d="M21 12a8 8 0 01-11.6 7.1L3 21l1.9-5.4A8 8 0 1121 12z"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+ alert:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
+ faq:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1-1.5 2M12 17h.01"/>',
+ moon:'<path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/>',
+ globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+ out:'<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>',
+ trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+ chev:'<path d="M15 5l-7 7 7 7"/>'
+};
+const ico=n=>`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[n]||""}</svg>`;
+const mrow=(n,t,sub,attr,extra)=>`<button class="mr" ${attr}>${ico(n)}<span class="mt"><b>${t}</b>${sub?`<small>${sub}</small>`:""}</span>${extra||ico("chev")}</button>`;
+const mlink=(n,t,sub,href)=>`<a class="mr" href="${href}" target="${href.startsWith("http")?"_blank":"_self"}" rel="noopener">${ico(n)}<span class="mt"><b>${t}</b>${sub?`<small>${sub}</small>`:""}</span>${ico("chev")}</a>`;
+const segc=(attr,items)=>`<span class="seg2">${items.map(([v,l,on,dis])=>`<button ${dis?"disabled":""} data-${attr}="${v}" class="${on?"on":""}">${l}</button>`).join("")}</span>`;
 function accountView(){
   const A=ACC(),th=getTh(),isM=(()=>{try{return !!localStorage.getItem("hm_tk")}catch(e){return false}})();
-  const seg=(attr,items)=>`<div class="seg2">${items.map(([v,l,on,dis])=>`<button ${dis?"disabled":""} data-${attr}="${v}" class="${on?"on":""}">${l}</button>`).join("")}</div>`;
-  const setts=`<div class="acr"><span>🎨 المظهر</span>${seg("th",[["light","فاتح",th==="light"],["dark","داكن",th==="dark"],["auto","تلقائي",th==="auto"]])}</div>
-   <div class="acr"><span>🌐 اللغة</span>${seg("lg",[["ar","العربية",true],["en","English (قريباً)",false,true]])}</div>`;
-  if(!A) return `<div class="backbar"><h2>👤 حسابي</h2></div><div class="accard"><b>سجّل برقم جوالك</b><small>لتسهيل طلباتك وتعبئة بياناتك تلقائياً</small>
+  const wa=S.whatsapp?`https://wa.me/${esc(S.whatsapp)}`:"";
+  const prefs=`<div class="mgt">التفضيلات</div><div class="mg"><div class="mr st">${ico("moon")}<span class="mt"><b>المظهر</b></span>${segc("th",[["light","فاتح",th==="light"],["dark","داكن",th==="dark"],["auto","تلقائي",th==="auto"]])}</div>
+    <div class="mr st">${ico("globe")}<span class="mt"><b>اللغة</b></span>${segc("lg",[["ar","العربية",true],["en","English (قريباً)",false,true]])}</div></div>`;
+  const help=`<div class="mgt">المساعدة</div><div class="mg">${mrow("help","مركز المساعدة","استعلام عن طلب · شكاوى · أسئلة شائعة",'data-go="help"')}${wa?mlink("chat","تواصل مع خدمة العملاء","عبر واتساب",wa):""}</div>`;
+  const seller=`<div class="mgt">البيع في ${esc(S.name)}</div><div class="mg">${isM?mlink("store","حساب المتجر","إدارة منتجاتك وطلباتك ومستحقاتك","merchant.html"):mlink("plus","تحويل حسابي إلى حساب تاجر","سجّل متجرك وابدأ البيع (بعد موافقة الإدارة)","merchant.html#reg")}</div>`;
+  if(!A) return `<div class="backbar"><h2>حسابي</h2></div><div class="accard"><div class="prof"><div class="av2">${ico("user")}</div><div><b>أهلاً بك</b><small>سجّل برقم جوالك لتسهيل طلباتك</small></div></div>
     <label>الاسم (اختياري)</label><input id="ac-name" placeholder="اسمك"><label>رقم الجوال</label><input id="ac-phone" type="tel" inputmode="tel" dir="ltr" placeholder="05xxxxxxxx أو 967xxxxxxxxx"><button class="btn buy" data-acct="login" style="width:100%;margin-top:12px">تسجيل الدخول</button><div class="msg" id="ac-msg"></div></div>
-    <div class="accard">${setts}</div><div class="me"><a href="merchant.html">🏪 حساب التاجر</a>${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 تواصل معنا</a>`:""}</div>`;
-  return `<div class="backbar"><h2>👤 حسابي</h2></div><div class="accard prof"><div class="av2">${esc((A.name||"👤").trim().charAt(0)||"👤")}</div><div><b>${esc(A.name||"عميل")}</b><div dir="ltr" class="ph2">+${esc(A.phone)}</div><span class="role">عميل${isM?" · تاجر":""}</span></div></div>
-    ${acEdit?`<div class="accard"><label>الاسم</label><div class="av"><input id="ac-name" value="${esc(A.name||"")}" placeholder="اسمك"><button data-acct="save">حفظ</button><button data-acct="cancel" style="background:#eee;color:#111">إلغاء</button></div></div>`:""}
-    <div class="accard">${setts}</div>
-    <div class="me"><button class="li" data-go="orders">📦 طلباتي</button>${acEdit?"":`<button class="li" data-acct="edit">✏️ تعديل الاسم</button>`}<a href="merchant.html">🏪 حساب التاجر${isM?" (مسجّل)":""}</a>${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 تواصل معنا</a>`:""}<button class="li" data-acct="logout" style="color:var(--hot)">🚪 تسجيل الخروج</button>${acDel?`<div class="accard" style="border-color:var(--hot)"><b style="color:var(--hot)">حذف الحساب نهائياً؟</b><small>يُحذف رقمك واسمك وبيانات الطلب المحفوظة من هذا الجهاز. طلباتك السابقة تبقى محفوظة عند المتجر لإتمامها.</small><div class="av"><button data-acct="delyes" style="background:var(--hot);color:#fff;padding:11px 16px">نعم، احذف حسابي</button><button data-acct="delno" style="background:#eee;color:#111;padding:11px 16px">تراجع</button></div></div>`:`<button class="li" data-acct="delask" style="color:var(--hot)">🗑 حذف الحساب</button>`}</div>`;
+    <div class="mgt">طلباتي</div><div class="mg">${mrow("box","تتبّع طلباتي","","data-go=\"orders\"")}${mrow("heart","المفضلة","",'data-go="favs"')}</div>${help}${seller}${prefs}`;
+  const ed=acEdit?`<div class="accard"><label>الاسم</label><input id="ac-name" value="${esc(A.name||"")}" placeholder="اسمك"><label>البريد الإلكتروني (اختياري)</label><input id="ac-mail" type="email" dir="ltr" value="${esc(A.email||"")}" placeholder="name@example.com"><div class="av" style="margin-top:12px"><button data-acct="save">حفظ</button><button data-acct="cancel" style="background:#eee;color:#111">إلغاء</button></div><div class="msg" id="ac-msg"></div></div>`:"";
+  return `<div class="backbar"><h2>حسابي</h2></div>
+  <div class="accard"><div class="prof"><div class="av2">${esc((A.name||"").trim().charAt(0)||"")||ico("user")}</div><div><b>${esc(A.name||"عميل")}</b><div dir="ltr" class="ph2">+${esc(A.phone)}</div>${A.email?`<div dir="ltr" class="ph2">${esc(A.email)}</div>`:""}<span class="role">عميل${isM?" · تاجر":""}</span></div></div></div>${ed}
+  <div class="mgt">معلومات الحساب</div><div class="mg">${mrow("edit","تعديل الاسم",esc(A.name||"لم تُضف اسماً"),'data-acct="edit"')}${mrow("mail",A.email?"تعديل البريد الإلكتروني":"إضافة بريدك الإلكتروني",esc(A.email||"اختياري"),'data-acct="edit"')}${mrow("phone","رقم الجوال",`+${esc(A.phone)}`,"disabled",'<span></span>')}</div>
+  <div class="mgt">طلباتي</div><div class="mg">${mrow("box","طلباتي","تتبّع الطلبات وتأكيد الاستلام والتقييم",'data-go="orders"')}${mrow("heart","المفضلة","",'data-go="favs"')}</div>
+  ${seller}${help}${prefs}
+  <div class="mgt">الحساب</div><div class="mg">${mrow("out","تسجيل الخروج","",'data-acct="logout"')}${acDel?`<div class="mr st" style="display:block"><b style="color:#c00">حذف الحساب نهائياً؟</b><small style="display:block;color:#777;margin:4px 0 8px">يُحذف رقمك واسمك وبريدك وبيانات الطلب من هذا الجهاز. طلباتك السابقة تبقى عند المتجر لإتمامها.</small><div class="av"><button data-acct="delyes" style="background:#c00;color:#fff;padding:11px 16px">نعم، احذف حسابي</button><button data-acct="delno" style="background:#eee;color:#111;padding:11px 16px">تراجع</button></div></div>`:mrow("trash","حذف الحساب","",'data-acct="delask"')}</div><div style="height:14px"></div>`;
 }
+const FAQ=[["كيف أطلب؟","أضف المنتجات للسلة، أكمل بياناتك، ثم ارفع سند التحويل بعد الطلب. تصلك حالة الطلب في صفحة «طلباتي»."],["كيف أدفع؟","التحويل إلى حساب المتجر المعروض بعد إتمام الطلب، ثم رفع صورة السند ليتم تأكيده."],["متى يصل طلبي؟","بعد تأكيد الدفع يجهّز التاجر الطلب ويُشحن. ستجد معلومات الشحن ومدّته في تفاصيل الطلب."],["لم أستلم طلبي أو وصل بحالة سيئة","اضغط «لا، لم أستلم» عند سؤال الاستلام، أو راسل خدمة العملاء مع رقم الطلب وسنتابع مع التاجر."],["كيف أقيّم المنتج والتاجر؟","بعد تأكيد استلام الطلب يظهر لك نموذج التقييم، أو من «طلباتي» ثم «قيّم الطلب»."]];
+function helpView(){
+  const wa=S.whatsapp;
+  return `<div class="backbar"><h2>مركز المساعدة</h2></div>
+  <div class="mgt">الاستعلام عن طلب</div><div class="accard"><label>رقم الطلب</label><input id="hp-ord" inputmode="numeric" placeholder="مثال: 25"><button class="btn buy" data-help="inq" style="width:100%;margin-top:10px">${ico("search")} استعلام عبر واتساب</button><small style="margin-top:8px">أو افتح «طلباتي» لمتابعة الحالة مباشرة.</small></div>
+  <div class="mgt">تقديم شكوى أو اقتراح</div><div class="accard"><label>رقم الطلب (إن وجد)</label><input id="hp-cord" inputmode="numeric" placeholder="اختياري"><label>اكتب شكواك أو ملاحظتك</label><textarea id="hp-cmp" rows="3" style="width:100%;border:1px solid #ddd;padding:10px;font-family:inherit;box-sizing:border-box;background:#fff;color:#111"></textarea><button class="btn buy" data-help="cmp" style="width:100%;margin-top:10px">${ico("alert")} إرسال عبر واتساب</button></div>
+  <div class="mgt">خدمة العملاء</div><div class="mg">${wa?mlink("chat","محادثة مباشرة","نرد عليك في أقرب وقت",`https://wa.me/${esc(wa)}`):""}${mrow("box","طلباتي","",'data-go="orders"')}</div>
+  <div class="mgt">أسئلة شائعة</div><div class="mg">${FAQ.map(([q,a])=>`<details class="fq"><summary>${ico("faq")}<b>${q}</b></summary><p>${a}</p></details>`).join("")}</div><div style="height:14px"></div>`;
+}
+document.addEventListener("click",e=>{
+  const h=e.target.closest("[data-help]");if(!h)return;
+  const wa=S.whatsapp;if(!wa){toast("رقم واتساب غير مضبوط");return}
+  const A=ACC()||{},who=A.name?` (${A.name})`:"";
+  let m;
+  if(h.dataset.help==="inq"){const n=(($("#hp-ord")||{}).value||"").replace(/\D/g,"");if(!n){toast("اكتب رقم الطلب");return}m=`السلام عليكم${who}، أبغى أستعلم عن حالة طلبي رقم #${n}.`}
+  else{const c=(($("#hp-cmp")||{}).value||"").trim(),n=(($("#hp-cord")||{}).value||"").replace(/\D/g,"");if(!c){toast("اكتب شكواك أولاً");return}m=`السلام عليكم${who}، لدي شكوى/ملاحظة${n?" بخصوص الطلب #"+n:""}:\n${c}`}
+  window.open(`https://wa.me/${wa}?text=${encodeURIComponent(m)}`,"_blank")
+});
 document.addEventListener("click",e=>{
   const t=e.target.closest("[data-th]");if(t){setTh(t.dataset.th);if(view.name==="account")render();return}
   const a=e.target.closest("[data-acct]");if(!a)return;
   const k=a.dataset.acct,nm=($("#ac-name")||{}).value||"";
   if(k==="login"){const ph=(($("#ac-phone")||{}).value||"").replace(/\D/g,"");if(ph.length<9){const m=$("#ac-msg");if(m){m.textContent="اكتب رقم جوالك الصحيح";m.style.color="var(--hot)"}return}
     LS.set("hs_acct",{phone:ph,name:nm.trim().slice(0,40)});toast("✅ تم تسجيل الدخول");render()}
-  else if(k==="save"){const A=ACC();if(A){A.name=nm.trim().slice(0,40);LS.set("hs_acct",A);acEdit=false;toast("✅ تم الحفظ");render()}}
-  else if(k==="edit"){acEdit=true;render();const i=$("#ac-name");if(i)i.focus()}
+  else if(k==="save"){const A=ACC();if(A){const em=(($("#ac-mail")||{}).value||"").trim();if(em&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){const m=$("#ac-msg");if(m){m.textContent="البريد الإلكتروني غير صحيح";m.style.color="var(--hot)"}return}A.name=nm.trim().slice(0,40);A.email=em.slice(0,80);LS.set("hs_acct",A);acEdit=false;toast("✅ تم الحفظ");render()}}
+  else if(k==="edit"){acEdit=true;render();const i=$("#ac-name");if(i){i.focus();i.scrollIntoView({block:"center"})}}
   else if(k==="cancel"){acEdit=false;render()}
   else if(k==="delask"){acDel=true;render()}
   else if(k==="delno"){acDel=false;render()}
@@ -847,6 +903,7 @@ function render(){
     case "search": {const q=norm(view.q);html=`<div class="backbar"><h2>نتائج: ${esc(view.q)}</h2></div>`+(()=>{const r=ALL.filter(p=>norm(p.title+" "+p.desc+" "+((CATS.find(c=>c.id===p.cat)||{}).name||"")).includes(q));return r.length?listView(r):`<div class="empty">ما لقينا نتائج لـ «${esc(view.q)}»<br>جرّب كلمة ثانية أو تصفّح الأقسام</div>`})();break}
     case "orders": html=ordersView(); nv="n-account"; if(Date.now()-trkAt>8000){trkAt=Date.now();setTimeout(trackOrders,0)} break;
     case "account": html=accountView(); nv="n-account"; break;
+    case "help": html=helpView(); nv="n-account"; break;
     case "me": html=`<div class="backbar"><h2>💬 تواصل معنا</h2></div><div class="me">${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 راسلنا على واتساب</a>`:""}<div class="li">🛍️ ${esc(S.name)}</div></div>`; nv="n-account"; break;
     default: html=home();
   }
