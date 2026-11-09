@@ -29,3 +29,18 @@ self.addEventListener("fetch", e => {
       .catch(() => caches.match(req).then(hit => hit || (req.mode === "navigate" ? caches.match("./") : undefined)))
   );
 });
+
+/* إشعارات لوحة التحكم (Web Push بدون محتوى): تظهر رسالة عامة وتفتح اللوحة عند الضغط */
+self.addEventListener("push", e => {
+  e.waitUntil(self.registration.showNotification("🔔 حضرم شوب — الإدارة", {
+    body: "عندك تنبيه جديد (تاجر / إيصال دفع / طلب). افتح لوحة التحكم.",
+    icon: "icon-192.png", badge: "icon-192.png", tag: "hs-admin", renotify: true, data: { url: "orders.html" }
+  }));
+});
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+    for (const c of list) { if (c.url.includes("orders.html") && "focus" in c) return c.focus(); }
+    return clients.openWindow("orders.html");
+  }));
+});
