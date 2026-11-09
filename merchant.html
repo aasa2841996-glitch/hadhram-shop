@@ -2,6 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
+<script>try{var m=localStorage.getItem("hs_theme")||"auto";var d=m==="dark"||(m==="auto"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light"}catch(e){}</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffd500">
 <meta name="robots" content="noindex,nofollow">
@@ -156,6 +158,10 @@ header .rf,header button{background:#f2f2f2!important;color:#111!important}
 .pc .row .gd,.btn.gold,.sheet .go,.login .go{border:0!important}
 .fab{border:0!important}
 .act .prt,.seg button.on{border-color:transparent!important}
+html[data-theme=dark]{filter:invert(1) hue-rotate(180deg);background:#fff}
+html[data-theme=dark] img,html[data-theme=dark] video,html[data-theme=dark] .wlc .ph,html[data-theme=dark] .slide .im{filter:invert(1) hue-rotate(180deg)}
+.seg3 button{padding:6px 11px;border:1px solid #ddd;margin-right:-1px;font-weight:700;font-size:13px;background:#fff;color:#111}.seg3 button.on{background:#ffd500;border-color:#ffd500}
+html[data-theme=dark] .addw,html[data-theme=dark] .nav button.on,html[data-theme=dark] .dnav .on,html[data-theme=dark] .chip.on,html[data-theme=dark] .btn.cart,html[data-theme=dark] .av2,html[data-theme=dark] .role,html[data-theme=dark] .upl,html[data-theme=dark] .seg2 button.on,html[data-theme=dark] .seg3 button.on,html[data-theme=dark] .rbtn,html[data-theme=dark] .rgo,html[data-theme=dark] .av button,html[data-theme=dark] .fab,html[data-theme=dark] .go,html[data-theme=dark] .btn.gold,html[data-theme=dark] .slide,html[data-theme=dark] .pnav button.on,html[data-theme=dark] .tag,html[data-theme=dark] .dp,html[data-theme=dark] .cnt,html[data-theme=dark] .nb{filter:invert(1) hue-rotate(180deg)}
 </style>
 </head>
 <body>
@@ -286,7 +292,7 @@ function prodsBody(){
 }
 function meBody(){
   return `<div class="profile" style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 14px;margin-top:12px">
-  <div class="kv"><span>المتجر</span><span>${esc(ME.name)}</span></div><div class="kv"><span>صاحب الحساب</span><span>${esc(ME.owner)}</span></div><div class="kv"><span>المدينة</span><span>${esc(ME.city)}</span></div>
+  <div class="kv"><span>📱 رقم الجوال</span><span dir="ltr">+${esc(ME.wa||LS.get("hm_phone","")||"—")}</span></div><div class="kv"><span>المتجر</span><span>${esc(ME.name)}</span></div><div class="kv"><span>صاحب الحساب</span><span>${esc(ME.owner)}</span></div><div class="kv"><span>المدينة</span><span>${esc(ME.city)}</span></div>
   <div class="kv"><span>عمولة المنصة</span><span>${ME.commission==null?"—":ME.commission+"%"}</span></div></div>
   <div class="profile" style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 14px;margin-top:12px"><div style="font-weight:900;padding:10px 0 2px">🏦 حساب استلام المستحقات</div>
   ${ME.has_bank?`<div class="kv"><span>النوع</span><span>${ME.acct_type==="SA"?"🇸🇦 سعودي":"🇾🇪 يمني"}</span></div><div class="kv"><span>البنك</span><span>${esc(ME.bank)}</span></div><div class="kv"><span>رقم الحساب</span><span dir="ltr">${esc(ME.acct)}</span></div><div class="kv"><span>باسم</span><span>${esc(ME.acct_name)}</span></div>`:`<div class="nobank" style="margin:6px 0">⚠️ لم تُضِف حسابك البنكي — لن تقدر على نشر منتجات ولن نستطيع تحويل مستحقاتك.</div>`}
@@ -294,6 +300,7 @@ function meBody(){
   ${BAL?`<div class="profile" style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 14px;margin-top:12px"><div style="font-weight:900;padding:10px 0 2px">💰 مستحقاتي (بعد خصم العمولة)</div>
   <div class="kv"><span>جاهزة للتحويل (طلبات سُلِّمت)</span><span>${money(BAL.due)}</span></div><div class="kv"><span>قيد التنفيذ</span><span>${money(BAL.pending)}</span></div><div class="kv"><span>تم تحويلها لك</span><span>${money(BAL.settled)}</span></div>
   <div style="color:var(--muted);font-size:12.5px;font-weight:700;padding:6px 0 10px">تُحوَّل المستحقات بعد تأكيد التسليم. رسوم الشحن تُحصّلها أنت من العميل وليست ضمن المبالغ أعلاه.</div></div>`:""}
+  <div class="profile" style="background:var(--card);border:1px solid var(--line);padding:6px 14px;margin-top:12px"><div class="kv"><span>🎨 المظهر</span><span class="seg3">${[["light","فاتح"],["dark","داكن"],["auto","تلقائي"]].map(([v,l])=>`<button data-th="${v}" class="${(LS.get("hs_theme","auto"))===v?"on":""}">${l}</button>`).join("")}</span></div><div class="kv"><span>🌐 اللغة</span><span>العربية</span></div></div>
   <button class="btn dark" id="showTerms">📄 شروط التاجر</button><a class="btn gold" href="index.html">فتح المتجر</a><button class="btn red" id="logout">تسجيل الخروج</button>`;
 }
 const money=b=>{const t=[b.sar?nf(b.sar)+" ر.س":"",b.yer?nf(b.yer)+" ر.ي":""].filter(Boolean).join(" + ");return t||"0"}
@@ -451,6 +458,7 @@ document.addEventListener("click",async e=>{
     const id=Number(s.dataset.id),inp=$(`[data-ship="${id}"]`);
     try{await api("/m/order/status",{method:"POST",body:JSON.stringify({id,status:s.dataset.st,ship_info:inp?inp.value:undefined})});toast("تم التحديث ✓");await loadOrders(true,true);draw()}catch(err){toast("⚠️ "+err.message)}return}
 });
+document.addEventListener("click",e=>{const t=e.target.closest("[data-th]");if(!t)return;const m=t.dataset.th;try{localStorage.setItem("hs_theme",m)}catch(x){}const d=m==="dark"||(m==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";draw()});
 async function boot(){
   await loadMeta();
   if(!TK)return authView();
