@@ -434,6 +434,19 @@ html,body{font-family:"Tajawal",sans-serif!important;font-weight:400}
 .pr b{flex-basis:100%}
 .pb{gap:3px!important}
 .pt{min-height:0!important;max-height:42px}
+.pr b{flex-basis:auto!important}
+.pr{gap:4px 8px!important;align-items:center!important}
+.pr s{order:2}.pr .dp{order:3}
+.pt{max-height:none!important;min-height:0!important}
+.sn{font-size:13px;color:#444}
+.rt{font-size:12.5px}.rt b{font-weight:800;color:#111}
+.pr2{margin-top:-2px}
+.addw{margin-top:8px!important}
+.grid .pc,.hrow .pc{display:flex;flex-direction:column}
+.pb{flex:1;display:flex;flex-direction:column}
+.pb .addw{margin-top:auto!important}
+.pb>.pr2:last-of-type{margin-bottom:8px}
+.pr{flex-direction:row!important;justify-content:flex-start!important;min-height:0!important}
 </style>
 </head>
 <body>
@@ -525,7 +538,7 @@ function card(p){
     ${d>=5?`<span class="tag">خصم<br>${d}%</span>`:""}${isNew(p)&&!d?`<span class="newb">جديد</span>`:""}${p.stock?"":`<div class="sold">نفد المخزون</div>`}
     <button class="fav ${fav?"on":""}" data-act="fav" data-id="${esc(p.id)}">♥</button></div>
     <div class="pb"><div class="pt">${esc(p.title)}</div><div class="sn">🏪 ${esc(p.mn||S.name)}</div>
-    ${p.rate>0&&p.rc>0?`<div class="rt"><span class="stars">★</span> ${nf(p.rate)} <span>(${p.rc} مراجعة)</span></div>`:""}
+    ${p.rate>0&&p.rc>0?`<div class="rt"><span class="stars">★</span> <b>${nf(p.rate)}</b> <span>(${p.rc} مراجعة)</span></div>`:`<div class="rt"><span class="stars" style="color:#ccc">★</span> <span>جديد · لا تقييمات بعد</span></div>`}
     <div class="pr"><b>${nf(p.price)} ${esc(p.cur)}</b>${d?`<s>${nf(p.old)} ${esc(p.cur)}</s><span class="dp">-${d}%</span>`:""}</div>
     ${p.yer?`<div class="pr2">${nf(p.yer)} ر.ي</div>`:""}
     ${p.ship?`<div class="shp">🚚 ${esc(p.ship)}</div>`:""}
