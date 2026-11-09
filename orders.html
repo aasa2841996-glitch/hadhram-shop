@@ -11,13 +11,13 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--deep:#241406;--brown:#3a2210;--gold:#f0b13a;--gold2:#ffd27a;--bg:#f6efe4;--ink:#241406;--muted:#8a7a68;--line:#eadfce;--card:#fff;
 --new:#d92d20;--prep:#d98a06;--ship:#2563eb;--done:#12803c;--cancel:#8a7a68}
 @media (prefers-color-scheme:dark){:root{--bg:#171009;--ink:#f6efe4;--muted:#b3a28c;--line:#3a2a1a;--card:#241709}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Arabic","Segoe UI",Tahoma,sans-serif}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Tajawal","Segoe UI",Tahoma,sans-serif}
 button{font-family:inherit;cursor:pointer;border:0;color:inherit;background:none}
 input{font-family:inherit}
 .wrap{max-width:760px;margin:0 auto;padding:0 12px 90px}
@@ -144,6 +144,11 @@ header .rf,header button{background:#f2f2f2!important;color:#111!important}
   .stats{grid-template-columns:repeat(6,1fr);gap:10px}
   .st{font-size:13px;padding:12px 4px}.st b{font-size:26px}
 }
+*{border-radius:0!important}
+.act .go,.act .prt,.act button,.act a{background:#fff!important;color:#111!important;border:1px solid #cfcfcf!important}
+.act .wa{background:#25d366!important;color:#fff!important;border-color:#25d366!important}
+.act .go:active,.act .prt:active,.act button:active,.act .cur{background:#12803c!important;color:#fff!important;border-color:#12803c!important;opacity:1!important}
+.act .go{border-color:var(--c)!important}
 </style>
 </head>
 <body>
@@ -242,7 +247,7 @@ function draw(){
     top=`<div class="pc" style="margin-top:12px"><h3>🏪 ${esc(g.name)}</h3><div class="sub">${g.owner?"👤 "+esc(g.owner)+" · ":""}${g.phone?"<span dir=ltr>+"+esc(g.phone)+"</span> · ":""}${g.city?"📍 "+esc(g.city):""}</div>
     <div class="sub" style="margin-top:4px">⚠️ المعلّق: <b>${rems||"لا يوجد"}</b></div>
     <div class="row">${g.phone?`<a href="tel:+${esc(g.phone)}">📞 اتصال بالتاجر</a><a href="${wa}" target="_blank" rel="noopener" style="background:#25d366;border-color:#25d366;color:#fff">💬 تذكير واتساب</a>`:""}</div></div>
-    <div class="stats" style="grid-template-columns:repeat(6,1fr);margin-top:10px">${[["","الكل",(cc.new||0)+(cc.prep||0)+(cc.ship||0)+(cc.done||0)+(cc.cancel||0),"var(--ink)"],...Object.entries(ST).map(([k,[l,col]])=>[k,l,cc[k]||0,col])].map(([k,l,n,col])=>`<button class="st ${mf===k?"on":""}" data-mf="${k}"><i style="background:${col}"></i><b>${n}</b>${l}</button>`).join("")}</div>`;
+    <div class="stats" style="grid-template-columns:repeat(5,1fr);margin-top:10px">${[...Object.entries(ST).map(([k,[l,col]])=>[k,l,cc[k]||0,col])].map(([k,l,n,col])=>`<button class="st ${mf===k?"on":""}" data-mf="${k}"><i style="background:${col}"></i><b>${n}</b>${l}</button>`).join("")}</div>`;
   }else{
     top=`<div class="stats" style="grid-template-columns:repeat(6,1fr);margin-top:12px">${tabs.map(([k,l,n,col])=>`<button class="st ${filter===k&&!q?"on":""}" data-f="${k}"><i style="background:${col}"></i><b>${n}</b>${l}</button>`).join("")}</div>
     <div class="today"><span>📅 اليوم: <b>${t.count}</b> طلب</span><span>💰 <b>${nf(t.sar)}</b> ر.س${t.yer?` + <b>${nf(t.yer)}</b> ر.ي`:""}</span></div>`;
@@ -313,7 +318,7 @@ async function setStatus(ids,st){
 async function hideOrders(ids,h){try{await api("/api/hide",{method:"POST",body:JSON.stringify({ids,hidden:h})});toast(h?"🙈 تم الإخفاء — ابحث برقم الطلب لإرجاعه":"👁 تم إظهار الطلب");sel.clear();await load(true,true)}catch(e){toast("⚠️ "+e.message)}}
 document.addEventListener("click",e=>{
   if(page!=="orders")return;
-  const op=e.target.closest("[data-open]");if(op){curMid=Number(op.dataset.open);curG=groups.find(g=>g.mid===curMid)||null;mf="";sel.clear();window.scrollTo(0,0);load(true);return}
+  const op=e.target.closest("[data-open]");if(op){curMid=Number(op.dataset.open);curG=groups.find(g=>g.mid===curMid)||null;mf=ST[filter]?filter:"new";sel.clear();window.scrollTo(0,0);load(true);return}
   if(e.target.closest("#bk")){curMid=null;curG=null;sel.clear();load(true);return}
   const mfb=e.target.closest("[data-mf]");if(mfb){mf=mfb.dataset.mf;sel.clear();load(true);return}
   const hb=e.target.closest("[data-hide]");if(hb){hideOrders([Number(hb.dataset.hide)],true);return}
