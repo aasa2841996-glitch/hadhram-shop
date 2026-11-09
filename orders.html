@@ -166,6 +166,7 @@ const ST={new:["جديد","var(--new)"],prep:["قيد التجهيز","var(--pre
 const nf=n=>(Math.round(n*100)/100).toLocaleString("en-US");
 const SHOP="حضرم شوب";
 let API=LS.get("ho_api","https://hadhram-bot.aasa2841996.workers.dev"), KEY=LS.get("ho_key","");
+if(/[?&]reset/.test(location.search)){LS.del("ho_key");KEY="";try{history.replaceState(null,"",location.pathname)}catch(e){}}
 let filter="new", curMid=null, curG=null, mf="", groups=[], q="", orders=[], stats=null, more=false, sel=new Set(), maxId=0, timer=null, busy=false;
 const toast=t=>{const el=$("#toast");el.textContent=t;el.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("show"),1800)};
 
@@ -474,7 +475,6 @@ function alertsSheet(){
 }
 document.addEventListener("click",e=>{if(e.target.closest("#bell")){pollAlerts().then(alertsSheet)}});
 async function boot(){
-  if(/[?&]reset/.test(location.search)){LS.del("ho_key");KEY=""}
   if(!KEY)return loginView();
   clearInterval(timer);
   await loadProds();
