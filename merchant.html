@@ -132,7 +132,7 @@ const toast=t=>{const el=$("#toast");el.textContent=t;el.classList.add("show");c
 const ST={new:["جديد","var(--new)"],prep:["قيد التجهيز","var(--prep)"],ship:["في الطريق","var(--ship)"],done:["تم التوصيل","var(--done)"],cancel:["ملغي","var(--cancel)"]};
 const SHOP="حضرم شوب";
 let API="https://hadhram-bot.aasa2841996.workers.dev", TK=LS.get("hm_tk",""), ME=null, CATS=[];
-let BAL=null, tab="orders", ofilter="new", orders=[], ocounts={}, omore=false, prods=[], sel=null, maxId=0, timer=null, mode="login";
+let BAL=null, tab="orders", ofilter="new", oq="", orders=[], ocounts={}, omore=false, prods=[], sel=null, maxId=0, timer=null, mode="login";
 
 const BK={YE:["الكريمي","البنك الأهلي اليمني","بنك التضامن","بنك سبأ الإسلامي","بنك اليمن الدولي","بنك اليمن والكويت","بنك القطيبي"],SA:["مصرف الراجحي","البنك الأهلي السعودي","بنك الإنماء","بنك الرياض","البنك السعودي الأول (ساب)","بنك البلاد","بنك الجزيرة","STC Pay"]};
 function bankFields(p,v){
@@ -233,12 +233,13 @@ function orderCard(o){
   <div class="ship"><label style="margin:0 0 4px">🚚 معلومات الشحن للعميل (الرسوم/شركة النقل/موعد)</label><input data-ship="${o.id}" value="${esc(o.ship_info)}" placeholder="مثال: الشحن 20 ريال، باص الأمان، يصل خلال يومين"></div>
   <div class="act">${o.phone?`<a class="wa" target="_blank" rel="noopener" href="https://wa.me/${esc(o.phone)}?text=${encodeURIComponent(waMsg(o,o.status))}">📲 أبلغ العميل على واتساب (${lab})</a>`:""}
   ${["prep","ship","done","cancel"].map(s=>`<button class="go ${o.status===s?"cur":""}" style="--c:${ST[s][1]}" data-st="${s}" data-id="${o.id}">${ST[s][0]}</button>`).join("")}
-  <button class="prt" data-print="${o.id}">🖨 طباعة بوليصة الشحن</button></div></div>`;
+  <button class="prt" data-print="${o.id}">🖨 طباعة بوليصة الشحن</button>${o.mhidden||o.status==="done"||o.status==="cancel"?`<button class="prt" style="background:var(--bg);color:var(--ink);border:1px solid var(--line)" data-mh="${o.id}" data-h="${o.mhidden?0:1}">${o.mhidden?"👁 إظهار الطلب":"🙈 إخفاء الطلب (يبقى محفوظاً)"}</button>`:""}</div></div>`;
 }
 function ordersBody(){
-  const tabs=[...Object.entries(ST).map(([k,[l,c]])=>[k,l,ocounts[k]||0,c])];
+  const tabs=[...Object.entries(ST).map(([k,[l,c]])=>[k,l,ocounts[k]||0,c]),["hidden","🙈 مخفية",ocounts.hidden||0,"var(--muted)"]];
   return `<div class="stats" style="grid-template-columns:repeat(${tabs.length},1fr)">${tabs.map(([k,l,n,c])=>`<button class="st ${ofilter===k?"on":""}" data-of="${k}"><i style="background:${c}"></i><b>${n}</b>${l}</button>`).join("")}</div>
-  ${orders.length?orders.map(orderCard).join(""):`<div class="empty">لا توجد طلبات هنا بعد</div>`}${omore?`<button class="btn dark" id="moreO">عرض المزيد</button>`:""}`;
+  <input id="oqin" type="search" inputmode="numeric" placeholder="🔎 ابحث برقم الطلب (حتى المخفية)" value="${esc(oq)}" style="margin-bottom:10px">
+  ${orders.length?orders.map(orderCard).join(""):`<div class="empty">${oq?"لا يوجد طلب بهذا الرقم":ofilter==="hidden"?"لا توجد طلبات مخفية":"لا توجد طلبات هنا بعد"}</div>`}${omore?`<button class="btn dark" id="moreO">عرض المزيد</button>`:""}`;
 }
 function prodsBody(){
   return prods.length?prods.map(p=>`<div class="pl"><img src="${API}/img/${esc(p.img)}" alt=""><div class="t">${esc(p.title)}<small>${nf(p.price)} ${p.cur==="YER"?"ر.ي":"ر.س"}${p.price_yer?` · ${nf(p.price_yer)} ر.ي`:""}</small><small class="sw ${p.stock?"on":"off"}">${p.stock?"● متوفر":"● نفد المخزون"}</small></div>
@@ -263,7 +264,7 @@ function draw(){
 async function loadOrders(reset=true,silent=false){
   try{
     const off=reset?0:orders.length;
-    const j=await api(`/m/orders?status=${ofilter}&offset=${off}`);
+    const j=await api(`/m/orders?status=${oq?"":(ofilter==="hidden"?"":ofilter)}&offset=${off}${ofilter==="hidden"&&!oq?"&hidden=1":""}${oq?"&q="+encodeURIComponent(oq):""}`);
     if(reset){const top=Math.max(0,...j.orders.map(o=>o.id));if(silent&&maxId&&(!ofilter||ofilter==="new")&&top>maxId){beep();toast("🆕 طلب جديد وصل!");navigator.vibrate&&navigator.vibrate(200)}if((!ofilter||ofilter==="new"))maxId=Math.max(maxId,top);orders=j.orders}else orders=orders.concat(j.orders);
     ocounts=j.counts||{};omore=j.more;
   }catch(e){if(!silent)toast("⚠️ "+e.message)}
@@ -376,6 +377,7 @@ document.addEventListener("change",async e=>{
   }
 });
 document.addEventListener("input",e=>{
+  if(e.target.id==="oqin"){clearTimeout(window._oqt);const v=e.target.value.replace(/\D/g,"");window._oqt=setTimeout(async()=>{oq=v;await loadOrders();draw();const i=$("#oqin");if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},400);return}
   if(e.target.id==="p-price"&&$("#earn"))$("#earn").innerHTML=earnHtml();
   const n=e.target.dataset;
   if(n.on!==undefined)popts[+n.on].name=e.target.value;
@@ -383,7 +385,8 @@ document.addEventListener("input",e=>{
 document.addEventListener("change",e=>{if(e.target.dataset.on!==undefined)drawOpts();if(e.target.id==="p-cur"&&$("#earn"))$("#earn").innerHTML=earnHtml()});
 document.addEventListener("click",async e=>{
   const t=e.target.closest("[data-tab]");if(t){tab=t.dataset.tab;if(tab==="products")await loadProds();if(tab==="orders")await loadOrders();if(tab==="me"){try{BAL=(await api("/m/balance")).balance}catch(e){}}draw();return}
-  const f=e.target.closest("[data-of]");if(f){ofilter=f.dataset.of;await loadOrders();draw();return}
+  const mh=e.target.closest("[data-mh]");if(mh){try{await api("/m/order/hide",{method:"POST",body:JSON.stringify({id:Number(mh.dataset.mh),hidden:mh.dataset.h==="1"})});toast(mh.dataset.h==="1"?"🙈 تم الإخفاء — ابحث برقم الطلب أو افتح «مخفية»":"👁 تم إظهار الطلب");await loadOrders(true,true);draw()}catch(err){toast("⚠️ "+err.message)}return}
+  const f=e.target.closest("[data-of]");if(f){oq="";ofilter=f.dataset.of;await loadOrders();draw();return}
   if(e.target.closest("#moreO")){await loadOrders(false);draw();return}
   if(e.target.closest("#logout")){TK="";LS.del("hm_tk");clearInterval(timer);mode="login";authView();return}
   if(e.target.closest("#addP")){productForm();return}

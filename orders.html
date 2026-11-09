@@ -176,7 +176,7 @@ function card(o){
   <div class="tm">🕒 ${esc(o.time)}${o.hidden?" · 🙈 مخفي":""}${o.recv==="yes"?" · ✅ العميل أكّد الاستلام":o.recv==="no"?" · ⚠️ العميل لم يستلم":""}</div>
   <div class="bd"><div class="nm">👤 ${esc(o.name||"—")}${o.phone?` <span dir="ltr" style="color:var(--muted);font-weight:700;font-size:13px">+${esc(o.phone)}</span>`:""}</div><div class="ad">📍 ${esc(o.addr||"—")}</div>
   <div class="its">${its}</div><div class="tot"><span>الإجمالي</span><b>${esc(o.total)}</b></div>${o.note?`<div class="note">📝 ${esc(o.note)}</div>`:""}</div>
-  <div class="act">${wa}${btns}<button class="prt" data-print="${o.id}">🖨 طباعة بوليصة الشحن</button><button style="flex-basis:100%" data-${o.hidden?"unhide":"hide"}="${o.id}">${o.hidden?"👁 إظهار الطلب":"🙈 إخفاء الطلب (يبقى محفوظاً)"}</button></div></div>`;
+  <div class="act">${wa}${btns}<button class="prt" data-print="${o.id}">🖨 طباعة بوليصة الشحن</button>${o.hidden||o.status==="done"||o.status==="cancel"?`<button style="flex-basis:100%" data-${o.hidden?"unhide":"hide"}="${o.id}">${o.hidden?"👁 إظهار الطلب":"🙈 إخفاء الطلب (يبقى محفوظاً)"}</button>`:""}</div></div>`;
 }
 const ago=t=>{if(!t)return"—";const m=Math.max(0,Math.round((Date.now()-t)/6e4));if(m<60)return m+" دقيقة";const h=Math.round(m/60);if(h<48)return h+" ساعة";return Math.round(h/24)+" يوم"};
 const REM={new:(g)=>`عندك ${g.n} طلب جديد لم يتم تجهيزه بعد (${g.ids.map(i=>"#"+i).join("، ")}). نرجو البدء بالتجهيز وتحديث الحالة من التطبيق 🙏`,prep:(g)=>`عندك ${g.n} طلب قيد التجهيز ولم يُشحن بعد (${g.ids.map(i=>"#"+i).join("، ")}). متى سيتم شحنها؟ 🙏`,ship:(g)=>`عندك ${g.n} طلب في الطريق ولم يتأكد توصيله (${g.ids.map(i=>"#"+i).join("، ")}). نرجو تأكيد التوصيل من التطبيق بعد وصوله 🙏`};
@@ -277,7 +277,7 @@ document.addEventListener("click",e=>{
   const mfb=e.target.closest("[data-mf]");if(mfb){mf=mfb.dataset.mf;sel.clear();load(true);return}
   const hb=e.target.closest("[data-hide]");if(hb){hideOrders([Number(hb.dataset.hide)],true);return}
   const uh=e.target.closest("[data-unhide]");if(uh){hideOrders([Number(uh.dataset.unhide)],false);return}
-  if(e.target.closest("[data-bulkhide]")){if(confirm(`إخفاء ${sel.size} طلب؟ (تبقى محفوظة ويمكن إرجاعها بالبحث برقم الطلب)`))hideOrders([...sel],true);return}
+  if(e.target.closest("[data-bulkhide]")){const ok=[...sel].filter(id=>{const o=orders.find(x=>x.id===id);return o&&(o.status==="done"||o.status==="cancel")});if(!ok.length){toast("الإخفاء متاح فقط للطلبات المسلّمة أو الملغية");return}if(confirm(`إخفاء ${ok.length} طلب مسلَّم/ملغي؟ (تبقى محفوظة ويمكن إرجاعها بالبحث برقم الطلب)`))hideOrders(ok,true);return}
   const f=e.target.closest("[data-f]");if(f){filter=f.dataset.f;q="";sel.clear();load(true);return}
   if(e.target.closest("#rf")){load(true);return}
   if(e.target.closest("#more")){load(false);return}
