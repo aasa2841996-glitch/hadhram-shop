@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#3b2410">
+<meta name="theme-color" content="#ffd500">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="حضرم شوب">
@@ -245,6 +245,141 @@ input,textarea,.pg p{-webkit-user-select:text;user-select:text}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @keyframes bump{50%{transform:scale(1.35)}}
 .bump{animation:bump .35s}
+
+/* ===================== الثيم الجديد: أبيض + أصفر + أسود ===================== */
+:root{--deep:#111;--brown:#111;--brown2:#222;--gold:#ffd500;--gold2:#ffe24d;--gold3:#111;--cream:#f6f6f6;--bg:#fff;--ink:#111;--muted:#6b6b6b;--line:#ececec;--hot:#e5281c;--sh:0 1px 4px rgba(0,0,0,.07)}
+html,body{background:#fff}
+.top{background:#fff;color:#111;box-shadow:0 1px 0 #ececec}
+.logo{color:#111;font-size:21px}
+.logo img{box-shadow:none;border-radius:11px}
+.search{background:#f2f2f2;box-shadow:none}
+.search svg{color:#111}
+.cartbtn{color:#111}
+.cnt{background:var(--hot)}
+.chips{padding:2px 12px 10px}
+.chip{background:#fff;border:1.5px solid #e6e6e6;color:#111}
+.chip.on{background:var(--gold);border-color:var(--gold);color:#111}
+.hero{border:0;box-shadow:none;border-radius:16px;margin:8px 12px 0}
+.slide{background:var(--gold);color:#111;height:128px}
+.slide h3{color:#111;text-shadow:none;font-size:17px}
+.slide p{color:#222;font-size:12px}
+.slide .cta{background:#111;color:#fff;box-shadow:none;padding:6px 16px;font-size:12.5px}
+.slide .cta:after{content:" ›"}
+.slide .im{width:42%}
+.slide .im img{-webkit-mask-image:linear-gradient(to left,#000 75%,transparent);mask-image:linear-gradient(to left,#000 75%,transparent)}
+.slide .off{background:var(--hot);box-shadow:0 0 0 2px #fff;width:44px;height:44px;font-size:13px}
+.dots i{background:rgba(255,255,255,.7);box-shadow:0 0 2px #0004}.dots i.on{background:#111}
+.perks{background:#f6f6f6;border:0;box-shadow:none;border-radius:16px;padding:12px 2px}
+.perks div{font-size:12px;border-left:1px solid #e3e3e3;color:#111;display:flex;flex-direction:column;align-items:center;gap:6px}
+.perks svg{width:28px;height:28px;stroke-width:1.7}
+.sec-h h3{font-size:22px}
+.sec-h button{color:#111;font-weight:800}
+.tile{background:#f4f4f4;border:0;box-shadow:none;border-radius:16px}
+.tile .ic.emo{background:#fff}
+.tile b{font-size:13px}
+.pc{background:#fff;border:1px solid #efefef;box-shadow:none;border-radius:14px}
+.pimg{background:#fff}
+.tag{background:var(--hot);border-radius:8px}
+.newb{background:var(--gold);color:#111;box-shadow:none}
+.fav{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.12);color:#8a8a8a}
+.pr b,.pg .price b,.ci .tt .p{color:var(--hot)}
+.pt{color:#111}
+.addw{background:var(--gold);color:#111;box-shadow:none;font-weight:900;border-radius:10px}
+.nav{background:#fff;border-radius:0;border-top:1px solid #ececec;box-shadow:0 -2px 12px rgba(0,0,0,.06);padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+.nav .in{grid-template-columns:repeat(5,1fr);gap:4px}
+.nav button{color:#111;font-size:11.5px;border-radius:14px}
+.nav button svg{color:#111}
+.nav button.on{background:var(--gold);color:#111;box-shadow:none}
+.nav .nb{background:var(--hot)}
+.btn.cart{background:var(--gold);color:#111}
+.btn.buy{background:#111;color:#fff}
+.btn{border-radius:12px}
+.optv button.on{border-color:#111;background:#111;color:#fff}
+.optv.need button{border-color:var(--hot)}
+.gth img.on{border-color:#111}
+.sb.on{background:#111;color:#fff;border-color:#111}
+.stp .s.dn i{background:var(--gold);border-color:var(--gold);color:#111}
+.stp .s.cur i{box-shadow:0 0 0 4px rgba(255,213,0,.35)}
+.upl{background:var(--gold);color:#111}
+.paybox{background:#fffbe0;border-color:var(--gold)}
+.paybox .pi{border-color:var(--gold)}
+.me a,.me .li{background:#fff;color:#111}
+.me button.li{width:100%;text-align:right;border:0;border-bottom:1px solid var(--line);font-family:inherit;font-size:15px}
+.rcv{border-color:var(--gold);bottom:calc(70px + env(safe-area-inset-bottom))}
+.trust span{background:#f6f6f6}
+.toast{background:#111;color:var(--gold)}
+.sk{background:linear-gradient(100deg,#eee 30%,#f8f8f8 50%,#eee 70%);background-size:200% 100%}
+.dnav{display:none}
+.pg .hd button{box-shadow:0 1px 6px rgba(0,0,0,.18)}
+/* الصفحات الضيقة (سلة/طلبات/حسابي) تبقى بعرض مريح على الكمبيوتر */
+#app[data-v=cart],#app[data-v=orders],#app[data-v=account],#app[data-v=me]{max-width:680px}
+@media (min-width:900px){
+  body{padding-bottom:30px}
+  .wrap{max-width:1240px}
+  .top .wrap{max-width:1240px}
+  .bar{padding:14px 20px;gap:22px}
+  .search{max-width:620px;margin:0 auto;padding:2px 18px}
+  .search input{font-size:15px;padding:11px 0}
+  .cartbtn{display:none}
+  .dnav{display:flex;gap:4px;align-items:center}
+  .dnav button,.dnav a{position:relative;display:flex;align-items:center;gap:6px;padding:9px 14px;border-radius:12px;font-weight:800;font-size:14px;color:#111;text-decoration:none;white-space:nowrap}
+  .dnav button:hover,.dnav a:hover{background:#f4f4f4}
+  .dnav .on{background:var(--gold)}
+  .dnav svg{width:20px;height:20px}
+  .dnav .cnt{position:static;margin-right:2px}
+  .chips{padding:0 20px 12px;flex-wrap:wrap;overflow:visible}
+  .nav{display:none}
+  .rcv{bottom:20px}
+  .toast{bottom:30px}
+  .hero{margin:14px 20px 0;border-radius:20px}
+  .slide{height:260px}
+  .slide .tx{padding:26px 40px;gap:12px}
+  .slide h3{font-size:34px}
+  .slide p{font-size:16px}
+  .slide .cta{padding:11px 30px;font-size:16px}
+  .slide .im{width:50%}
+  .slide .off{width:78px;height:78px;font-size:22px;top:18px;left:18px}
+  .slide .off small{font-size:12px}
+  .perks{margin:16px 20px 0;padding:18px 6px}
+  .perks div{font-size:14px}.perks svg{width:34px;height:34px}
+  .sec{padding:0 20px;margin-top:28px}
+  .sec-h h3{font-size:26px}
+  .sec-h button{font-size:15px}
+  .tile{width:130px;padding:14px 6px}
+  .tile .ic{height:90px}.tile .ic.hasimg img,.tile .ic.emo{width:88px;height:88px}
+  .tile b{font-size:14.5px}
+  .cgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;padding:12px 20px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px;padding:0 20px}
+  .pc{border-radius:16px;transition:box-shadow .2s,transform .2s}
+  .pc:hover{box-shadow:0 8px 24px rgba(0,0,0,.12);transform:translateY(-2px)}
+  .pb{padding:12px 14px 14px;gap:8px}
+  .pt{font-size:15px;min-height:44px;line-height:1.5}
+  .pr b{font-size:20px}.pr s{font-size:13px}.yer{font-size:12px}
+  .addw{padding:11px 8px;font-size:15px;border-radius:12px}.addw svg{width:19px;height:19px}
+  .tag{font-size:12px;padding:5px 9px;top:10px;right:10px}
+  .fav{width:34px;height:34px;font-size:17px;top:10px;left:10px}
+  .hrow{padding:2px 20px 12px}.hrow .pc{flex:0 0 220px}
+  .backbar{padding:20px 20px 10px}.backbar h2{font-size:24px}
+  .sortbar{padding:2px 20px 12px}.cntline{padding:0 20px 8px}
+  .mq{padding:2px 20px 10px}
+  /* صفحة المنتج: عمودان */
+  .pg.show{display:grid;grid-template-columns:minmax(0,500px) minmax(0,1fr);grid-template-rows:auto 500px auto auto auto auto;column-gap:40px;align-content:start;padding:0 max(24px,calc((100vw - 1140px)/2)) 40px;background:#fff}
+  .pg .hd{grid-column:1/-1;grid-row:1;padding:18px 0 6px}
+  .pg .gwrap{grid-column:1;grid-row:2;margin:0;border-radius:18px;overflow:hidden;max-width:none;height:500px;width:100%}
+  .pg .gal2{height:100%}
+  .pg .gal2 img{height:100%;aspect-ratio:auto}
+  .pg .gth{grid-column:1;grid-row:3;padding:10px 0 0}
+  .pg .bd{grid-column:2;grid-row:2;max-width:none;padding:0;align-self:start}
+  .pg .actbar{position:static;grid-column:2;grid-row:3;max-width:none;width:100%;margin:0;padding:6px 0 0;border:0;background:none;align-self:start}
+  .pg .price b{font-size:34px}.pg h3{font-size:24px}
+  .pg .simh{grid-column:1/-1;grid-row:5;margin:30px 0 12px;font-size:22px}
+  .pg .grid{grid-column:1/-1;grid-row:6;padding:0;max-width:none!important;margin:0!important}
+  .btn{font-size:16px;padding:15px 10px}
+  .ci,.sum,.frm,.ord{margin-left:0;margin-right:0}
+  .ci{padding:12px}.ci img{width:96px;height:96px}
+  .wlc .ph{max-height:70vh}
+}
+@media (min-width:1400px){.grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}}
 </style>
 </head>
 <body>
@@ -252,6 +387,7 @@ input,textarea,.pg p{-webkit-user-select:text;user-select:text}
   <div class="bar">
     <div class="logo" data-go="home"><img src="icon-192.png" alt=""><span id="shopName">حضرم شوب</span></div>
     <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" type="search" placeholder="ابحث عن منتج..." autocomplete="off"></div>
+    <nav class="dnav"><button data-go="home" id="d-home">الرئيسية</button><button data-go="cats" id="d-cats">الأقسام</button><button data-go="favs" id="d-favs">المفضلة</button><button data-go="orders" id="d-orders">طلباتي</button><a href="merchant.html">🏪 حساب التاجر</a><button data-go="cart" id="d-cart"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11.2a2 2 0 002 1.6h7.4a2 2 0 002-1.5L20.5 8H6"/><circle cx="10" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg>السلة<span class="cnt" id="dCnt" style="display:none">0</span></button></nav>
     <button class="cartbtn" data-go="cart" aria-label="السلة"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11.2a2 2 0 002 1.6h7.4a2 2 0 002-1.5L20.5 8H6"/><circle cx="10" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg><span class="cnt" id="cartCnt" style="display:none">0</span></button>
   </div>
   <div class="chips" id="chips"></div>
@@ -263,8 +399,7 @@ input,textarea,.pg p{-webkit-user-select:text;user-select:text}
   <button data-go="cats" id="n-cats"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>الأقسام</button>
   <button data-go="cart" id="n-cart"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11.2a2 2 0 002 1.6h7.4a2 2 0 002-1.5L20.5 8H6"/><circle cx="10" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg>السلة<span class="nb" id="navCnt" style="display:none">0</span></button>
   <button data-go="favs" id="n-favs"><svg viewBox="0 0 24 24"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 018-2.7A4.5 4.5 0 0120 10c0 5.8-8 11-8 11z"/></svg>المفضلة</button>
-  <button data-go="orders" id="n-orders"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>طلباتي</button>
-<a class="tr" href="merchant.html"><b>🏪</b>التاجر</a>
+  <button data-go="account" id="n-account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>حسابي</button>
 </div></nav>
 <div class="pg" id="pg"></div>
 <div class="toast" id="toast"></div>
@@ -316,7 +451,7 @@ function openFromHash(){ if(hashDone) return; const m=location.hash.match(/p=([^
 const disc=p=>p.old>p.price?Math.round((1-p.price/p.old)*100):0;
 function drawBadges(){
   const n=CART.reduce((a,i)=>a+i.q,0);
-  for(const id of ["cartCnt","navCnt"]){const el=$("#"+id);el.style.display=n?"grid":"none";el.textContent=n}
+  for(const id of ["cartCnt","navCnt","dCnt"]){const el=$("#"+id);el.style.display=n?"grid":"none";el.textContent=n}
 }
 const selKey=(id,sel)=>id+(sel&&Object.keys(sel).length?"|"+Object.keys(sel).sort().map(k=>k+"="+sel[k]).join("&"):"");
 const selTxt=sel=>sel?Object.entries(sel).map(([k,v])=>k+": "+v).join("، "):"";
@@ -382,8 +517,8 @@ function home(){
   feat.slice(0,3).forEach(p=>{const d=disc(p);slides.push(`<div class="slide">${d>=5?`<div class="off"><div>${d}%<small>خصم</small></div></div>`:""}<div class="tx"><h3>${esc(p.title.length>38?p.title.slice(0,38)+"…":p.title)}</h3><p>${nf(p.price)} ${esc(p.cur)}${d?` بدل ${nf(p.old)} ${esc(p.cur)}`:""}</p><button class="cta" data-act="open" data-id="${esc(p.id)}">تسوّق الآن ‹</button></div><div class="im"><img src="${esc(safeUrl(p.image))}" alt=""></div></div>`)});
   if(!slides.length) slides.push(`<div class="slide"><div class="tx"><h3>${esc(S.name)}</h3><p>${esc(S.tagline)}</p><button class="cta" data-go="all">تسوّق الآن ‹</button></div><div class="em">🛍️</div></div>`);
   return `<div class="hero"><div class="slides" id="slides">${slides.join("")}</div>${slides.length>1?`<div class="dots" id="dots">${slides.map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}</div>
-  <div class="perks"><div><i>⚡</i>طلب سريع<br>عبر واتساب</div><div><i>💰</i>أسعار<br>مميزة</div><div><i>✅</i>منتجات<br>مختارة</div><div><i>💬</i>تواصل<br>مباشر</div></div>
-  <a href="merchant.html" style="display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 10px 0;padding:12px;border-radius:14px;background:linear-gradient(135deg,#f7c04a,#d4a017);color:#2b1a08;font-weight:900;text-decoration:none">🏪 حساب التاجر — سجّل وادخل لعرض منتجاتك</a>
+  <div class="perks"><div><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>طلب سريع<br>عبر واتساب</div><div><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>أسعار<br>مميزة</div><div><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>منتجات<br>مختارة</div><div><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-11.6 7.1L3 21l1.9-5.4A8 8 0 1121 12z"/></svg>تواصل<br>مباشر</div></div>
+  <a href="merchant.html" style="display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 10px 0;padding:12px;border-radius:14px;background:#111;color:#ffd500;font-weight:900;text-decoration:none">🏪 حساب التاجر — سجّل وادخل لعرض منتجاتك</a>
   ${CATS.length?`<section class="sec"><div class="sec-h"><button data-go="cats">عرض الكل ‹</button><h3>تسوّق حسب القسم</h3></div>${CATS.length>=4?`<div class="mq" dir="ltr"><div class="mqt" style="--d:${CATS.length*3.2}s">${CATS.map(circ).join("")}${CATS.map(circ).join("")}</div></div>`:`<div class="tiles">${CATS.map(circ).join("")}</div>`}</section>`:""}
   ${ALL.length>2?`<section class="sec"><div class="sec-h"><button data-go="all">عرض الكل ‹</button><h3>وصل حديثاً ✨</h3></div></section><div class="hrow">${ALL.slice(0,8).map(card).join("")}</div>`:""}
   ${deals.length?`<section class="sec"><div class="sec-h"><button data-go="deals">عرض الكل ‹</button><h3>عروض اليوم 🔥</h3></div><div class="sub">أسعار مخفّضة على منتجات مختارة</div></section><div class="grid">${deals.slice(0,6).map(card).join("")}</div>`:""}
@@ -537,12 +672,14 @@ function render(){
     case "cart": html=cartView(); nv="n-cart"; break;
     case "favs": {const s=saved();html=`<div class="backbar"><h2>♥ المفضلة</h2></div>`+(s.length?listView(ALL.filter(p=>s.includes(p.id))):`<div class="empty">اضغط ♥ على أي منتج لحفظه هنا</div>`);nv="n-favs";break}
     case "search": {const q=norm(view.q);html=`<div class="backbar"><h2>نتائج: ${esc(view.q)}</h2></div>`+(()=>{const r=ALL.filter(p=>norm(p.title+" "+p.desc+" "+((CATS.find(c=>c.id===p.cat)||{}).name||"")).includes(q));return r.length?listView(r):`<div class="empty">ما لقينا نتائج لـ «${esc(view.q)}»<br>جرّب كلمة ثانية أو تصفّح الأقسام</div>`})();break}
-    case "orders": html=ordersView(); nv="n-orders"; if(Date.now()-trkAt>8000){trkAt=Date.now();setTimeout(trackOrders,0)} break;
-    case "me": html=`<div class="backbar"><h2>💬 تواصل معنا</h2></div><div class="me">${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 راسلنا على واتساب</a>`:""}<div class="li">🛍️ ${esc(S.name)}</div></div>`; nv="n-me"; break;
+    case "orders": html=ordersView(); nv="n-account"; if(Date.now()-trkAt>8000){trkAt=Date.now();setTimeout(trackOrders,0)} break;
+    case "account": html=`<div class="backbar"><h2>👤 حسابي</h2></div><div class="me"><button class="li" data-go="orders">📦 طلباتي</button>${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 تواصل معنا</a>`:""}<a href="merchant.html">🏪 حساب التاجر</a><div class="li">🛍️ ${esc(S.name)}</div></div>`; nv="n-account"; break;
+    case "me": html=`<div class="backbar"><h2>💬 تواصل معنا</h2></div><div class="me">${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 راسلنا على واتساب</a>`:""}<div class="li">🛍️ ${esc(S.name)}</div></div>`; nv="n-account"; break;
     default: html=home();
   }
   app.innerHTML=html; drawChips(); drawBadges();
   document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on",b.id===nv));
+  {const dm={"n-home":"d-home","n-cats":"d-cats","n-cart":"d-cart","n-favs":"d-favs"};const dv=view.name==="orders"?"d-orders":dm[nv];document.querySelectorAll(".dnav button").forEach(b=>b.classList.toggle("on",b.id===dv));app.dataset.v=view.name}
   if(view.name==="home"){let i=0;const sl=$("#slides"),ds=[...document.querySelectorAll("#dots i")],n=sl.children.length;if(n<2)return;slideT=setInterval(()=>{if(!sl.isConnected)return;i=(i+1)%n;sl.style.transform=`translateX(${-i*100}%)`;ds.forEach((d,k)=>d.classList.toggle("on",k===i))},3800)}
 }
 function nav(v,push=true){closePage();view=v;if(push)history.pushState(v,"");render();scrollTo(0,0)}
