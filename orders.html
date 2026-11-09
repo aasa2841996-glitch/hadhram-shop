@@ -162,7 +162,7 @@ html[data-theme=dark] img,html[data-theme=dark] video,html[data-theme=dark] .wlc
 html[data-theme=dark] .addw,html[data-theme=dark] .nav button.on,html[data-theme=dark] .dnav .on,html[data-theme=dark] .chip.on,html[data-theme=dark] .btn.cart,html[data-theme=dark] .av2,html[data-theme=dark] .role,html[data-theme=dark] .upl,html[data-theme=dark] .seg2 button.on,html[data-theme=dark] .seg3 button.on,html[data-theme=dark] .rbtn,html[data-theme=dark] .rgo,html[data-theme=dark] .av button,html[data-theme=dark] .fab,html[data-theme=dark] .go,html[data-theme=dark] .btn.gold,html[data-theme=dark] .slide,html[data-theme=dark] .pnav button.on,html[data-theme=dark] .tag,html[data-theme=dark] .dp,html[data-theme=dark] .cnt,html[data-theme=dark] .nb{filter:invert(1) hue-rotate(180deg)}
 .cth{margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
 .cm{max-width:82%;padding:7px 10px;font-size:13.5px;line-height:1.6}.cm small{display:block;color:#888;font-size:10.5px}
-.cm.c{align-self:flex-start;background:#f2f2f2}.cm.a{align-self:flex-end;background:#ffd500}
+.cm.c{align-self:flex-start;background:#f2f2f2}.cm.a{align-self:flex-end;background:#ffd500}.cm.a.ai{background:#eee}
 </style>
 </head>
 <body>
@@ -393,8 +393,8 @@ function pageBody(){
     <div class="row">${g.has_bank?`<button class="gd" data-copy="${esc(g.acct)}">📋 نسخ رقم الحساب</button>`:""}${g.ids.length?`<button class="ok" data-payout="${g.mid}" data-amt="${esc(g.amount)}" data-name="${esc(g.name)}">✅ تم التحويل</button>`:""}${phLink(g.phone,"السلام عليكم، تم تحويل مستحقاتك من "+SHOP+" ("+g.amount+") 💛")}</div></div>`).join(""):`<div class="empty">لا توجد مستحقات للتسوية الآن ✅</div>`}
   if(page==="chat"){const L=d.chats||[];return L.length?L.map(c=>{const open=openC===c.cid,last=c.msgs[c.msgs.length-1];return `<div class="pc"><div data-copen="${esc(c.cid)}" style="cursor:pointer"><h3>💬 ${esc(c.name||"عميل")}${c.phone?` <span class="sub" dir="ltr">+${esc(c.phone)}</span>`:""}</h3>
     <div>${c.waiting?`<span class="tag pending">بانتظار ردّك</span> `:""}${c.complaint?`<span class="tag rejected">شكوى</span> `:""}${c.inquiry?`<span class="tag active">استعلام</span>`:""}</div>
-    ${open?"":`<div class="sub">${last.dir==="a"?"أنت: ":""}${esc(last.txt.slice(0,80))}</div>`}</div>
-    ${open?`<div class="cth">${c.msgs.map(m=>`<div class="cm ${m.dir}"><div>${esc(m.txt).replace(/\n/g,"<br>")}</div><small>${esc(m.time)}</small></div>`).join("")}</div>
+    ${open?"":`<div class="sub">${last.who==="admin"?"أنت: ":last.who==="ai"?"🤖 الذكاء الاصطناعي: ":""}${esc(last.txt.slice(0,80))}</div>`}</div>
+    ${open?`<div class="cth">${c.msgs.map(m=>`<div class="cm ${m.dir}${m.who==="ai"?" ai":""}"><small style="font-weight:900;color:#555">${m.who==="c"?"👤 العميل":m.who==="admin"?"🧑‍💼 أنت (الإدارة)":"🤖 رد آلي"}</small><div>${esc(m.txt).replace(/\n/g,"<br>")}</div><small>${esc(m.time)}</small></div>`).join("")}</div>
     <textarea data-cin2="${esc(c.cid)}" rows="2" placeholder="اكتب ردّك للعميل…" style="width:100%;box-sizing:border-box;margin-top:8px;padding:9px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px"></textarea>
     <div class="row"><button class="ok" data-csend="${esc(c.cid)}">إرسال الرد</button>${phLink(c.phone)}</div>`:""}</div>`}).join(""):`<div class="empty">لا توجد رسائل من العملاء بعد</div>`}
   if(page==="prods"){
