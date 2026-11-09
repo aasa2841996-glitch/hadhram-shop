@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json?v=2">
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
 <link rel="icon" href="icon-192.png?v=2">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--deep:#241406;--brown:#3a2210;--brown2:#52301a;--gold:#f0b13a;--gold2:#ffd27a;--gold3:#c98a1a;--cream:#fbf4e8;--bg:#f6efe4;--ink:#241406;--muted:#8a7a68;--line:#eadfce;--hot:#d92d20;--wa:#25d366;--sh:0 4px 16px rgba(36,20,6,.10)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -330,6 +330,12 @@ html,body{background:#fff}
 .hrow .pc,.grid .pc{transition:box-shadow .2s,background .2s}
 @media (min-width:900px){.pc{padding:8px;margin:-8px}.pc:hover{background:#fff!important;box-shadow:0 4px 18px rgba(0,0,0,.14)!important;transform:none!important;z-index:2}.grid{gap:24px 18px!important}}
 @media (max-width:899px){.grid{gap:16px 10px!important}}
+.pt{font-family:Roboto,Arial,"Noto Sans Arabic",sans-serif!important;font-size:14px!important;font-weight:400!important;line-height:1.5!important}
+.pr b{font-family:Roboto,Arial,"Noto Sans Arabic",sans-serif!important;font-size:17px!important;font-weight:700!important}
+.pr s,.pr .yer{font-family:Arial,"Noto Sans Arabic",sans-serif!important;font-size:12px!important;font-weight:400!important}
+.tag{font-family:Roboto,Arial,"Noto Sans Arabic",sans-serif!important;font-size:12px!important;font-weight:700!important}
+.sn{font-family:Arial,"Noto Sans Arabic",sans-serif;font-size:13px;font-weight:700;color:#555}
+@media (min-width:900px){.pt{font-size:14px!important}.pr b{font-size:17px!important}}
 .dnav{display:none}
 .pg .hd button{box-shadow:0 1px 6px rgba(0,0,0,.18)}
 /* الصفحات الضيقة (سلة/طلبات/حسابي) تبقى بعرض مريح على الكمبيوتر */
@@ -491,7 +497,7 @@ function card(p){
     ${p.image?`<img loading="lazy" decoding="async" src="${esc(safeUrl(p.image))}" alt="${esc(p.title)}">`:"🛍️"}
     ${d>=5?`<span class="tag">خصم<br>${d}%</span>`:""}${isNew(p)&&!d?`<span class="newb">جديد</span>`:""}${p.stock?"":`<div class="sold">نفد المخزون</div>`}
     <button class="fav ${fav?"on":""}" data-act="fav" data-id="${esc(p.id)}">♥</button></div>
-    <div class="pb"><div class="pt">${esc(p.title)}</div>
+    <div class="pb"><div class="pt">${esc(p.title)}</div>${p.mn?`<div class="sn">${esc(p.mn)}</div>`:""}
     <div class="pr"><b>${nf(p.price)} ${esc(p.cur)}</b>${d?`<s>${nf(p.old)} ${esc(p.cur)}</s>`:""}${p.yer?`<small class="yer">${nf(p.yer)} ر.ي</small>`:""}</div>
     ${p.stock?`<button class="addw" data-act="${p.opts&&p.opts.length?"open":"add"}" data-id="${esc(p.id)}">${p.opts&&p.opts.length?"اختر":"أضف إلى السلة"} ${ICON_CART2}</button>`:""}</div></article>`;
 }
