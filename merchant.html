@@ -461,7 +461,7 @@ document.addEventListener("click",async e=>{
 document.addEventListener("click",e=>{const t=e.target.closest("[data-th]");if(!t)return;const m=t.dataset.th;try{localStorage.setItem("hs_theme",m)}catch(x){}const d=m==="dark"||(m==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";draw()});
 async function boot(){
   await loadMeta();
-  if(!TK)return authView();
+  if(!TK){if(/#reg/.test(location.hash))mode="reg";authView();if(mode==="reg"){try{const A=JSON.parse(localStorage.getItem("hs_acct")||"null");if(A){if($("#r-phone")&&!$("#r-phone").value)$("#r-phone").value=A.phone||"";if($("#r-owner")&&!$("#r-owner").value)$("#r-owner").value=A.name||""}}catch(e){}}return}
   try{ME=(await api("/m/me")).merchant}catch(e){return}
   await loadOrders();draw();
   clearInterval(timer);
