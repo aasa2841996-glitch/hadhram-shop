@@ -397,14 +397,14 @@ html,body{background:#fff}
   .sortbar{padding:2px 20px 12px}.cntline{padding:0 20px 8px}
   .mq{padding:2px 20px 10px}
   /* صفحة المنتج: عمودان */
-  .pg.show{display:grid;grid-template-columns:minmax(0,500px) minmax(0,1fr);grid-template-rows:auto 500px auto auto auto auto;column-gap:40px;align-content:start;padding:0 max(24px,calc((100vw - 1140px)/2)) 40px;background:#fff}
+  .pg.show{display:grid;grid-template-columns:minmax(0,500px) minmax(0,1fr);grid-template-rows:auto auto auto auto auto auto;column-gap:40px;align-content:start;padding:0 max(24px,calc((100vw - 1140px)/2)) 40px;background:#fff}
   .pg .hd{grid-column:1/-1;grid-row:1;padding:18px 0 6px}
   .pg .gwrap{grid-column:1;grid-row:2;margin:0;border-radius:18px;overflow:hidden;max-width:none;height:500px;width:100%}
   .pg .gal2{height:100%}
   .pg .gal2 img{height:100%;aspect-ratio:auto}
-  .pg .gth{grid-column:1;grid-row:3;padding:10px 0 0}
-  .pg .bd{grid-column:2;grid-row:2;max-width:none;padding:0;align-self:start}
-  .pg .actbar{position:static;grid-column:2;grid-row:3;max-width:none;width:100%;margin:0;padding:6px 0 0;border:0;background:none;align-self:start}
+  .pg .gth{grid-column:1;grid-row:3;padding:10px 0 0;overflow-y:hidden}
+  .pg .bd{grid-column:2;grid-row:2/4;max-width:none;padding:0;align-self:start}
+  .pg .actbar{position:static;grid-column:2;grid-row:4;max-width:none;width:100%;margin:0;padding:6px 0 0;border:0;background:none;align-self:start}
   .pg .price b{font-size:34px}.pg h3{font-size:24px}
   .pg .simh{grid-column:1/-1;grid-row:5;margin:30px 0 12px;font-size:22px}
   .pg .grid{grid-column:1/-1;grid-row:6;padding:0;max-width:none!important;margin:0!important}
@@ -447,6 +447,7 @@ html,body{font-family:"Tajawal",sans-serif!important;font-weight:400}
 .pb .addw{margin-top:auto!important}
 .pb>.pr2:last-of-type{margin-bottom:8px}
 .pr{flex-direction:row!important;justify-content:flex-start!important;min-height:0!important}
+@media (min-width:900px){.pg .bd{width:100%;margin:0!important;box-sizing:border-box}}
 </style>
 </head>
 <body>
@@ -492,8 +493,8 @@ let MPROD=LS.get("hs_mp",[]);
 function ingest(d){
   S={...S,...(d.settings||{})}; CATS=d.categories||[];
   const api=(S.orderApi||"").replace(/\/$/,"");
-  const mp=(MPROD||[]).map(p=>({id:p.id,title:p.title,price:p.price,currency:p.cur,old:p.old,image:p.img?api+"/img/"+p.img:"",images:(p.imgs||[]).map(x=>api+"/img/"+x),opts:p.opts||[],category:p.cat,desc:p.desc,priceYer:p.price_yer,stock:p.stock,createdAt:new Date(p.created).toISOString(),merchant:p.merchant}));
-  ALL=[...(d.products||[]),...mp].map(p=>({mn:p.merchant||"",rate:parseFloat(p.rating)||0,rc:parseInt(p.reviews)||0,ship:String(p.ship||"").slice(0,40),id:String(p.id),title:p.title||"منتج",price:parseFloat(p.price)||0,cur:p.currency==="YER"?"ر.ي":"ر.س",old:parseFloat(p.old)||0,image:p.image||"",imgs:(p.images&&p.images.length?p.images:(p.image?[p.image]:[])),opts:p.opts||[],cat:p.category||"",desc:p.desc||"",yer:parseFloat(p.priceYer)||0,stock:p.stock!==false,created:Date.parse(p.createdAt)||0}))
+  const mp=(MPROD||[]).map(p=>({id:p.id,title:p.title,price:p.price,currency:p.cur,old:p.old,image:p.img?api+"/img/"+p.img:"",images:(p.imgs||[]).map(x=>api+"/img/"+x),opts:fixOpts(p.opts),category:p.cat,desc:p.desc,priceYer:p.price_yer,stock:p.stock,createdAt:new Date(p.created).toISOString(),merchant:p.merchant}));
+  ALL=[...(d.products||[]),...mp].map(p=>({mn:p.merchant||"",rate:parseFloat(p.rating)||0,rc:parseInt(p.reviews)||0,ship:String(p.ship||"").slice(0,40),id:String(p.id),title:p.title||"منتج",price:parseFloat(p.price)||0,cur:p.currency==="YER"?"ر.ي":"ر.س",old:parseFloat(p.old)||0,image:p.image||"",imgs:(p.images&&p.images.length?p.images:(p.image?[p.image]:[])),opts:fixOpts(p.opts),cat:p.category||"",desc:p.desc||"",yer:parseFloat(p.priceYer)||0,stock:p.stock!==false,created:Date.parse(p.createdAt)||0}))
     .filter(p=>p.price>0).sort((a,b)=>b.created-a.created);
   byId=new Map(ALL.map(x=>[x.id,x]));
   CART=CART.filter(i=>byId.has(i.id));
@@ -700,6 +701,7 @@ document.addEventListener("change",async e=>{
   }catch(err){toast("⚠️ "+err.message)}
 });
 const contactBox=()=>`<div class="me">${S.whatsapp?`<a href="https://wa.me/${esc(S.whatsapp)}" target="_blank" rel="noopener">💬 راسلنا على واتساب</a>`:""}<a href="merchant.html">🏪 قسم التاجر — بع منتجاتك معنا</a></div>`;
+function fixOpts(o){return (Array.isArray(o)?o:[]).map(g=>{const vs=[];(g.values||[]).forEach(v=>{String(v).split(/\s+[.،,]\s+|\s*[،,]\s*|(?<=[A-Za-z\u0600-\u06FF])\.(?=[A-Za-z\u0600-\u06FF])/).forEach(x=>{x=x.trim();if(x&&!vs.includes(x))vs.push(x)})});return {...g,values:vs}})}
 function openPage(id){
   const p=byId.get(id); if(!p) return; let q=1, sel={}, gi=0, need=false; const d=disc(p); const sim=ALL.filter(x=>x.cat===p.cat&&x.id!==p.id).slice(0,6);
   const draw=()=>{ $("#pg").innerHTML=`<div class="hd"><button data-pgclose>›</button><div class="hb"><button data-act="share" data-id="${esc(p.id)}" aria-label="مشاركة">↗</button><button data-act="fav" data-id="${esc(p.id)}" class="${saved().includes(p.id)?"on":""}" style="color:${saved().includes(p.id)?"var(--hot)":"#b5aa9a"}">♥</button></div></div>
