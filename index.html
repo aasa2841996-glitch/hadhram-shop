@@ -490,9 +490,14 @@ html[data-theme=dark] .addw,html[data-theme=dark] .nav button.on,html[data-theme
 .cb.me{align-self:flex-start;background:#ffd500;color:#111}.cb.ag{align-self:flex-end;background:#fff;color:#111;border:1px solid #e5e5e5}
 .chempty{margin:auto;text-align:center;color:#777}.chempty .ic{width:40px;height:40px;color:#111}.chempty p{line-height:1.9;font-size:14px}
 .chbar{display:flex;gap:8px;padding:10px;border-top:1px solid #ececec;background:#fff}
-.chbar input{flex:1;border:1px solid #ddd;padding:12px;font-family:inherit;font-size:15px;background:#fff;color:#111;min-width:0}
+.chbar input{flex:1;border:1px solid #ddd;padding:12px;font-family:inherit;font-size:16px;background:#fff;color:#111;min-width:0}
 .chbar button{width:46px;border:0;background:#111;color:#ffd500;display:flex;align-items:center;justify-content:center}
 @media(min-width:900px){.chat{height:calc(100vh - 260px);max-width:720px}}
+body.chatmode header.top,body.chatmode .nav,body.chatmode .cats,body.chatmode #chips{display:none!important}
+body.chatmode{overflow:hidden}
+body.chatmode .chat{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:80;max-width:none;min-height:0;border:0;background:#fff}
+body.chatmode .chat .backbar{border-bottom:1px solid #ececec;background:#fff;flex:none}
+body.chatmode .chbar{flex:none}
 </style>
 </head>
 <body>
@@ -788,7 +793,7 @@ const apiBase=()=>(S.orderApi||"").replace(/\/$/,"");
 const chId=()=>{let c="";try{c=localStorage.getItem("hs_chid")||""}catch(e){}if(!/^[a-z0-9]{12,32}$/i.test(c)){c=Array.from(crypto.getRandomValues(new Uint8Array(12)),x=>(x%36).toString(36)).join("");try{localStorage.setItem("hs_chid",c)}catch(e){}}return c};
 let CH=LS.get("hs_chat",{msgs:[],last:0}),chT=null;
 const chHtml=()=>CH.msgs.length?CH.msgs.map(m=>`<div class="cb ${m.dir==="c"?"me":"ag"}">${esc(m.txt).replace(/\n/g,"<br>")}</div>`).join(""):`<div class="chempty">${ico("chat")}<p>أهلاً بك 👋<br>اكتب رسالتك وسيرد عليك فريق خدمة العملاء هنا.</p></div>`;
-function chatView(){return `${sub("خدمة العملاء")}<div class="chat"><div class="chmsgs" id="chm">${chHtml()}</div><form class="chbar" id="chf"><input id="chi" autocomplete="off" placeholder="اكتب رسالتك…" maxlength="600"><button type="submit" aria-label="إرسال"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg></button></form></div>`}
+function chatView(){return `<div class="chat">${sub("خدمة العملاء")}<div class="chmsgs" id="chm">${chHtml()}</div><form class="chbar" id="chf"><input id="chi" autocomplete="off" placeholder="اكتب رسالتك…" maxlength="600"><button type="submit" aria-label="إرسال"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg></button></form></div>`}
 function chDraw(){const m=$("#chm");if(!m)return;const bottom=m.scrollHeight-m.scrollTop-m.clientHeight<80;m.innerHTML=chHtml();if(bottom||CH.fresh){m.scrollTop=m.scrollHeight;CH.fresh=false}}
 async function chPoll(){
   if(view.name!=="chat"||!apiBase())return;
@@ -796,7 +801,9 @@ async function chPoll(){
     const add=(j.msgs||[]).filter(x=>!CH.msgs.some(y=>y.id===x.id));
     if(add.length){CH.msgs=CH.msgs.filter(x=>!x.tmp).concat(add);CH.last=Math.max(...CH.msgs.map(x=>x.id||0));LS.set("hs_chat",{msgs:CH.msgs.slice(-60),last:CH.last});chDraw()}}catch(e){}
 }
-function chStart(){clearInterval(chT);CH.fresh=true;chDraw();chPoll();chT=setInterval(()=>{if(view.name!=="chat"){clearInterval(chT);return}chPoll()},4000)}
+function chVV(){const v=window.visualViewport;const el=document.querySelector(".chat");if(!el)return;if(v){el.style.height=v.height+"px";el.style.top=v.offsetTop+"px"}const m=$("#chm");if(m)m.scrollTop=m.scrollHeight}
+if(window.visualViewport){visualViewport.addEventListener("resize",chVV);visualViewport.addEventListener("scroll",chVV)}
+function chStart(){chVV();clearInterval(chT);CH.fresh=true;chDraw();chPoll();chT=setInterval(()=>{if(view.name!=="chat"){clearInterval(chT);return}chPoll()},4000)}
 async function chSend(txt){
   txt=String(txt||"").trim();if(!txt)return false;
   if(!apiBase()){toast("الدردشة غير متاحة الآن");return false}
@@ -925,6 +932,7 @@ function shareP(id){
 }
 function closePage(back){ $("#pg").classList.remove("show"); }
 function render(){
+  document.body.classList.toggle("chatmode",view.name==="chat");
   clearInterval(slideT);
   let html="",nv="n-home";
   switch(view.name){
