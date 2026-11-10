@@ -498,6 +498,14 @@ body.chatmode{overflow:hidden}
 body.chatmode .chat{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:80;max-width:none;min-height:0;border:0;background:#fff}
 body.chatmode .chat .backbar{border-bottom:1px solid #ececec;background:#fff;flex:none}
 body.chatmode .chbar{flex:none}
+/* فئات بأسلوب نون: بطاقة صورة كبيرة بإطار أصفر واسم عريض تحتها */
+.catg{gap:10px}
+.catg .tile{background:transparent!important;padding:0!important;border:0;box-shadow:none;border-radius:0}
+.catg .tile .ic,.catg .tile .ic.hasimg,.catg .tile .ic.emo{width:100%!important;height:auto!important;aspect-ratio:1/1.05;margin:0 0 6px!important;border-radius:16px;overflow:hidden;border:2.5px solid #ffd500;background:linear-gradient(180deg,#fff7c2,#ffe55c);display:grid;place-items:center;font-size:42px}
+.catg .tile .ic.hasimg img{width:100%!important;height:100%!important;object-fit:cover;border-radius:0!important}
+.catg .tile b{font-size:13.5px;font-weight:800;margin-top:2px}
+.catg .tile small{font-size:11px}
+.sec:has(.catg){background:linear-gradient(180deg,#fff9d6,#fff);padding-top:6px;padding-bottom:12px}
 </style>
 </head>
 <body>
@@ -624,7 +632,7 @@ function categoryKey(c){
 const EMO={dress:"👗",beauty:"💄",general:"🛍️",perfume:"🧴",electronics:"📱",clothing:"👕",bags:"👜",accessories:"⌚",kitchen:"🍳",home:"🛋️"};
 const catEmo=c=>c.emoji||EMO[categoryKey(c)]||"🛍️";
 const catImg=c=>{if(c.image)return c.image;const k=categoryKey(c);if(k==="dress"||k==="beauty"){const pi=(ALL.find(p=>p.cat===c.id&&p.image)||{}).image;return pi||""}if(k!=="general")return CATEGORY_ART[k];return (ALL.find(p=>p.cat===c.id&&p.image)||{}).image||CATEGORY_ART.general};
-const circ=c=>{const im=catImg(c);return `<button class="tile" data-act="cat" data-id="${esc(c.id)}"><div class="ic ${im?"hasimg":"emo"}">${im?`<img loading="lazy" src="${esc(safeUrl(im))}" alt="">`:esc(catEmo(c))}</div><b>${esc(c.name)}</b><small>${ALL.filter(p=>p.cat===c.id).length} منتج</small></button>`}
+const circ=c=>{const im=catImg(c);return `<button class="tile" data-act="cat" data-id="${esc(c.id)}"><div class="ic ${im?"hasimg":"emo"}">${im?`<img loading="lazy" src="${esc(safeUrl(im))}" alt="" onerror="this.parentNode.className='ic emo';this.parentNode.textContent='🛍'">`:esc(catEmo(c))}</div><b>${esc(c.name)}</b><small>${ALL.filter(p=>p.cat===c.id).length} منتج</small></button>`}
 function mini(p){return `<div class="mini" data-act="open" data-id="${esc(p.id)}"><span class="tag">-${disc(p)}%</span><div class="im">${p.image?`<img loading="lazy" src="${esc(safeUrl(p.image))}" alt="">`:""}</div><div class="pr">${nf(p.price)} ${esc(p.cur)}<s>${nf(p.old)} ${esc(p.cur)}</s></div></div>`}
 
 function chipIc(c){const im=catImg(c);return im?`<img class="cim" src="${esc(safeUrl(im))}" alt="">`:`<span class="cem">${esc(catEmo(c))}</span>`}
