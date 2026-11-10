@@ -172,14 +172,15 @@ main{padding:0 0 10px}
 .clr{display:block;margin:2px auto 8px;color:var(--muted);font-weight:800;font-size:13px;text-decoration:underline}
 .ok{margin:30px 14px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px 16px;box-shadow:var(--sh)}
 .ok b{display:block;font-size:20px;margin:8px 0}
-.wlc{position:fixed;inset:0;z-index:200;background:#1d0f04;display:flex;flex-direction:column;justify-content:center;transition:opacity .45s,transform .45s}
+.wlc{position:fixed;inset:0;z-index:200;background:#fafafa;display:flex;flex-direction:column;overflow:auto;transition:opacity .45s,transform .45s}
 .wlc.out{opacity:0;transform:scale(1.04);pointer-events:none}
-.wlc .ph{flex:none;width:100%;max-width:560px;margin:0 auto;aspect-ratio:800/826;max-height:74vh;position:relative;background:url(welcome.jpg) center top/contain no-repeat;-webkit-mask-image:linear-gradient(180deg,transparent,#000 7%);mask-image:linear-gradient(180deg,transparent,#000 7%)}
-.wlc .ph:after{content:"";position:absolute;left:0;right:0;bottom:0;height:14%;background:linear-gradient(180deg,transparent,#1d0f04)}
-.wlc .bt{padding:6px 22px calc(26px + env(safe-area-inset-bottom));background:#1d0f04;text-align:center}
-.wlc button{width:100%;max-width:420px;border-radius:999px;padding:16px;font-weight:900;font-size:20px;color:var(--deep);background:linear-gradient(180deg,#ffe29a,#f0b13a 55%,#c98a1a);box-shadow:0 0 0 2px rgba(255,226,154,.35),0 8px 24px rgba(240,177,58,.35)}
+.wlc .ph{flex:none;width:100%;max-width:560px;margin:0 auto;aspect-ratio:750/535;background:url(welcome.jpg?v=2) center top/100% 100% no-repeat}
+.wlc .bt{flex:1;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:6px 24px calc(28px + env(safe-area-inset-bottom));text-align:center;color:#111}
+.wlc h2{font-size:26px;font-weight:900;margin:0 0 8px}
+.wlc p{margin:0 0 22px;color:#666;font-weight:700;font-size:15px;line-height:1.6;max-width:320px}
+.wlc button{width:100%;max-width:420px;border-radius:999px;padding:16px;font-weight:900;font-size:19px;border:0;cursor:pointer;color:#111;background:#ffd500;box-shadow:0 6px 18px rgba(255,213,0,.45)}
 .wlc button:active{transform:scale(.98)}
-.wlc small{display:block;color:#b99a6c;font-weight:700;margin-top:10px;font-size:12.5px}
+.wlc small{display:block;color:#888;font-weight:700;margin-top:12px;font-size:12.5px}
 body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 input,textarea,.pg p{-webkit-user-select:text;user-select:text}
 .pc,.tile,.slide{cursor:pointer}
@@ -413,7 +414,6 @@ html,body{background:#fff}
   .btn{font-size:16px;padding:15px 10px}
   .ci,.sum,.frm,.ord{margin-left:0;margin-right:0}
   .ci{padding:12px}.ci img{width:96px;height:96px}
-  .wlc .ph{max-height:70vh}
 }
 @media (min-width:1400px){.grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}}
 html,body{font-family:"Tajawal",sans-serif!important;font-weight:400}
@@ -463,7 +463,7 @@ html,body{font-family:"Tajawal",sans-serif!important;font-weight:400}
 .rph{display:inline-block;margin-top:6px;padding:8px 12px;background:#f4f4f4;font-weight:700;font-size:13px;cursor:pointer}
 .rgo{width:100%;margin-top:8px;background:#ffd500;color:#111;font-weight:800;padding:14px;font-size:16px;border:0}.rgo:disabled{opacity:.6}
 html[data-theme=dark]{filter:invert(1) hue-rotate(180deg);background:#fff}
-html[data-theme=dark] img,html[data-theme=dark] video,html[data-theme=dark] .wlc .ph,html[data-theme=dark] .slide .im{filter:invert(1) hue-rotate(180deg)}
+html[data-theme=dark] img,html[data-theme=dark] video,html[data-theme=dark] .slide .im{filter:invert(1) hue-rotate(180deg)}
 .accard{background:#fff;border:1px solid #ececec;margin:10px 12px;padding:14px}.accard b{display:block;font-size:17px;margin-bottom:2px}.accard small{display:block;color:#777;margin-bottom:6px}
 .accard label{display:block;font-weight:700;font-size:13px;margin:10px 0 4px}.accard input{width:100%;border:1px solid #ddd;padding:11px;font-size:15px;font-family:inherit;box-sizing:border-box;background:#fff;color:#111}
 .accard .msg{min-height:18px;font-size:13px;margin-top:6px}
@@ -543,7 +543,7 @@ body.chatmode .chbar{flex:none}
 </div></nav>
 <div class="pg" id="pg"></div>
 <div class="toast" id="toast"></div>
-<div class="wlc" id="wlc" style="display:none"><div class="ph"></div><div class="bt"><button id="wgo">👤 تسجيل الدخول</button><small>اضغط للدخول وتصفّح المنتجات</small><a href="merchant.html" style="display:inline-block;margin-top:10px;color:var(--gold2);font-weight:900;font-size:14px;text-decoration:underline">🏪 هل أنت تاجر؟ ادخل قسم التاجر</a></div></div>
+<div class="wlc" id="wlc" style="display:none"><div class="ph"></div><div class="bt"><h2>مرحباً بك في وَفَر</h2><p>تسوّق العروض والخصومات من أفضل المتاجر في مكان واحد</p><button id="wgo">تسجيل الدخول</button><a href="merchant.html" style="display:inline-block;margin-top:16px;color:#111;font-weight:900;font-size:14px;text-decoration:underline">🏪 هل أنت تاجر؟ ادخل قسم التاجر</a></div></div>
 <script>
 const $=(s,r=document)=>r.querySelector(s);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
