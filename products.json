@@ -8,38 +8,122 @@
  },
  "categories": [
   {
-   "id": "general",
-   "name": "منتجات عامة",
-   "emoji": "🛍️"
+   "id": "home-fix",
+   "name": "مستلزمات المنزل والصيانة",
+   "emoji": "🔧",
+   "img": "cats/home-fix.webp"
+  },
+  {
+   "id": "stationery",
+   "name": "القرطاسية والمكتب",
+   "emoji": "📚",
+   "img": "cats/stationery.webp"
+  },
+  {
+   "id": "pets",
+   "name": "مستلزمات الحيوانات الأليفة",
+   "emoji": "🐾",
+   "img": "cats/pets.webp"
+  },
+  {
+   "id": "kids-supplies",
+   "name": "مستلزمات الأطفال",
+   "emoji": "🧸",
+   "img": "cats/kids-supplies.webp"
+  },
+  {
+   "id": "sports-trips",
+   "name": "الرياضة والرحلات",
+   "emoji": "⚽",
+   "img": "cats/sports-trips.webp"
+  },
+  {
+   "id": "cars",
+   "name": "مستلزمات السيارات",
+   "emoji": "🚗",
+   "img": "cats/cars.webp"
+  },
+  {
+   "id": "cmw3iyjtg",
+   "name": "العناية الشخصية",
+   "emoji": "🧴",
+   "img": "cats/personal-care.webp"
+  },
+  {
+   "id": "cmw3iy8lw",
+   "name": "المنزل والمطبخ",
+   "emoji": "🍳",
+   "img": "cats/home-kitchen.webp"
+  },
+  {
+   "id": "electronics",
+   "name": "الإلكترونيات",
+   "emoji": "📱",
+   "img": "cats/electronics.webp"
+  },
+  {
+   "id": "appliances",
+   "name": "الأجهزة",
+   "emoji": "☕",
+   "img": "cats/appliances.webp"
+  },
+  {
+   "id": "cmw3iy1hv",
+   "name": "أزياء النساء",
+   "emoji": "👗",
+   "img": "cats/women.webp"
+  },
+  {
+   "id": "men",
+   "name": "أزياء الرجال",
+   "emoji": "👔",
+   "img": "cats/men.webp"
+  },
+  {
+   "id": "sunglasses",
+   "name": "نظارات",
+   "emoji": "🕶️",
+   "img": "cats/sunglasses.webp"
+  },
+  {
+   "id": "cmw3ixqrn",
+   "name": "شنط يد",
+   "emoji": "👜",
+   "img": "cats/handbags.webp"
+  },
+  {
+   "id": "shoes",
+   "name": "الأحذية",
+   "emoji": "👟",
+   "img": "cats/shoes.webp"
+  },
+  {
+   "id": "jewelry",
+   "name": "مجوهرات",
+   "emoji": "💍",
+   "img": "cats/jewelry.webp"
+  },
+  {
+   "id": "cmw3ixvrn",
+   "name": "أزياء الأطفال",
+   "emoji": "🧒",
+   "img": "cats/kids-fashion.webp"
+  },
+  {
+   "id": "sportswear",
+   "name": "ملابس رياضية",
+   "emoji": "🏃",
+   "img": "cats/sportswear.webp"
   },
   {
    "id": "cmw3ixeij",
    "name": "العطور",
-   "emoji": "🛍️"
+   "emoji": "🌸",
+   "img": "cats/perfume.webp"
   },
   {
-   "id": "cmw3ixqrn",
-   "name": "الشنط",
-   "emoji": "🛍️"
-  },
-  {
-   "id": "cmw3ixvrn",
-   "name": "الملابس",
-   "emoji": "🛍️"
-  },
-  {
-   "id": "cmw3iy1hv",
-   "name": "الفساتين",
-   "emoji": "🛍️"
-  },
-  {
-   "id": "cmw3iy8lw",
-   "name": "المطبخ",
-   "emoji": "🛍️"
-  },
-  {
-   "id": "cmw3iyjtg",
-   "name": "العناية والجمال",
+   "id": "general",
+   "name": "منتجات عامة",
    "emoji": "🛍️"
   }
  ],
