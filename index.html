@@ -661,10 +661,10 @@ function cartView(){
     <label>رقم الجوال (واتساب)</label><input id="c-phone" type="tel" inputmode="tel" value="${esc(f.phone||"")}" placeholder="مثال: 05xxxxxxxx">
     <label>تفاصيل العنوان (اختياري)</label><input id="c-addr" value="${esc(f.addr)}" placeholder="الشارع، أقرب معلم">
     <label>ملاحظات (اختياري)</label><textarea id="c-note" rows="2">${esc(f.note)}</textarea></div>
-  <div style="padding:0 10px"><button class="btn wa wide" data-act="checkout">💬 إتمام الطلب عبر واتساب</button><button class="clr" data-act="clear">تفريغ السلة</button></div>`;
+  <div style="padding:0 10px">${S.orderApi?`<button class="btn buy wide" data-act="checkout">✅ إتمام الطلب</button>`:`<button class="btn wa wide" data-act="checkout">💬 إتمام الطلب عبر واتساب</button>`}<button class="clr" data-act="clear">تفريغ السلة</button></div>`;
 }
 function checkout(items){
-  if(!S.whatsapp){toast("رقم واتساب غير مضبوط");return}
+  if(!S.whatsapp&&!S.orderApi){toast("رقم واتساب غير مضبوط");return}
   const cust={name:($("#c-name")||{}).value||"",addr:($("#c-addr")||{}).value||"",city:($("#c-city")||{}).value||"",area:($("#c-area")||{}).value||"",phone:($("#c-phone")||{}).value||"",note:($("#c-note")||{}).value||""};
   if($("#c-name")){
     if(!cust.name.trim()){toast("اكتب اسمك أولاً");$("#c-name").focus();return}
@@ -685,7 +685,7 @@ function checkout(items){
     LS.set("hs_orders",ol.slice(0,30));
     CART=[];saveCart();
   }
-  window.open(`https://wa.me/${S.whatsapp}?text=${encodeURIComponent(m)}`,"_blank","noopener");
+  if(!S.orderApi)window.open(`https://wa.me/${S.whatsapp}?text=${encodeURIComponent(m)}`,"_blank","noopener");
   if(S.orderApi){toast("تم استلام طلبك ✅ أكمل الدفع من «طلباتي»");nav({name:"orders"})}
 }
 const TRK={}; let trkAt=0, PAYINFO="";
@@ -761,11 +761,28 @@ const mrow=(n,t,sub,attr,extra)=>`<button class="mr" ${attr}>${ico(n)}<span clas
 const mlink=(n,t,sub,href)=>`<a class="mr" href="${href}" target="${href.startsWith("http")?"_blank":"_self"}" rel="noopener">${ico(n)}<span class="mt"><b>${t}</b>${sub?`<small>${sub}</small>`:""}</span>${ico("chev")}</a>`;
 const segc=(attr,items)=>`<span class="seg2">${items.map(([v,l,on,dis])=>`<button ${dis?"disabled":""} data-${attr}="${v}" class="${on?"on":""}">${l}</button>`).join("")}</span>`;
 const sub=t=>`<div class="backbar"><button class="bk" data-pgclose aria-label="رجوع">${ico("chev").replace('M15 5l-7 7 7 7','M9 5l7 7-7 7')}</button><h2>${t}</h2></div>`;
+let BOTU="",VFT=null;
+async function botName(){if(BOTU||!apiBase())return BOTU;try{const j=await (await fetch(apiBase()+"/verify/info")).json();BOTU=j.bot||""}catch(e){}return BOTU}
+function vfMsg(h){const m=$("#ac-msg");if(m){m.innerHTML=h;m.style.color="#111"}}
+async function acVerify(name){
+  if(!apiBase()){toast("التسجيل غير متاح الآن");return}
+  const vt=Array.from(crypto.getRandomValues(new Uint8Array(20)),x=>(x%36).toString(36)).join("");
+  clearInterval(VFT);const bu=await botName();if(!bu){vfMsg("تعذّر الاتصال بالبوت، حاول بعد قليل");return}
+  const link=`https://t.me/${bu}?start=v_${vt}`;
+  vfMsg(`⏳ بانتظار تأكيد رقمك…<br><a href="${link}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;padding:10px 14px;background:#111;color:#ffd500;font-weight:800;text-decoration:none">افتح تيليجرام</a><br><small>اضغط «Start» ثم زر مشاركة الرقم، وارجع هنا.</small>`);
+  try{window.open(link,"_blank")}catch(e){}
+  const t0=Date.now();
+  VFT=setInterval(async()=>{
+    if(Date.now()-t0>600000||view.name!=="account"){clearInterval(VFT);return}
+    try{const j=await (await fetch(apiBase()+"/verify/check?vt="+vt,{cache:"no-store"})).json();
+      if(j.phone){clearInterval(VFT);LS.set("hs_acct",{phone:j.phone,name,verified:1});toast("✅ تم التحقق من رقمك");render()}}catch(e){}
+  },2500);
+}
 function accountView(){
   const A=ACC(),isM=(()=>{try{return !!localStorage.getItem("hm_tk")}catch(e){return false}})();
-  const top=A?`<div class="accard"><div class="prof"><div class="av2">${esc((A.name||"").trim().charAt(0))||ico("user")}</div><div><b>${esc(A.name||"عميل")}</b><div dir="ltr" class="ph2">+${esc(A.phone)}</div><span class="role">عميل${isM?" · تاجر":""}</span></div></div></div>`:
+  const top=A?`<div class="accard"><div class="prof"><div class="av2">${esc((A.name||"").trim().charAt(0))||ico("user")}</div><div><b>${esc(A.name||"عميل")}</b><div dir="ltr" class="ph2">+${esc(A.phone)}</div><span class="role">${A.verified?"✅ رقم موثّق":"عميل"}${isM?" · تاجر":""}</span></div></div></div>`:
   `<div class="accard"><div class="prof"><div class="av2">${ico("user")}</div><div><b>أهلاً بك</b><small>سجّل برقم جوالك لتسهيل طلباتك</small></div></div>
-    <label>الاسم (اختياري)</label><input id="ac-name" placeholder="اسمك"><label>رقم الجوال</label><input id="ac-phone" type="tel" inputmode="tel" dir="ltr" placeholder="05xxxxxxxx أو 967xxxxxxxxx"><button class="btn buy" data-acct="login" style="width:100%;margin-top:12px">تسجيل الدخول</button><div class="msg" id="ac-msg"></div></div>`;
+    <label>الاسم (اختياري)</label><input id="ac-name" placeholder="اسمك"><button class="btn buy" data-acct="login" style="width:100%;margin-top:12px">التسجيل بتأكيد رقمي عبر تيليجرام</button><small style="display:block;margin-top:8px;color:#777;line-height:1.7">يفتح لك بوت المتجر في تيليجرام، تشارك رقمك بزر واحد ثم ترجع هنا تلقائياً. نتحقق أن الرقم رقمك فعلاً.</small><div class="msg" id="ac-msg"></div></div>`;
   return `<div class="backbar"><h2>حسابي</h2></div>${top}
   <div class="mg" style="margin-top:14px">${A?mrow("user","الملف الشخصي","",'data-go="prof"'):""}${mrow("box","طلباتي","",'data-go="orders"')}${mrow("heart","المفضلة","",'data-go="favs"')}</div>
   <div class="mg" style="margin-top:14px">${isM?mlink("store","حساب المتجر","","merchant.html"):mlink("plus","فتح حساب تاجر","","merchant.html#reg")}</div>
@@ -824,8 +841,7 @@ document.addEventListener("click",e=>{
   const t=e.target.closest("[data-th]");if(t){setTh(t.dataset.th);if(view.name==="account"||view.name==="sett")render();return}
   const a=e.target.closest("[data-acct]");if(!a)return;
   const k=a.dataset.acct,nm=($("#ac-name")||{}).value||"";
-  if(k==="login"){const ph=(($("#ac-phone")||{}).value||"").replace(/\D/g,"");if(ph.length<9){const m=$("#ac-msg");if(m){m.textContent="اكتب رقم جوالك الصحيح";m.style.color="var(--hot)"}return}
-    LS.set("hs_acct",{phone:ph,name:nm.trim().slice(0,40)});toast("✅ تم تسجيل الدخول");render()}
+  if(k==="login"){acVerify(nm.trim().slice(0,40))}
   else if(k==="save"){const A=ACC();if(A){const em=(($("#ac-mail")||{}).value||"").trim();if(em&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){const m=$("#ac-msg");if(m){m.textContent="البريد الإلكتروني غير صحيح";m.style.color="var(--hot)"}return}A.name=nm.trim().slice(0,40);A.email=em.slice(0,80);LS.set("hs_acct",A);acEdit=false;toast("✅ تم الحفظ");history.back()}}
   else if(k==="edit"){nav({name:"prof"})}
   else if(k==="cancel"){acEdit=false;render()}
