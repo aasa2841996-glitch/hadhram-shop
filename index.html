@@ -506,6 +506,17 @@ body.chatmode .chbar{flex:none}
 .catg .tile b{font-size:13.5px;font-weight:800;margin-top:2px}
 .catg .tile small{font-size:11px}
 .sec:has(.catg){background:linear-gradient(180deg,#fff9d6,#fff);padding-top:6px;padding-bottom:12px}
+/* شريط الأقسام بأسلوب نون */
+.nsw{position:relative}
+.ns{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;padding:12px 12px 8px;background:linear-gradient(180deg,#fff0a0,#fff8d0);scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.ns::-webkit-scrollbar{display:none}
+.nc{flex:0 0 94px;scroll-snap-align:start;background:none;border:0;padding:0;text-align:center;cursor:pointer;font-family:inherit}
+.nim{position:relative;aspect-ratio:3/3.6;border:2.5px solid #e53935;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#fff,#ffe9a0);display:grid;place-items:center;font-size:36px}
+.nim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.nim i{position:absolute;left:4px;right:4px;bottom:5px;background:#b71c1c;color:#fff;font-style:normal;font-size:10.5px;font-weight:800;border-radius:99px;padding:3px 2px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nc b{display:block;font-size:13px;font-weight:800;margin-top:6px;color:#111;line-height:1.3}
+.nsb{display:none}
+@media(min-width:900px){.nc{flex-basis:130px}.nc b{font-size:15px}.nsb{display:grid;place-items:center;position:absolute;top:38%;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid #ddd;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:22px;z-index:2;cursor:pointer}.nsb.l{left:8px}.nsb.r{right:8px}}
 </style>
 </head>
 <body>
@@ -632,6 +643,11 @@ function categoryKey(c){
 const EMO={dress:"👗",beauty:"💄",general:"🛍️",perfume:"🧴",electronics:"📱",clothing:"👕",bags:"👜",accessories:"⌚",kitchen:"🍳",home:"🛋️"};
 const catEmo=c=>c.emoji||EMO[categoryKey(c)]||"🛍️";
 const catImg=c=>{if(c.image)return c.image;const k=categoryKey(c);if(k==="dress"||k==="beauty"){const pi=(ALL.find(p=>p.cat===c.id&&p.image)||{}).image;return pi||""}if(k!=="general")return CATEGORY_ART[k];return (ALL.find(p=>p.cat===c.id&&p.image)||{}).image||CATEGORY_ART.general};
+const hasCats=()=>CATS.filter(c=>ALL.some(p=>p.cat===c.id));
+const catDisc=c=>{let m=0;ALL.forEach(p=>{if(p.cat===c.id&&p.old>p.price&&p.price>0)m=Math.max(m,Math.round((1-p.price/p.old)*100))});return m};
+const nCard=c=>{const im=catImg(c),d=catDisc(c),n=ALL.filter(p=>p.cat===c.id).length;
+  return `<button class="nc" data-act="cat" data-id="${esc(c.id)}"><div class="nim">${im?`<img loading="lazy" src="${esc(safeUrl(im))}" alt="" onerror="this.remove()">`:`<span>${esc(catEmo(c))}</span>`}<i>${d>=5?"خصم حتى "+d+"%":n+" منتج"}</i></div><b>${esc(c.name)}</b></button>`};
+document.addEventListener("click",e=>{const b=e.target.closest("[data-ns]");if(!b)return;const s=$("#ns");if(s)s.scrollBy({left:Number(b.dataset.ns)*s.clientWidth*0.8,behavior:"smooth"})});
 const circ=c=>{const im=catImg(c);return `<button class="tile" data-act="cat" data-id="${esc(c.id)}"><div class="ic ${im?"hasimg":"emo"}">${im?`<img loading="lazy" src="${esc(safeUrl(im))}" alt="" onerror="this.parentNode.className='ic emo';this.parentNode.textContent='🛍'">`:esc(catEmo(c))}</div><b>${esc(c.name)}</b><small>${ALL.filter(p=>p.cat===c.id).length} منتج</small></button>`}
 function mini(p){return `<div class="mini" data-act="open" data-id="${esc(p.id)}"><span class="tag">-${disc(p)}%</span><div class="im">${p.image?`<img loading="lazy" src="${esc(safeUrl(p.image))}" alt="">`:""}</div><div class="pr">${nf(p.price)} ${esc(p.cur)}<s>${nf(p.old)} ${esc(p.cur)}</s></div></div>`}
 
@@ -649,7 +665,7 @@ function home(){
   return `<div class="hero"><div class="slides" id="slides">${slides.join("")}</div>${slides.length>1?`<div class="dots" id="dots">${slides.map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}</div>
   <div class="perks"><div><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>طلب سريع<br>عبر واتساب</div><div><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>أسعار<br>مميزة</div><div><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>منتجات<br>مختارة</div><div><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 01-11.6 7.1L3 21l1.9-5.4A8 8 0 1121 12z"/></svg>تواصل<br>مباشر</div></div>
   <a href="merchant.html" style="display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 10px 0;padding:12px;border-radius:14px;background:#111;color:#ffd500;font-weight:900;text-decoration:none">🏪 حساب التاجر — سجّل وادخل لعرض منتجاتك</a>
-  ${CATS.length?`<section class="sec"><div class="sec-h"><button data-go="cats">عرض الكل ‹</button><h3>تسوّق حسب القسم</h3></div><div class="catg">${CATS.slice(0,8).map(circ).join("")}</div></section>`:""}
+  ${hasCats().length?`<section class="sec"><div class="sec-h"><button data-go="cats">عرض الكل ‹</button><h3>تسوّق حسب القسم</h3></div><div class="nsw"><button class="nsb l" data-ns="-1" aria-label="التالي">‹</button><div class="ns" id="ns">${hasCats().map(nCard).join("")}</div><button class="nsb r" data-ns="1" aria-label="السابق">›</button></div></section>`:""}
   ${ALL.length>2?`<section class="sec"><div class="sec-h"><button data-go="all">عرض الكل ‹</button><h3>وصل حديثاً ✨</h3></div></section><div class="grid rec">${ALL.slice(0,8).map(card).join("")}</div>`:""}
   ${deals.length?`<section class="sec"><div class="sec-h"><button data-go="deals">عرض الكل ‹</button><h3>عروض اليوم 🔥</h3></div><div class="sub">أسعار مخفّضة على منتجات مختارة</div></section><div class="grid">${deals.slice(0,6).map(card).join("")}</div>`:""}
   `;
@@ -960,7 +976,7 @@ function render(){
   clearInterval(slideT);
   let html="",nv="n-home";
   switch(view.name){
-    case "cats": html=`<div class="backbar"><h2>🧩 الأقسام</h2></div><div class="cgrid">${CATS.map(circ).join("")}</div>`; nv="n-cats"; break;
+    case "cats": html=`<div class="backbar"><h2>🧩 الأقسام</h2></div><div class="cgrid">${hasCats().map(circ).join("")}</div>`; nv="n-cats"; break;
     case "cat": {const c=CATS.find(x=>x.id===view.id)||{};html=`<div class="backbar"><h2>${esc((c.emoji||"")+" "+(c.name||""))}</h2></div>`+listView(ALL.filter(p=>p.cat===view.id));nv="n-cats";break}
     case "all": html=`<div class="backbar"><h2>🛒 جميع المنتجات</h2></div>`+listView(ALL); break;
     case "deals": html=`<div class="backbar"><h2>⚡ العروض</h2></div>`+listView(ALL.filter(p=>disc(p)>=5)); break;
