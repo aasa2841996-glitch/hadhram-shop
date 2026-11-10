@@ -79,7 +79,7 @@ header .rf.spin{animation:sp .8s linear infinite}@keyframes sp{to{transform:rota
 .login .go{width:100%;margin-top:16px;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#111;font-weight:900;font-size:16px;border-radius:12px;padding:13px}
 .err{color:var(--new);font-weight:800;font-size:13px;margin-top:10px;min-height:18px}
 .pnav{position:fixed;left:0;right:0;bottom:0;z-index:35;background:linear-gradient(180deg,var(--brown),var(--deep));padding:6px 6px calc(6px + env(safe-area-inset-bottom));display:flex;gap:3px;border-radius:18px 18px 0 0;box-shadow:0 -6px 20px rgba(0,0,0,.3)}
-.pnav button{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;gap:0;font-size:10.5px;font-weight:800;color:#d9c7ad;padding:6px 0;border-radius:12px}
+.pnav button{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;gap:0;font-size:10px;font-weight:800;color:#d9c7ad;padding:6px 0;border-radius:12px}
 .pnav button b{font-size:18px;line-height:1.25}
 .pnav button.on{background:linear-gradient(180deg,var(--gold2),var(--gold));color:#111}
 .pnav .nb{position:absolute;top:0;left:14%;background:var(--new);color:#fff;font-size:10px;min-width:16px;height:16px;border-radius:99px;display:grid;place-items:center;padding:0 4px}
@@ -354,8 +354,8 @@ function findProd(i){return PRODS.find(p=>i.id&&p.id===i.id)||PRODS.find(p=>p.ti
 async function loadProds(){try{const r=await fetch("products.json?v="+Math.floor(Date.now()/60000));const d=await r.json();PRODS=(d.products||[]).map(p=>({id:String(p.id),title:p.title,abs:p.image?new URL(p.image,location.href).href:""}))}catch(e){}}
 /* ================= أقسام اللوحة: الدفعات / التجار / التسويات / المنتجات ================= */
 let page=LS.get("ho_page","orders"),D={},psrc="store",pq="",openC="";
-const PAGES=[["orders","🧾","الطلبات"],["pay","💳","الدفعات"],["merch","🏪","التجار"],["settle","💼","التسويات"],["prods","📦","المنتجات"],["chat","💬","الدردشة"]];
-const EP={pay:"/api/payments",merch:"/api/merchants",settle:"/api/settle",prods:"/api/products",chat:"/api/chats"};
+const PAGES=[["orders","🧾","الطلبات"],["pay","💳","الدفعات"],["merch","🏪","التجار"],["settle","💼","التسويات"],["prods","📦","المنتجات"],["chat","💬","الدردشة"],["rev","⭐","التقييمات"]];
+const EP={pay:"/api/payments",merch:"/api/merchants",settle:"/api/settle",prods:"/api/products",chat:"/api/chats",rev:"/api/reviews"};
 function drawNav(){
   const nb={pay:(D.pay&&D.pay.payments||[]).length,merch:((D.merch&&D.merch.merchants)||[]).filter(m=>m.status==="pending").length,settle:(D.settle&&D.settle.settle||[]).length,chat:(D.chat&&D.chat.waiting)||0};
   $("#pnav").style.display="flex";
@@ -397,6 +397,10 @@ function pageBody(){
     ${open?`<div class="cth">${c.msgs.map(m=>`<div class="cm ${m.dir}${m.who==="ai"?" ai":""}"><small style="font-weight:900;color:#555">${m.who==="c"?"👤 العميل":m.who==="admin"?"🧑‍💼 أنت (الإدارة)":"🤖 رد آلي"}</small><div>${esc(m.txt).replace(/\n/g,"<br>")}</div><small>${esc(m.time)}</small></div>`).join("")}</div>
     <textarea data-cin2="${esc(c.cid)}" rows="2" placeholder="اكتب ردّك للعميل…" style="width:100%;box-sizing:border-box;margin-top:8px;padding:9px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px"></textarea>
     <div class="row"><button class="ok" data-csend="${esc(c.cid)}">إرسال الرد</button>${phLink(c.phone)}</div>`:""}</div>`}).join(""):`<div class="empty">لا توجد رسائل من العملاء بعد</div>`}
+  if(page==="rev"){const L=d.reviews||[];return L.length?L.map(r=>{const pr=r.kind==="p"?PRODS.find(p=>p.id===String(r.pid)):null,tgt=r.kind==="m"?"🏪 تاجر: "+esc(r.mname||"—"):"📦 "+esc(pr?pr.title:"منتج");
+    return `<div class="pc" style="${r.hidden?"opacity:.55":""}"><h3>${"★".repeat(r.stars)}${"☆".repeat(5-r.stars)} <span class="sub">${esc(r.name||"عميل")}</span>${r.hidden?` <span class="tag rejected">مخفي</span>`:""}</h3>
+    <div class="sub">${tgt} · طلب #${r.oid}</div>${r.txt?`<div style="margin-top:4px">«${esc(r.txt)}»</div>`:""}${r.img?`<a href="${API}/img/${esc(r.img)}" target="_blank" rel="noopener"><img class="rc" src="${API}/img/${esc(r.img)}" alt="" style="max-height:140px;margin-top:6px"></a>`:""}
+    <div class="row"><button class="${r.hidden?"ok":"no"}" data-rvhide="${r.id}:${r.hidden?0:1}">${r.hidden?"👁 إظهار":"🙈 إخفاء"}</button></div></div>`}).join(""):`<div class="empty">لا توجد تقييمات بعد</div>`}
   if(page==="prods"){
     const st=(d.store||[]).map(p=>({...p,src:"store",img:imgOf(p.image),cur:p.currency==="YER"?"ر.ي":"ر.س"}));
     const mp=(d.merchant||[]).map(p=>({id:p.id,title:p.title,price:p.price,old:p.old,cat:p.cat,stock:p.stock,src:"merchant",img:p.img?API+"/img/"+p.img:"",cur:p.cur==="YER"?"ر.ي":"ر.س",merchant:p.merchant,hidden:p.status!=="active"}));
@@ -443,6 +447,7 @@ document.addEventListener("click",async e=>{
   if(b=e.target.closest("[data-psrc]")){psrc=b.dataset.psrc;drawPage();return}
   if(b=e.target.closest("[data-pedit]")){const[s,...r]=b.dataset.pedit.split(":");editSheet(s,r.join(":"));return}
   if(b=e.target.closest("[data-pstk]")){const[s,...r]=b.dataset.pstk.split(":");act("/api/product",{src:s,id:r.join(":"),action:"stk"},"تم ✓");return}
+  if(b=e.target.closest("[data-rvhide]")){const [id,h]=b.dataset.rvhide.split(":");act("/api/review",{id:Number(id),hide:h==="1"},h==="1"?"🙈 تم إخفاء التقييم":"👁 تم إظهار التقييم");return}
   if(b=e.target.closest("[data-phide]")){act("/api/product",{src:"merchant",id:b.dataset.phide,action:"hide"},"تم ✓");return}
   if(b=e.target.closest("[data-pdel]")){const[s,...r]=b.dataset.pdel.split(":");if(confirm("حذف هذا المنتج نهائياً؟"))act("/api/product",{src:s,id:r.join(":"),action:"del"},"🗑 تم الحذف");return}
 });
