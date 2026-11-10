@@ -514,9 +514,12 @@ body.chatmode .chbar{flex:none}
 .nim{position:relative;aspect-ratio:3/3.6;border:2.5px solid #e53935;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#fff,#ffe9a0);display:grid;place-items:center;font-size:36px}
 .nim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .nim i{position:absolute;left:4px;right:4px;bottom:5px;background:#b71c1c;color:#fff;font-style:normal;font-size:10.5px;font-weight:800;border-radius:99px;padding:3px 2px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nc.ni{flex-basis:108px}.nc.ni img{width:100%;height:auto;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));transition:transform .15s}.nc.ni:active img{transform:scale(.96)}
+.tile.timg{background:none!important;border:0!important;box-shadow:none!important;padding:0!important}.tile.timg img{width:100%;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18))}
+.ns{background:#fff!important}
 .nc b{display:block;font-size:13px;font-weight:800;margin-top:6px;color:#111;line-height:1.3}
 .nsb{display:none}
-@media(min-width:900px){.nc{flex-basis:130px}.nc b{font-size:15px}.nsb{display:grid;place-items:center;position:absolute;top:38%;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid #ddd;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:22px;z-index:2;cursor:pointer}.nsb.l{left:8px}.nsb.r{right:8px}}
+@media(min-width:900px){.nc{flex-basis:130px}.nc.ni{flex-basis:150px}.nc b{font-size:15px}.nsb{display:grid;place-items:center;position:absolute;top:38%;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid #ddd;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:22px;z-index:2;cursor:pointer}.nsb.l{left:8px}.nsb.r{right:8px}}
 </style>
 </head>
 <body>
@@ -642,19 +645,19 @@ function categoryKey(c){
 }
 const EMO={dress:"👗",beauty:"💄",general:"🛍️",perfume:"🧴",electronics:"📱",clothing:"👕",bags:"👜",accessories:"⌚",kitchen:"🍳",home:"🛋️"};
 const catEmo=c=>c.emoji||EMO[categoryKey(c)]||"🛍️";
-const catImg=c=>{if(c.image)return c.image;const k=categoryKey(c);if(k==="dress"||k==="beauty"){const pi=(ALL.find(p=>p.cat===c.id&&p.image)||{}).image;return pi||""}if(k!=="general")return CATEGORY_ART[k];return (ALL.find(p=>p.cat===c.id&&p.image)||{}).image||CATEGORY_ART.general};
-const hasCats=()=>CATS.filter(c=>ALL.some(p=>p.cat===c.id));
+const catImg=c=>{if(c.img)return c.img;if(c.image)return c.image;const k=categoryKey(c);if(k==="dress"||k==="beauty"){const pi=(ALL.find(p=>p.cat===c.id&&p.image)||{}).image;return pi||""}if(k!=="general")return CATEGORY_ART[k];return (ALL.find(p=>p.cat===c.id&&p.image)||{}).image||CATEGORY_ART.general};
+const hasCats=()=>CATS.filter(c=>c.img||ALL.some(p=>p.cat===c.id));
 const catDisc=c=>{let m=0;ALL.forEach(p=>{if(p.cat===c.id&&p.old>p.price&&p.price>0)m=Math.max(m,Math.round((1-p.price/p.old)*100))});return m};
-const nCard=c=>{const im=catImg(c),d=catDisc(c),n=ALL.filter(p=>p.cat===c.id).length;
+const nCard=c=>{if(c.img)return `<button class="nc ni" data-act="cat" data-id="${esc(c.id)}" aria-label="${esc(c.name)}"><img loading="lazy" src="${esc(safeUrl(c.img))}" alt="${esc(c.name)}"></button>`;const im=catImg(c),d=catDisc(c),n=ALL.filter(p=>p.cat===c.id).length;
   return `<button class="nc" data-act="cat" data-id="${esc(c.id)}"><div class="nim">${im?`<img loading="lazy" src="${esc(safeUrl(im))}" alt="" onerror="this.remove()">`:`<span>${esc(catEmo(c))}</span>`}<i>${d>=5?"خصم حتى "+d+"%":n+" منتج"}</i></div><b>${esc(c.name)}</b></button>`};
 document.addEventListener("click",e=>{const b=e.target.closest("[data-ns]");if(!b)return;const s=$("#ns");if(s)s.scrollBy({left:Number(b.dataset.ns)*s.clientWidth*0.8,behavior:"smooth"})});
-const circ=c=>{const im=catImg(c);return `<button class="tile" data-act="cat" data-id="${esc(c.id)}"><div class="ic ${im?"hasimg":"emo"}">${im?`<img loading="lazy" src="${esc(safeUrl(im))}" alt="" onerror="this.parentNode.className='ic emo';this.parentNode.textContent='🛍'">`:esc(catEmo(c))}</div><b>${esc(c.name)}</b><small>${ALL.filter(p=>p.cat===c.id).length} منتج</small></button>`}
+const circ=c=>{if(c.img)return `<button class="tile timg" data-act="cat" data-id="${esc(c.id)}" aria-label="${esc(c.name)}"><img loading="lazy" src="${esc(safeUrl(c.img))}" alt="${esc(c.name)}"></button>`;const im=catImg(c);return `<button class="tile" data-act="cat" data-id="${esc(c.id)}"><div class="ic ${im?"hasimg":"emo"}">${im?`<img loading="lazy" src="${esc(safeUrl(im))}" alt="" onerror="this.parentNode.className='ic emo';this.parentNode.textContent='🛍'">`:esc(catEmo(c))}</div><b>${esc(c.name)}</b><small>${ALL.filter(p=>p.cat===c.id).length} منتج</small></button>`}
 function mini(p){return `<div class="mini" data-act="open" data-id="${esc(p.id)}"><span class="tag">-${disc(p)}%</span><div class="im">${p.image?`<img loading="lazy" src="${esc(safeUrl(p.image))}" alt="">`:""}</div><div class="pr">${nf(p.price)} ${esc(p.cur)}<s>${nf(p.old)} ${esc(p.cur)}</s></div></div>`}
 
-function chipIc(c){const im=catImg(c);return im?`<img class="cim" src="${esc(safeUrl(im))}" alt="">`:`<span class="cem">${esc(catEmo(c))}</span>`}
+function chipIc(c){const im=c.img?"":catImg(c);return im?`<img class="cim" src="${esc(safeUrl(im))}" alt="">`:`<span class="cem">${esc(catEmo(c))}</span>`}
 function drawChips(){
   const cur=view.name==="cat"?view.id:(view.name==="home"?"":"__");
-  $("#chips").innerHTML=`<button class="chip ${cur===""?"on":""}" data-go="home">الكل</button>`+CATS.map(c=>`<button class="chip ${cur===c.id?"on":""}" data-act="cat" data-id="${esc(c.id)}">${chipIc(c)}${esc(c.name)}</button>`).join("");
+  $("#chips").innerHTML=`<button class="chip ${cur===""?"on":""}" data-go="home">الكل</button>`+hasCats().map(c=>`<button class="chip ${cur===c.id?"on":""}" data-act="cat" data-id="${esc(c.id)}">${chipIc(c)}${esc(c.name)}</button>`).join("");
 }
 function home(){
   const deals=ALL.filter(p=>disc(p)>=5&&p.stock).sort((a,b)=>disc(b)-disc(a));
