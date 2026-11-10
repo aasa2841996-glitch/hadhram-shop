@@ -651,8 +651,8 @@ main{max-width:1800px;margin:0 auto}
 .pc .addw svg{width:17px;height:17px}
 .pc .pr2{padding:0!important;font-size:11.5px!important}
 @media(min-width:900px){
-.pc .pt{font-size:15px!important;min-height:42px!important}
-.pc .pb{padding:10px 8px!important;gap:8px!important}
+.pc .pt{font-size:15px!important;min-height:0!important}
+.pc .pb{padding:10px 8px!important;gap:7px!important}
 .pc .sn{font-size:13px}.pc .sic{width:26px;height:26px}
 .pc .pr b{font-size:16px!important;padding:5px 14px}.pc .pr s{font-size:13px!important}
 .pc .addw{font-size:14.5px!important;padding:10px 8px!important}
@@ -749,7 +749,7 @@ function card(p){
     ${d>=5?`<span class="tag">-${d}%</span>`:""}${isNew(p)&&!d?`<span class="newb">جديد</span>`:""}${p.stock?"":`<div class="sold">نفد المخزون</div>`}
     <button class="fav ${fav?"on":""}" data-act="fav" data-id="${esc(p.id)}">♥</button></div>
     <div class="pb"><div class="pt">${esc(p.title)}</div><div class="sn"><span class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1.5-5h13L20 9"/><path d="M4 9a2.7 2.7 0 005.3 0 2.7 2.7 0 005.4 0A2.7 2.7 0 0020 9"/><path d="M5 12v8h14v-8"/><path d="M10 20v-4h4v4"/></svg></span><span class="snt">${esc(p.mn||S.name)}${(CATS.find(c=>c.id===p.cat)||{}).name&&p.cat!=="general"?" | "+esc(CATS.find(c=>c.id===p.cat).name):""}</span></div>
-    ${p.rate>0&&p.rc>0?`<div class="rt"><b>${nf(p.rate)}</b> <span class="stars">★</span> <span>(${nf(p.rc)})</span></div>`:`<div class="rt"><b>جديد</b> <span class="stars">★</span></div>`}
+    ${p.rate>0&&p.rc>0?`<div class="rt"><b>${nf(p.rate)}</b> <span class="stars">★</span> <span>(${nf(p.rc)})</span></div>`:""}
     <div class="pr"><b>${nf(p.price)} ${esc(p.cur)}</b>${d?`<s>${nf(p.old)} ${esc(p.cur)}</s>`:""}</div>
     ${p.yer?`<div class="pr2">${nf(p.yer)} ر.ي</div>`:""}
     ${p.ship?`<div class="shp">🚚 ${esc(p.ship)}</div>`:""}
