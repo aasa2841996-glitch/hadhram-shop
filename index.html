@@ -661,7 +661,7 @@ function cartView(){
     <label>رقم الجوال (واتساب)</label><input id="c-phone" type="tel" inputmode="tel" value="${esc(f.phone||"")}" placeholder="مثال: 05xxxxxxxx">
     <label>تفاصيل العنوان (اختياري)</label><input id="c-addr" value="${esc(f.addr)}" placeholder="الشارع، أقرب معلم">
     <label>ملاحظات (اختياري)</label><textarea id="c-note" rows="2">${esc(f.note)}</textarea></div>
-  <div style="padding:0 10px">${S.orderApi?`<button class="btn buy wide" data-act="checkout">✅ إتمام الطلب</button>`:`<button class="btn wa wide" data-act="checkout">💬 إتمام الطلب عبر واتساب</button>`}<button class="clr" data-act="clear">تفريغ السلة</button></div>`;
+  <div style="padding:0 10px">${S.orderApi?`<button class="btn wa wide" data-act="checkout">✅ إتمام الطلب</button>`:`<button class="btn wa wide" data-act="checkout">💬 إتمام الطلب عبر واتساب</button>`}<button class="clr" data-act="clear">تفريغ السلة</button></div>`;
 }
 function checkout(items){
   if(!S.whatsapp&&!S.orderApi){toast("رقم واتساب غير مضبوط");return}
