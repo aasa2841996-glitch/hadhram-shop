@@ -660,6 +660,19 @@ main{max-width:1800px;margin:0 auto}
 
 @media(min-width:1200px){.grid,.grid.rec{grid-template-columns:repeat(6,minmax(0,1fr))!important}}
 @media(min-width:900px) and (max-width:1199px){.grid,.grid.rec{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+
+/* لمسات أخيرة على البطاقة */
+.pc .pb>.pt{min-height:0!important;max-height:none!important;margin:0!important}
+.pc .pb{justify-content:flex-start}
+.pc .addw{margin-top:auto!important}
+.pc .pr{justify-content:flex-start;gap:6px 8px}
+.pc .pr b{font-size:12.5px!important;padding:3px 10px!important}
+.pc .pr s{font-size:11px!important}
+.pc .pr .dp2{margin-inline-start:auto;background:#111;color:#ffd500;border-radius:999px;font-size:11.5px;font-weight:900;padding:3px 9px;white-space:nowrap}
+.pc .pimg .fav{width:32px!important;height:32px!important;border-radius:50%!important;background:rgba(255,255,255,.95)!important;color:#b9b9b9!important;font-size:17px!important;box-shadow:0 1px 5px rgba(0,0,0,.2);transition:transform .15s,color .15s}
+.pc .pimg .fav.on{color:#e5281c!important}
+.pc .pimg .fav:active{transform:scale(.85)}
+@media(min-width:900px){.pc .pr b{font-size:14px!important;padding:4px 11px!important}.pc .pr s{font-size:12px!important}}
 </style>
 </head>
 <body>
@@ -749,11 +762,11 @@ function card(p){
   const d=disc(p), fav=saved().includes(p.id);
   return `<article class="pc" data-act="open" data-id="${esc(p.id)}"><div class="pimg">
     ${p.image?`<img loading="lazy" decoding="async" src="${esc(safeUrl(p.image))}" alt="${esc(p.title)}">`:"🛍️"}
-    ${d>=5?`<span class="tag">-${d}%</span>`:""}${isNew(p)&&!d?`<span class="newb">جديد</span>`:""}${p.stock?"":`<div class="sold">نفد المخزون</div>`}
+    ${isNew(p)&&!d?`<span class="newb">جديد</span>`:""}${p.stock?"":`<div class="sold">نفد المخزون</div>`}
     <button class="fav ${fav?"on":""}" data-act="fav" data-id="${esc(p.id)}">♥</button></div>
     <div class="pb"><div class="pt">${esc(p.title)}</div><div class="sn"><span class="sic"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1.5-5h13L20 9"/><path d="M4 9a2.7 2.7 0 005.3 0 2.7 2.7 0 005.4 0A2.7 2.7 0 0020 9"/><path d="M5 12v8h14v-8"/><path d="M10 20v-4h4v4"/></svg></span><span class="snt">${esc(p.mn||S.name)}${(CATS.find(c=>c.id===p.cat)||{}).name&&p.cat!=="general"?" | "+esc(CATS.find(c=>c.id===p.cat).name):""}</span></div>
     ${p.rate>0&&p.rc>0?`<div class="rt"><b>${nf(p.rate)}</b> <span class="stars">★</span> <span>(${nf(p.rc)})</span></div>`:""}
-    <div class="pr"><b>${nf(p.price)} ${esc(p.cur)}</b>${d?`<s>${nf(p.old)} ${esc(p.cur)}</s>`:""}</div>
+    <div class="pr"><b>${nf(p.price)} ${esc(p.cur)}</b>${d?`<s>${nf(p.old)} ${esc(p.cur)}</s>`:""}${d>=1?`<span class="dp2">-${d}%</span>`:""}</div>
     ${p.yer?`<div class="pr2">${nf(p.yer)} ر.ي</div>`:""}
     ${p.ship?`<div class="shp">🚚 ${esc(p.ship)}</div>`:""}
     ${p.stock?`<button class="addw" data-act="${p.opts&&p.opts.length?"open":"add"}" data-id="${esc(p.id)}">${p.opts&&p.opts.length?"أضف إلى السلة":"أضف إلى السلة"} ${ICON_CART2}</button>`:""}</div></article>`;
