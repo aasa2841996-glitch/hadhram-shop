@@ -8,66 +8,6 @@
  },
  "categories": [
   {
-   "id": "home-fix",
-   "name": "مستلزمات المنزل والصيانة",
-   "emoji": "🔧",
-   "img": "cats/home-fix.webp"
-  },
-  {
-   "id": "stationery",
-   "name": "القرطاسية والمكتب",
-   "emoji": "📚",
-   "img": "cats/stationery.webp"
-  },
-  {
-   "id": "pets",
-   "name": "مستلزمات الحيوانات الأليفة",
-   "emoji": "🐾",
-   "img": "cats/pets.webp"
-  },
-  {
-   "id": "kids-supplies",
-   "name": "مستلزمات الأطفال",
-   "emoji": "🧸",
-   "img": "cats/kids-supplies.webp"
-  },
-  {
-   "id": "sports-trips",
-   "name": "الرياضة والرحلات",
-   "emoji": "⚽",
-   "img": "cats/sports-trips.webp"
-  },
-  {
-   "id": "cars",
-   "name": "مستلزمات السيارات",
-   "emoji": "🚗",
-   "img": "cats/cars.webp"
-  },
-  {
-   "id": "cmw3iyjtg",
-   "name": "العناية الشخصية",
-   "emoji": "🧴",
-   "img": "cats/personal-care.webp"
-  },
-  {
-   "id": "cmw3iy8lw",
-   "name": "المنزل والمطبخ",
-   "emoji": "🍳",
-   "img": "cats/home-kitchen.webp"
-  },
-  {
-   "id": "electronics",
-   "name": "الإلكترونيات",
-   "emoji": "📱",
-   "img": "cats/electronics.webp"
-  },
-  {
-   "id": "appliances",
-   "name": "الأجهزة",
-   "emoji": "☕",
-   "img": "cats/appliances.webp"
-  },
-  {
    "id": "cmw3iy1hv",
    "name": "أزياء النساء",
    "emoji": "👗",
@@ -120,6 +60,66 @@
    "name": "العطور",
    "emoji": "🌸",
    "img": "cats/perfume.webp"
+  },
+  {
+   "id": "electronics",
+   "name": "الإلكترونيات",
+   "emoji": "📱",
+   "img": "cats/electronics.webp"
+  },
+  {
+   "id": "appliances",
+   "name": "الأجهزة",
+   "emoji": "☕",
+   "img": "cats/appliances.webp"
+  },
+  {
+   "id": "cmw3iyjtg",
+   "name": "العناية الشخصية",
+   "emoji": "🧴",
+   "img": "cats/personal-care.webp"
+  },
+  {
+   "id": "cmw3iy8lw",
+   "name": "المنزل والمطبخ",
+   "emoji": "🍳",
+   "img": "cats/home-kitchen.webp"
+  },
+  {
+   "id": "home-fix",
+   "name": "مستلزمات المنزل والصيانة",
+   "emoji": "🔧",
+   "img": "cats/home-fix.webp"
+  },
+  {
+   "id": "kids-supplies",
+   "name": "مستلزمات الأطفال",
+   "emoji": "🧸",
+   "img": "cats/kids-supplies.webp"
+  },
+  {
+   "id": "sports-trips",
+   "name": "الرياضة والرحلات",
+   "emoji": "⚽",
+   "img": "cats/sports-trips.webp"
+  },
+  {
+   "id": "cars",
+   "name": "مستلزمات السيارات",
+   "emoji": "🚗",
+   "img": "cats/cars.webp"
+  },
+  {
+   "id": "pets",
+   "name": "مستلزمات الحيوانات الأليفة",
+   "emoji": "🐾",
+   "img": "cats/pets.webp"
+  },
+  {
+   "id": "stationery",
+   "name": "القرطاسية والمكتب",
+   "emoji": "📚",
+   "img": "cats/stationery.webp"
   },
   {
    "id": "general",
