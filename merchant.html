@@ -162,6 +162,33 @@ html[data-theme=dark]{filter:invert(1) hue-rotate(180deg);background:#fff}
 html[data-theme=dark] img,html[data-theme=dark] video,html[data-theme=dark] .wlc .ph,html[data-theme=dark] .slide .im{filter:invert(1) hue-rotate(180deg)}
 .seg3 button{padding:6px 11px;border:1px solid #ddd;margin-right:-1px;font-weight:700;font-size:13px;background:#fff;color:#111}.seg3 button.on{background:#ffd500;border-color:#ffd500}
 html[data-theme=dark] .addw,html[data-theme=dark] .nav button.on,html[data-theme=dark] .dnav .on,html[data-theme=dark] .chip.on,html[data-theme=dark] .btn.cart,html[data-theme=dark] .av2,html[data-theme=dark] .role,html[data-theme=dark] .upl,html[data-theme=dark] .seg2 button.on,html[data-theme=dark] .seg3 button.on,html[data-theme=dark] .rbtn,html[data-theme=dark] .rgo,html[data-theme=dark] .av button,html[data-theme=dark] .fab,html[data-theme=dark] .go,html[data-theme=dark] .btn.gold,html[data-theme=dark] .slide,html[data-theme=dark] .pnav button.on,html[data-theme=dark] .tag,html[data-theme=dark] .dp,html[data-theme=dark] .cnt,html[data-theme=dark] .nb{filter:invert(1) hue-rotate(180deg)}
+
+/* ===== الشكل الجديد (وفر) ===== */
+:root{--gold:#ffd500;--gold2:#ffe55c;--bg:#f5f5f5;--ink:#111;--line:#ececec;--muted:#6b6b6b;--brown:#111;--deep:#111;--sh:0 2px 10px rgba(0,0,0,.07)}
+@media (prefers-color-scheme:dark){:root{--bg:#171717;--ink:#f3f3f3;--muted:#b0b0b0;--line:#2e2e2e;--card:#222}}
+header{background:linear-gradient(180deg,#ffd500,#ffe55c)!important;color:#111!important;box-shadow:0 2px 10px rgba(0,0,0,.1)!important;border:0!important}
+header h1{color:#111!important;font-size:19px}
+header a{background:#111!important;color:#ffd500!important}
+header .hlg{height:42px;width:auto;margin:-4px 0;flex:none}
+.btn.gold{background:#ffd500;color:#111;box-shadow:0 4px 12px rgba(255,213,0,.45)}
+.btn.dark{background:#111;color:#ffd500}
+.nav{left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto;border-radius:28px;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,.18);padding:7px 8px}
+.nav button,.nav .tolink{color:#111;border-radius:22px}
+.nav .tolink{border:1.5px solid #111;color:#111}
+.nav button.on{background:#ffd500;color:#111;box-shadow:0 3px 10px rgba(255,213,0,.5)}
+.st.on{outline-color:#ffd500;background:#fffbe0}
+.card{border-radius:14px}
+.link{color:#111}
+@media (prefers-color-scheme:dark){.nav{background:#222}.nav button,.nav .tolink{color:#f3f3f3}.nav .tolink{border-color:#f3f3f3}.nav button.on{color:#111}.st.on{background:#3a3500}}
+@media(min-width:900px){
+header .in{max-width:1500px;padding:0 24px}
+.wrap{max-width:1500px;padding:14px 24px 120px}
+.wrap:has(>.card),.wrap:has(>.pl){display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:14px;align-items:start}
+.wrap:has(>.card)>*,.wrap:has(>.pl)>*{margin-bottom:0}
+.wrap:has(>.card)>:not(.card),.wrap:has(>.pl)>:not(.pl){grid-column:1/-1}
+.stats{gap:10px}.st{padding:12px 4px;font-size:13px}.st b{font-size:26px}
+.nav{max-width:760px}
+}
 </style>
 </head>
 <body>
@@ -221,7 +248,7 @@ async function api(path,opt={}){
 async function loadMeta(){
   try{const r=await fetch("products.json?v="+Math.floor(Date.now()/60000));const d=await r.json();CATS=d.categories||[];if(d.settings&&d.settings.orderApi)API=d.settings.orderApi.replace(/\/$/,"")}catch{}
 }
-function header(t){return `<header><div class="in"><h1>🏪 ${esc(t)}</h1><a href="index.html">المتجر ‹</a></div></header>`}
+function header(t){return `<header><div class="in"><img class="hlg" src="logo-wafer.png?v=1" alt="وفر"><h1>${esc(t)}</h1><a href="index.html">المتجر ‹</a></div></header>`}
 
 /* ---------- الدخول والتسجيل ---------- */
 function authView(msg,cls){
