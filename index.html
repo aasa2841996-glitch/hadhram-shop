@@ -646,7 +646,7 @@ function categoryKey(c){
 const EMO={dress:"👗",beauty:"💄",general:"🛍️",perfume:"🧴",electronics:"📱",clothing:"👕",bags:"👜",accessories:"⌚",kitchen:"🍳",home:"🛋️"};
 const catEmo=c=>c.emoji||EMO[categoryKey(c)]||"🛍️";
 const catImg=c=>{if(c.img)return c.img;if(c.image)return c.image;const k=categoryKey(c);if(k==="dress"||k==="beauty"){const pi=(ALL.find(p=>p.cat===c.id&&p.image)||{}).image;return pi||""}if(k!=="general")return CATEGORY_ART[k];return (ALL.find(p=>p.cat===c.id&&p.image)||{}).image||CATEGORY_ART.general};
-const hasCats=()=>CATS.filter(c=>c.img||ALL.some(p=>p.cat===c.id));
+const hasCats=()=>CATS.filter(c=>c.id!=="general"&&(c.img||ALL.some(p=>p.cat===c.id)));
 const catDisc=c=>{let m=0;ALL.forEach(p=>{if(p.cat===c.id&&p.old>p.price&&p.price>0)m=Math.max(m,Math.round((1-p.price/p.old)*100))});return m};
 const nCard=c=>{if(c.img)return `<button class="nc ni" data-act="cat" data-id="${esc(c.id)}" aria-label="${esc(c.name)}"><img loading="lazy" src="${esc(safeUrl(c.img))}" alt="${esc(c.name)}"></button>`;const im=catImg(c),d=catDisc(c),n=ALL.filter(p=>p.cat===c.id).length;
   return `<button class="nc" data-act="cat" data-id="${esc(c.id)}"><div class="nim">${im?`<img loading="lazy" src="${esc(safeUrl(im))}" alt="" onerror="this.remove()">`:`<span>${esc(catEmo(c))}</span>`}<i>${d>=5?"خصم حتى "+d+"%":n+" منتج"}</i></div><b>${esc(c.name)}</b></button>`};
