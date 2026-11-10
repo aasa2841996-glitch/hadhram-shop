@@ -7,10 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffd500">
 <meta name="robots" content="noindex,nofollow">
-<title>طلبات حضرم شوب</title>
-<link rel="icon" href="icon-192.png?v=2">
+<title>طلبات وفر</title>
+<link rel="icon" href="icon-192.png?v=4">
 <link rel="manifest" href="orders-manifest.json?v=1">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -163,6 +163,24 @@ html[data-theme=dark] .addw,html[data-theme=dark] .nav button.on,html[data-theme
 .cth{margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
 .cm{max-width:82%;padding:7px 10px;font-size:13.5px;line-height:1.6}.cm small{display:block;color:#888;font-size:10.5px}
 .cm.c{align-self:flex-start;background:#f2f2f2}.cm.a{align-self:flex-end;background:#ffd500}.cm.a.ai{background:#eee}
+
+/* ===== الشكل الجديد (وفر) ===== */
+header{background:linear-gradient(180deg,#ffd500,#ffe55c)!important;color:#111!important;box-shadow:0 2px 10px rgba(0,0,0,.1)!important;border:0!important}
+header h1{color:#111!important}
+header .rf,header .bell{background:#111!important;color:#ffd500!important}
+header .hlg{height:42px;width:auto;margin:-4px 0;flex:none}
+.nav,.pnav{background:#fff!important;border-radius:28px!important;box-shadow:0 8px 28px rgba(0,0,0,.18)!important;border:0!important;left:10px!important;right:10px!important;bottom:calc(8px + env(safe-area-inset-bottom))!important}
+.nav button,.pnav button,.nav .tolink{color:#111!important}
+.st.on{outline-color:#ffd500}
+@media(min-width:900px){
+header .in{max-width:1700px!important;padding:0 24px}
+.wrap{max-width:1700px!important;padding-left:24px!important;padding-right:24px!important}
+.wrap:has(>.card),.wrap:has(>.pc){display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:14px;align-items:start}
+.wrap:has(>.card)>*,.wrap:has(>.pc)>*{margin-bottom:0}
+.wrap:has(>.card)>:not(.card),.wrap:has(>.pc)>:not(.pc){grid-column:1/-1}
+.nav,.pnav{left:50%!important;right:auto!important;width:760px!important}
+.stats{gap:10px}.st{padding:12px 4px;font-size:13px}.st b{font-size:26px}
+}
 </style>
 </head>
 <body>
@@ -175,7 +193,7 @@ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v}catch{return d}},set(k,v){try{localStorage.setItem(k,v)}catch{}},del(k){try{localStorage.removeItem(k)}catch{}}};
 const ST={new:["جديد","var(--new)"],prep:["قيد التجهيز","var(--prep)"],ship:["للتوصيل","var(--ship)"],done:["تم التوصيل","var(--done)"],cancel:["ملغي","var(--cancel)"]};
 const nf=n=>(Math.round(n*100)/100).toLocaleString("en-US");
-const SHOP="حضرم شوب";
+const SHOP="وفر";
 let API=LS.get("ho_api","https://hadhram-bot.aasa2841996.workers.dev"), KEY=LS.get("ho_key","");
 {const mk=location.hash.match(/[#&]k=([A-Za-z0-9]{24,40})/);if(mk){KEY=mk[1];LS.set("ho_key",KEY);try{history.replaceState(null,"",location.pathname)}catch(e){}}}
 if(/[?&]reset/.test(location.search)){LS.del("ho_key");KEY="";try{history.replaceState(null,"",location.pathname)}catch(e){}}
@@ -273,7 +291,7 @@ function draw(){
   const grouped=!q&&!inM&&filter!=="hidden";
   const body=grouped?(groups.length?groups.map(groupCard).join(""):`<div class="empty">لا توجد طلبات «${ST[filter][0]}» عند أي متجر ✅</div>`)
     :(orders.length?orders.map(card).join(""):`<div class="empty">${q?"لا توجد نتائج":"لا توجد طلبات هنا"}</div>`);
-  $("#app").innerHTML=`<header><div class="in">${inM?`<button class="rf" id="bk" aria-label="رجوع">›</button>`:""}<h1>${inM?"🏪 طلبات التاجر":"🧾 طلبات "+SHOP}</h1><button class="bell" id="bell" aria-label="التنبيهات">🔔<span class="nb2"></span></button><button class="rf" id="rf" aria-label="تحديث">⟳</button></div></header>
+  $("#app").innerHTML=`<header><div class="in"><img class="hlg" src="logo-wafer.png?v=1" alt="">${inM?`<button class="rf" id="bk" aria-label="رجوع">›</button>`:""}<h1>${inM?"🏪 طلبات التاجر":"🧾 طلبات "+SHOP}</h1><button class="bell" id="bell" aria-label="التنبيهات">🔔<span class="nb2"></span></button><button class="rf" id="rf" aria-label="تحديث">⟳</button></div></header>
   <div class="wrap">${top}
   ${inM?"":`<div class="search"><input id="q" type="search" placeholder="ابحث برقم الطلب (حتى المخفية)، الاسم، الجوال" value="${esc(q)}"></div>`}
   <div id="list">${body}</div>
@@ -417,7 +435,7 @@ function pageBody(){
 function drawPage(){
   const t=PAGES.find(x=>x[0]===page);
   const keep=$("#pq")&&document.activeElement===$("#pq");
-  $("#app").innerHTML=`<header><div class="in"><h1>${t[1]} ${t[2]}</h1><button class="bell" id="bell" aria-label="التنبيهات">🔔<span class="nb2"></span></button><button class="rf" id="rfp" aria-label="تحديث">⟳</button></div></header><div class="wrap">${pageBody()}</div>`;
+  $("#app").innerHTML=`<header><div class="in"><img class="hlg" src="logo-wafer.png?v=1" alt=""><h1>${t[1]} ${t[2]}</h1><button class="bell" id="bell" aria-label="التنبيهات">🔔<span class="nb2"></span></button><button class="rf" id="rfp" aria-label="تحديث">⟳</button></div></header><div class="wrap">${pageBody()}</div>`;
   if($("#pq")){$("#pq").oninput=e=>{pq=e.target.value.trim();clearTimeout(drawPage._t);drawPage._t=setTimeout(()=>{drawPage();const i=$("#pq");i.focus();i.setSelectionRange(i.value.length,i.value.length)},250)};if(keep){$("#pq").focus()}}
   paintBell();
 }
@@ -458,7 +476,7 @@ let AL=null, alPrev=null, swReg=null;
 const alTotal=a=>a?(a.merchants+a.payments+a.complaints.length+a.newOrders):0;
 function paintBell(){
   const b=$("#bell");if(b){const n=AL?(AL.merchants+AL.payments+AL.complaints.length+(AL.chats||0)):0,s=b.querySelector(".nb2");b.classList.toggle("has",n>0);if(s)s.textContent=n}
-  const n=AL?(AL.merchants+AL.payments+AL.complaints.length+(AL.chats||0)):0;document.title=(n?`(${n}) `:"")+"طلبات حضرم شوب";
+  const n=AL?(AL.merchants+AL.payments+AL.complaints.length+(AL.chats||0)):0;document.title=(n?`(${n}) `:"")+"طلبات وفر";
 }
 async function pollAlerts(){
   if(!KEY)return;
@@ -467,7 +485,7 @@ async function pollAlerts(){
     if(alPrev){
       const more=a.merchants>alPrev.merchants?"🏪 تاجر جديد بانتظار الموافقة":a.payments>alPrev.payments?"💳 إيصال دفع جديد للمراجعة":(a.chats||0)>(alPrev.chats||0)?"💬 رسالة جديدة من عميل":a.complaints.length>alPrev.complaints.length?"⚠️ عميل أبلغ أنه لم يستلم طلبه":a.newOrders>alPrev.newOrders?"🆕 طلب جديد وصل":"";
       if(more){beep();toast(more);try{navigator.vibrate&&navigator.vibrate(200)}catch{}
-        if(document.hidden&&"Notification" in window&&Notification.permission==="granted"){try{new Notification("حضرم شوب — الإدارة",{body:more,icon:"icon-192.png",tag:"hs-admin"})}catch{}}
+        if(document.hidden&&"Notification" in window&&Notification.permission==="granted"){try{new Notification("وفر — الإدارة",{body:more,icon:"icon-192.png",tag:"hs-admin"})}catch{}}
         if(page!=="orders")loadBadges()}
     }
     alPrev=a;AL=a;paintBell();
