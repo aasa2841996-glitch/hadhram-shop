@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffd500">
 <meta name="robots" content="noindex,nofollow">
-<title>قسم التاجر — حضرم شوب</title>
-<link rel="icon" href="icon-192.png?v=2">
+<title>قسم التاجر — وفر</title>
+<link rel="icon" href="icon-192.png?v=4">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--deep:#241406;--brown:#3a2210;--gold:#f0b13a;--gold2:#ffd27a;--bg:#f6efe4;--ink:#241406;--muted:#8a7a68;--line:#eadfce;--card:#fff;--hot:#d92d20;--wa:#25d366;
@@ -175,7 +175,7 @@ const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v}catch{
 const nf=n=>(Math.round(n*100)/100).toLocaleString("en-US");
 const toast=t=>{const el=$("#toast");el.textContent=t;el.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("show"),1900)};
 const ST={new:["جديد","var(--new)"],prep:["قيد التجهيز","var(--prep)"],ship:["في الطريق","var(--ship)"],done:["تم التوصيل","var(--done)"],cancel:["ملغي","var(--cancel)"]};
-const SHOP="حضرم شوب";
+const SHOP="وفر";
 let API="https://hadhram-bot.aasa2841996.workers.dev", TK=LS.get("hm_tk",""), ME=null, CATS=[];
 let BAL=null, tab="orders", ofilter="new", oq="", orders=[], ocounts={}, omore=false, prods=[], sel=null, maxId=0, timer=null, mode="login";
 
@@ -381,7 +381,7 @@ function productForm(p){
   <label>اسم المنتج</label><input id="p-title" value="${esc(p.title||"")}">
   <div class="row"><div><label>السعر</label><input id="p-price" type="number" inputmode="decimal" value="${p.price||""}"></div><div><label>العملة</label><select id="p-cur"><option value="SAR" ${p.cur!=="YER"?"selected":""}>ريال سعودي</option><option value="YER" ${p.cur==="YER"?"selected":""}>ريال يمني</option></select></div></div>
   <div class="row"><div><label>السعر القديم (اختياري)</label><input id="p-old" type="number" inputmode="decimal" value="${p.old||""}"></div><div><label>سعر بالريال اليمني (اختياري)</label><input id="p-yer" type="number" inputmode="decimal" value="${p.price_yer||""}"></div></div>
-  <label>القسم</label><select id="p-cat">${CATS.map(c=>`<option value="${esc(c.id)}" ${p.cat===c.id?"selected":""}>${esc((c.emoji||"")+" "+c.name)}</option>`).join("")}</select>
+  <label>القسم</label><select id="p-cat"><option value="">— اختر القسم —</option>${CATS.filter(c=>c.id!=="general"||p.cat==="general").map(c=>`<option value="${esc(c.id)}" ${p.cat===c.id?"selected":""}>${esc((c.emoji||"")+" "+c.name)}</option>`).join("")}</select>
   <label>وصف المنتج (المقاس، الخامة، اللون...)</label><textarea id="p-desc">${esc(p.desc||"")}</textarea>
   <div class="earn" id="earn"></div>
   <label>الخيارات المتوفرة (مقاسات، ألوان، أحجام...) — اختياري</label>
@@ -450,6 +450,7 @@ document.addEventListener("click",async e=>{
   const sk=e.target.closest("[data-sk]");if(sk){const p=prods.find(x=>x.id===sk.dataset.sk);try{await api("/m/product/stock",{method:"POST",body:JSON.stringify({id:p.id,stock:!p.stock})});await loadProds();draw()}catch(err){toast("⚠️ "+err.message)}return}
   const dl=e.target.closest("[data-del]");if(dl){if(confirm("حذف هذا المنتج نهائياً؟")){try{await api("/m/product/delete",{method:"POST",body:JSON.stringify({id:dl.dataset.del})});await loadProds();draw();toast("تم الحذف")}catch(err){toast("⚠️ "+err.message)}}return}
   const sv=e.target.closest("#p-save");if(sv){
+    if(!$("#p-cat").value){alert("اختر القسم أولاً");return}
     const b={id:sv.dataset.id||undefined,title:$("#p-title").value,price:$("#p-price").value,cur:$("#p-cur").value,old:$("#p-old").value,price_yer:$("#p-yer").value,cat:$("#p-cat").value,desc:$("#p-desc").value,stock:$("#p-stock").checked,imgs:pimgs,opts:popts.filter(g=>g.name.trim()&&g.values.length)};
     if(upl){$("#p-msg").textContent="انتظر اكتمال رفع الصور";return}
     sv.disabled=true;try{await api("/m/product",{method:"POST",body:JSON.stringify(b)});closeSheet();await loadProds();draw();toast("✅ تم حفظ المنتج")}catch(err){$("#p-msg").textContent=err.message}sv.disabled=false;return}
