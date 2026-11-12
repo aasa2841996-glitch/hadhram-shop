@@ -675,6 +675,7 @@ main{max-width:1800px;margin:0 auto}
 @media(min-width:900px){.pc .pr b{font-size:14px!important;padding:4px 11px!important}.pc .pr s{font-size:12px!important}}
 .dspb{background:#fff!important;color:#c0392b!important;border:1px solid #c0392b!important;margin-top:6px}
 .cbox{margin:8px 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fffbe6;font-size:13px;line-height:1.7}.cbox .cbt{font-weight:800;color:#8a6d00}.cbox .cmap{display:inline-block;margin-top:6px;background:#ffd500;color:#111;font-weight:800;padding:8px 14px;border-radius:10px;text-decoration:none}.cbox .cqr{text-align:center;margin-top:8px}.cbox .cqr svg{width:130px;height:130px;stroke:none;border:1px solid var(--line);border-radius:8px}.cbox .cqr svg *{stroke:none}.cbox .cqr small{display:block;color:var(--muted);margin-top:2px}.frm select{width:100%;font:inherit;font-size:15px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.cpn{display:flex;gap:8px;margin:10px 10px 0}.cpn input{flex:1;font:inherit;font-size:15px;padding:10px;border:1px dashed #b8a000;border-radius:10px;background:#fffbe6;text-transform:uppercase}.cpn button{background:#ffd500;color:#111;font-weight:800;border-radius:10px;padding:0 16px;border:0}.cpm{margin:6px 12px 0;font-size:13px;font-weight:700}.cpm.ok{color:#12803c}.cpm.no{color:#c0392b}
 </style>
 </head>
 <body>
@@ -829,15 +830,31 @@ function home(){
   ${deals.length?`<section class="sec"><div class="sec-h"><button data-go="deals">عرض الكل ‹</button><h3>عروض اليوم 🔥</h3></div><div class="sub">أسعار مخفّضة على منتجات مختارة</div></section><div class="grid">${deals.slice(0,6).map(card).join("")}</div>`:""}
   `;
 }
+let CPN={};
+function saveForm(){if(!$("#c-name"))return;const o=LS.get("hs_cust",{});LS.set("hs_cust",{...o,name:$("#c-name").value,addr:($("#c-addr")||{}).value||"",city:($("#c-city")||{}).value||"",area:($("#c-area")||{}).value||"",phone:($("#c-phone")||{}).value||"",note:($("#c-note")||{}).value||"",center:($("#c-center")||{}).value||""})}
+async function applyCoupon(code){
+  const items=CART.map(i=>({p:byId.get(i.id),q:i.q})).filter(x=>x.p),sig=items.map(x=>x.p.id+":"+x.q).join(",");
+  code=String(code||"").trim();saveForm();
+  if(!code){CPN={};if(view.name==="cart")render();return}
+  CPN={...CPN,busy:true,code};
+  const phone=(($("#c-phone")||{}).value)||(LS.get("hs_cust",{}).phone)||"";
+  try{const r=await fetch(S.orderApi.replace(/\/$/,"")+"/coupon",{method:"POST",headers:{"content-type":"text/plain"},body:JSON.stringify({code,phone,items:items.map(({p,q})=>({price:p.price,cur:p.cur,q}))})});const j=await r.json();
+    CPN=j.ok?{ok:true,code:j.code,disc:j.disc,cur:j.cur,sig,msg:"تم تطبيق الخصم 🎉"}:{ok:false,code,msg:j.error||"كود الخصم غير صحيح"}}
+  catch(e){CPN={ok:false,code,msg:"تعذّر التحقق، حاول مرة أخرى"}}
+  if(view.name==="cart")render();
+}
 function cartView(){
   if(!CART.length) return `<div class="backbar"><h2>🛒 السلة</h2></div><div class="empty">سلتك فارغة<br><br><button class="btn buy" style="flex:none;padding:12px 26px" data-go="home">ابدأ التسوق</button></div>`;
   const items=CART.map(i=>({p:byId.get(i.id),q:i.q,sel:i.sel,k:i.k||i.id})).filter(x=>x.p);
   const tot={}; items.forEach(({p,q})=>tot[p.cur]=(tot[p.cur]||0)+p.price*q);
+  const sig0=items.map(x=>x.p.id+":"+x.q).join(","),cpOk=!!(CPN.ok&&CPN.sig===sig0);
+  if(CPN.ok&&!cpOk&&!CPN.busy)setTimeout(()=>applyCoupon(CPN.code),0);
   const f0=LS.get("hs_cust",{name:"",phone:"",city:"",area:"",addr:"",note:""}),ac=LS.get("hs_acct",{})||{};const f={...f0,name:f0.name||ac.name||"",phone:f0.phone||ac.phone||""};
   return `<div class="backbar"><h2>🛒 السلة (${items.length})</h2></div>
   ${items.map(({p,q,sel,k})=>`<div class="ci"><img src="${esc(safeUrl(p.image))}" alt=""><div class="tt"><b>${esc(p.title)}</b>${sel?`<span class="sl">${esc(selTxt(sel))}</span>`:""}<span class="p">${nf(p.price)} ${esc(p.cur)}</span>
     <div class="ctl"><div class="qty"><button class="qb" data-act="dec" data-k="${esc(k)}">−</button><span>${q}</span><button class="qb" data-act="inc" data-k="${esc(k)}">+</button></div><button class="rm" data-act="rm" data-k="${esc(k)}">🗑 حذف</button></div></div></div>`).join("")}
-  <div class="sum"><div class="ln" style="font-size:13px;color:var(--muted)"><span>عدد القطع</span><span>${items.reduce((a,x)=>a+x.q,0)}</span></div>${Object.entries(tot).map(([c,v])=>`<div class="ln t"><span>الإجمالي</span><span style="color:var(--hot)">${nf(v)} ${esc(c)}</span></div>`).join("")}</div>
+  <div class="sum"><div class="ln" style="font-size:13px;color:var(--muted)"><span>عدد القطع</span><span>${items.reduce((a,x)=>a+x.q,0)}</span></div>${Object.entries(tot).map(([c,v])=>{const dd=cpOk&&CPN.cur===c?CPN.disc:0;return (dd?`<div class="ln" style="color:#12803c"><span>🎟 خصم الكود ${esc(CPN.code)}</span><span>−${nf(dd)} ${esc(c)}</span></div>`:"")+`<div class="ln t"><span>الإجمالي</span><span style="color:var(--hot)">${nf(v-dd)} ${esc(c)}</span></div>`}).join("")}</div>
+  ${S.orderApi?`<div class="cpn"><input id="c-cpn" dir="ltr" placeholder="كود الخصم (إن وجد)" value="${esc(CPN.code||"")}"><button data-act="cpn">تطبيق</button></div>${CPN.msg?`<div class="cpm ${CPN.ok?"ok":"no"}">${esc(CPN.msg)}</div>`:""}`:""}
   <div class="frm"><b>بيانات الطلب</b>
     <label>الاسم</label><input id="c-name" value="${esc(f.name)}" placeholder="اسمك">
     <div class="row2">${CEN.length?`<div><label>المحافظة / المدينة</label><select id="c-city"><option value="">اختر المحافظة</option>${[...new Set(CEN.map(c=>c.city))].map(x=>`<option value="${esc(x)}" ${f.city===x?"selected":""}>${esc(x)}</option>`).join("")}</select></div>`:`<div><label>المدينة</label><input id="c-city" value="${esc(f.city||"")}" placeholder="مثال: سيئون"></div>`}<div><label>المنطقة / الحي</label><input id="c-area" value="${esc(f.area||"")}" placeholder="مثال: الحي الجديد"></div></div>
@@ -859,16 +876,17 @@ function checkout(items){
     LS.set("hs_cust",cust);
   } else Object.assign(cust,LS.get("hs_cust",{}));
   const tot={}; items.forEach(({p,q})=>tot[p.cur]=(tot[p.cur]||0)+p.price*q);
+  const cpOk=!!(CPN.ok&&CPN.sig===items.map(x=>x.p.id+":"+x.q).join(",")),ntot={...tot};if(cpOk&&ntot[CPN.cur]!=null)ntot[CPN.cur]=Math.max(0,ntot[CPN.cur]-CPN.disc);
   let m=`السلام عليكم، أبغى أطلب من ${S.name}:\n\n`;
   items.forEach(({p,q,sel},n)=>{m+=`${n+1}) ${p.title}\n${sel?"   "+selTxt(sel)+"\n":""}   كود: ${p.id}\n   الكمية: ${q} × ${nf(p.price)} ${p.cur}\n`});
   m+=`\nالإجمالي: ${Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + ")}\n`;
   if(cust.name) m+=`\nالاسم: ${cust.name}`; if(cust.phone) m+=`\nالجوال: ${cust.phone}`; if(cust.city) m+=`\nالمدينة: ${cust.city}${cust.area?" - "+cust.area:""}`; if(cust.addr) m+=`\nالعنوان: ${cust.addr}`; if(cust.note) m+=`\nملاحظات: ${cust.note}`;
   const tk=Array.from(crypto.getRandomValues(new Uint8Array(10)),b=>"abcdefghjkmnpqrstuvwxyz23456789"[b%31]).join("");
-  if(S.orderApi){try{fetch(S.orderApi.replace(/\/$/,"")+"/order",{method:"POST",headers:{"content-type":"text/plain"},keepalive:true,body:JSON.stringify({tk,items:items.map(({p,q,sel})=>({sel:sel||undefined,id:p.id,img:p.image?new URL(p.image,location.href).href:"",title:p.title,q,price:p.price,cur:p.cur})),total:Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + "),name:cust.name,phone:cust.phone,city:cust.city,area:cust.area,addr:cust.addr,note:cust.note,center:Number(cust.center)||undefined})}).catch(()=>{})}catch(e){}}
+  if(S.orderApi){try{fetch(S.orderApi.replace(/\/$/,"")+"/order",{method:"POST",headers:{"content-type":"text/plain"},keepalive:true,body:JSON.stringify({tk,items:items.map(({p,q,sel})=>({sel:sel||undefined,id:p.id,img:p.image?new URL(p.image,location.href).href:"",title:p.title,q,price:p.price,cur:p.cur})),total:Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + "),name:cust.name,phone:cust.phone,city:cust.city,area:cust.area,addr:cust.addr,note:cust.note,center:Number(cust.center)||undefined,coupon:cpOk?CPN.code:undefined})}).catch(()=>{})}catch(e){}}
   if(S.orderApi){
-    const ol=LS.get("hs_orders",[]);ol.unshift({tk,t:Date.now(),total:Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + "),items:items.map(({p,q,sel})=>({title:p.title+(sel?" ("+selTxt(sel)+")":""),q,image:p.image||""}))});
+    const ol=LS.get("hs_orders",[]);ol.unshift({tk,t:Date.now(),total:Object.entries(ntot).map(([c,v])=>nf(v)+" "+c).join(" + "),items:items.map(({p,q,sel})=>({title:p.title+(sel?" ("+selTxt(sel)+")":""),q,image:p.image||""}))});
     LS.set("hs_orders",ol.slice(0,30));
-    CART=[];saveCart();
+    CART=[];saveCart();CPN={};
   }
   if(!S.orderApi)window.open(`https://wa.me/${S.whatsapp}?text=${encodeURIComponent(m)}`,"_blank","noopener");
   if(S.orderApi){toast("تم استلام طلبك ✅ أكمل الدفع من «طلباتي»");nav({name:"orders"})}
@@ -1271,6 +1289,7 @@ document.addEventListener("click",e=>{
   else if(act==="inc"){CART.find(i=>(i.k||i.id)===a.dataset.k).q++;saveCart();render()}
   else if(act==="dec"){const it=CART.find(i=>(i.k||i.id)===a.dataset.k);it.q=Math.max(1,it.q-1);saveCart();render()}
   else if(act==="rm"){CART=CART.filter(i=>(i.k||i.id)!==a.dataset.k);saveCart();render()}
+  else if(act==="cpn") applyCoupon(($("#c-cpn")||{}).value);
   else if(act==="checkout") checkout(CART.map(i=>({p:byId.get(i.id),q:i.q,sel:i.sel})).filter(x=>x.p));
 });
 window.addEventListener("popstate",e=>{ if($("#pg").classList.contains("show")){closePage();return} view=e.state||{name:"home"};render()});
