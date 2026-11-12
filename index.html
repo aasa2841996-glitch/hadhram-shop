@@ -1000,14 +1000,14 @@ function otpUi(name,step){
   OTPS.name=name||OTPS.name;
   const st="width:100%;padding:12px;border:1.5px solid #ddd;font-size:16px;margin-top:8px;box-sizing:border-box";
   if(step===1) vfMsg(`<b>أدخل رقم جوالك على واتساب</b><div style="display:flex;gap:8px;direction:ltr"><select id="otp-cc" style="${st};width:110px"><option value="967" ${OTPS.cc==="967"?"selected":""}>🇾🇪 +967</option><option value="966" ${OTPS.cc==="966"?"selected":""}>🇸🇦 +966</option></select><input id="otp-ph" inputmode="numeric" placeholder="7XXXXXXXX" value="${esc(OTPS.ph)}" style="${st}"></div><button type="button" data-acct="otpsend" style="margin-top:10px;padding:12px;background:#25d366;color:#fff;font-weight:800;border:0;width:100%">📲 أرسل الكود على واتساب</button>`);
-  else vfMsg(`<b>أرسلنا كوداً من 6 أرقام على واتساب</b><br><small dir="ltr">+${esc(OTPS.cc+OTPS.ph)}</small><input id="otp-code" inputmode="numeric" maxlength="6" placeholder="------" autocomplete="one-time-code" style="${st};text-align:center;letter-spacing:8px;font-size:22px;direction:ltr"><button type="button" data-acct="otpgo" style="margin-top:10px;padding:12px;background:#ffd500;font-weight:800;border:0;width:100%">✅ تأكيد الكود</button><button type="button" data-acct="otpback" style="margin-top:8px;padding:10px;background:#f2f2f2;border:0;width:100%">تغيير الرقم / إعادة الإرسال</button>`);
+  else vfMsg(`<b>أرسلنا كوداً من 6 أرقام ${OTPS.ch==="sms"?"برسالة نصية":"على واتساب"}</b><br><small dir="ltr">+${esc(OTPS.cc+OTPS.ph)}</small><input id="otp-code" inputmode="numeric" maxlength="6" placeholder="------" autocomplete="one-time-code" style="${st};text-align:center;letter-spacing:8px;font-size:22px;direction:ltr"><button type="button" data-acct="otpgo" style="margin-top:10px;padding:12px;background:#ffd500;font-weight:800;border:0;width:100%">✅ تأكيد الكود</button><button type="button" data-acct="otpsms" style="margin-top:8px;padding:10px;background:#111;color:#ffd500;border:0;width:100%;font-weight:800">✉️ لم يصلني — أرسل برسالة نصية</button><button type="button" data-acct="otpback" style="margin-top:8px;padding:10px;background:#f2f2f2;border:0;width:100%">تغيير الرقم</button>`);
 }
 async function otpPost(path,body){const r=await fetch(apiBase()+path,{method:"POST",headers:{"content-type":"text/plain"},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"تعذّر الإرسال");return j}
-async function otpSendNow(){
+async function otpSendNow(ch){
   const cc=($("#otp-cc")||{}).value||"967";let ph=(($("#otp-ph")||{}).value||"").replace(/\D/g,"").replace(/^0+/,"");if(ph.startsWith(cc))ph=ph.slice(cc.length);
   if(ph.length<7){toast("اكتب رقم الجوال بشكل صحيح");return}
   OTPS.cc=cc;OTPS.ph=ph;toast("جارٍ إرسال الكود…");
-  try{await otpPost("/otp/send",{phone:cc+ph});otpUi(OTPS.name,2)}catch(e){toast("⚠️ "+e.message)}
+  try{await otpPost("/otp/send",{phone:cc+ph,channel:ch||"whatsapp"});OTPS.ch=ch||"whatsapp";otpUi(OTPS.name,2)}catch(e){toast("⚠️ "+e.message);if(/نصية/.test(e.message)){const m=$("#ac-msg");if(m&&!$("#otp-sms"))m.insertAdjacentHTML("beforeend",`<button type="button" id="otp-sms" data-acct="otpsms" style="margin-top:8px;padding:11px;background:#111;color:#ffd500;font-weight:800;border:0;width:100%">✉️ إرسال الكود برسالة نصية</button>`)}}
 }
 async function otpGo(){
   const code=(($("#otp-code")||{}).value||"").replace(/\D/g,"");if(code.length!==6){toast("اكتب الكود المكوّن من 6 أرقام");return}
@@ -1101,7 +1101,7 @@ document.addEventListener("click",e=>{
   else if(k==="delask"){acDel=true;render()}
   else if(k==="delno"){acDel=false;render()}
   else if(k==="delyes"){LS.del("hs_acct");LS.del("hs_cust");acDel=false;acEdit=false;toast("🗑 تم حذف حسابك");nav({name:"account"},false);history.replaceState({name:"account"},"")}
-  else if(k==="otpsend")otpSendNow();else if(k==="otpgo")otpGo();else if(k==="otpback")otpUi(OTPS.name,1);
+  else if(k==="otpsend")otpSendNow();else if(k==="otpsms"){if(!$("#otp-ph")){otpPost("/otp/send",{phone:OTPS.cc+OTPS.ph,channel:"sms"}).then(()=>{OTPS.ch="sms";otpUi(OTPS.name,2);toast("أُرسل الكود برسالة نصية")}).catch(e=>toast("⚠️ "+e.message))}else otpSendNow("sms")}else if(k==="otpgo")otpGo();else if(k==="otpback")otpUi(OTPS.name,1);
   else if(k==="vcheck"){const P=LS.get("hs_vt",null);if(P)vfCheck(P.vt,P.name,true);else toast("ابدأ التسجيل من جديد")}
   else if(k==="logout"){LS.del("hs_acct");acEdit=false;acDel=false;toast("تم تسجيل الخروج");render()}
 });
