@@ -383,17 +383,18 @@ function askText(title,hint,min){return new Promise(res=>{
   bg.querySelector(".ok").onclick=()=>{const v=ta.value.trim();if(v.length<min){bg.querySelector(".ask-err").textContent=min>3?"اكتب وصفاً أوضح للمشكلة":"اكتب السبب ليصل للعميل";return}done(v)};
   bg.addEventListener("click",e=>{if(e.target===bg)done(null)});
 })}
+let dspTab="open",dspLim=30;
 let page=LS.get("ho_page","orders"),D={},psrc="store",pq="",openC="";
 const PAGES=[["orders","🧾","الطلبات"],["pay","💳","الدفعات"],["merch","🏪","التجار"],["settle","💼","التسويات"],["disp","⚠️","الاعتراضات"],["prods","📦","المنتجات"],["chat","💬","الدردشة"],["rev","⭐","التقييمات"]];
 const EP={pay:"/api/payments",merch:"/api/merchants",settle:"/api/settle",disp:"/api/disputes",prods:"/api/products",chat:"/api/chats",rev:"/api/reviews"};
 function drawNav(){
-  const nb={pay:(D.pay&&D.pay.payments||[]).length,merch:((D.merch&&D.merch.merchants)||[]).filter(m=>m.status==="pending").length,settle:(D.settle&&D.settle.settle||[]).length,disp:((D.disp&&D.disp.disputes)||[]).filter(x=>x.state==="open").length,chat:(D.chat&&D.chat.waiting)||0};
+  const nb={pay:(D.pay&&D.pay.payments||[]).length,merch:((D.merch&&D.merch.merchants)||[]).filter(m=>m.status==="pending").length,settle:(D.settle&&D.settle.settle||[]).length,disp:(D.disp&&D.disp.counts&&D.disp.counts.open)||0,chat:(D.chat&&D.chat.waiting)||0};
   $("#pnav").style.display="flex";
   $("#pnav").innerHTML=PAGES.map(([k,ic,l])=>`<button data-pg="${k}" class="${page===k?"on":""}"><b>${ic}</b>${l}${nb[k]?`<span class="nb">${nb[k]}</span>`:""}</button>`).join("");
 }
 async function loadPage(silent){
   if(page==="orders")return;
-  try{D[page]=await api(EP[page])}catch(e){if(e.message==="401")return loginView("كلمة السر غير صحيحة");if(!silent)toast("⚠️ "+e.message)}
+  try{D[page]=await api(page==="disp"?EP.disp+"?state="+dspTab+"&limit="+dspLim:EP[page])}catch(e){if(e.message==="401")return loginView("كلمة السر غير صحيحة");if(!silent)toast("⚠️ "+e.message)}
   if(page==="chat"&&[...document.querySelectorAll("[data-cin2]")].some(i=>i.value))return drawNav();
   if(page!==""&&document.querySelector("#app")&&page!=="orders")drawPage();drawNav();
 }
@@ -404,13 +405,15 @@ const imgOf=u=>u?(/^https?:|^data:/.test(u)?u:new URL(u,location.href).href):"";
 function pageBody(){
   const d=D[page];
   if(!d)return `<div class="empty">جارٍ التحميل…</div>`;
-  if(page==="disp"){const L=d.disputes||[];const lab={open:"⏳ مفتوح",refunded:"↩️ استرداد للعميل",closed:"✔️ رُفض لصالح التاجر"};
-    return L.length?L.map(x=>`<div class="pc"><h3>⚠️ اعتراض على طلب #${x.id} <span class="tag">${lab[x.state]||""}</span></h3>
+  if(page==="disp"){const L=d.disputes||[];const lab={open:"⏳ مفتوح",refunded:"↩️ استرداد للعميل",closed:"✔️ رُفض لصالح التاجر"};const c=d.counts||{};
+    const tabs=`<div class="row" style="margin-bottom:10px"><button class="${dspTab==="open"?"ok":""}" data-dtab="open" style="flex:1;padding:10px;border-radius:12px;font-weight:800;${dspTab==="open"?"":"background:var(--card);border:1px solid var(--line)"}">⏳ المفتوحة (${c.open||0})</button><button class="${dspTab==="done"?"ok":""}" data-dtab="done" style="flex:1;padding:10px;border-radius:12px;font-weight:800;${dspTab==="done"?"":"background:var(--card);border:1px solid var(--line)"}">✔️ المحلولة (${c.done||0})</button></div>`;
+    const more=d.more?`<button data-dmore style="width:100%;padding:12px;border-radius:12px;font-weight:800;background:var(--card);border:1px solid var(--line);margin-top:8px">عرض المزيد</button>`:"";
+    return tabs+(L.length?L.map(x=>`<div class="pc"><h3>⚠️ اعتراض على طلب #${x.id} <span class="tag">${lab[x.state]||""}</span></h3>
     <div class="sub">👤 ${esc(x.name||"—")}${x.phone?" · +"+esc(x.phone):""}${x.merchant?" · 🏪 "+esc(x.merchant):""}</div>
     <div class="sub">${x.items.map(esc).join("<br>")}</div><div class="big">${esc(x.amount)}</div>
     <div class="sub" style="color:var(--ink);font-weight:700">📝 ${esc(x.txt)}</div>${x.reply?`<div class="sub">💬 ردّك: ${esc(x.reply)}</div>`:""}
     ${x.state==="open"?`<div class="sub">قبول الاعتراض: حوّل المبلغ للعميل يدوياً، ويخرج الطلب من مستحقات التاجر. رفضه: يعود الطلب لمستحقات التاجر بعد فترة الفحص.</div>
-    <div class="row"><button class="ok" data-dp="${x.id}:rf">↩️ قبول (استرداد)</button><button class="no" data-dp="${x.id}:ok">✔️ رفض الاعتراض</button>${phLink(x.phone)}${phLink(x.mphone)}</div>`:""}</div>`).join(""):`<div class="empty">لا توجد اعتراضات ✅</div>`}
+    <div class="row"><button class="ok" data-dp="${x.id}:rf">↩️ قبول (استرداد)</button><button class="no" data-dp="${x.id}:ok">✔️ رفض الاعتراض</button>${phLink(x.phone)}${phLink(x.mphone)}</div>`:""}</div>`).join("")+more:`<div class="empty">${dspTab==="open"?"لا توجد اعتراضات مفتوحة ✅":"لا توجد اعتراضات محلولة"}</div>`)}
   if(page==="pay"){const L=d.payments||[];return L.length?L.map(p=>`<div class="pc"><h3>💳 إيصال من ${esc(p.name||"—")}</h3><div class="sub">${p.phone?"+"+esc(p.phone)+" · ":""}${p.orders.map(o=>"#"+o.id+(o.merchant?" ("+esc(o.merchant)+")":"")).join("، ")}</div>
     <div class="big">${esc(p.amount)}</div>${p.img?`<a href="${API}/img/${esc(p.img)}" target="_blank" rel="noopener"><img class="rc" src="${API}/img/${esc(p.img)}" alt="إيصال"></a>`:""}
     <div class="sub">تحقق من وصول المبلغ في حسابك ثم أكّد.</div>
@@ -477,6 +480,8 @@ document.addEventListener("click",async e=>{
   if(b=e.target.closest("[data-csend]")){const cid=b.dataset.csend,ta=document.querySelector(`[data-cin2="${cid}"]`),t=(ta&&ta.value||"").trim();if(!t){toast("اكتب الرد أولاً");return}api("/api/chatreply",{method:"POST",body:JSON.stringify({cid,txt:t})}).then(async()=>{ta.value="";toast("✅ وصل الرد للعميل");await loadPage(true)}).catch(e=>toast("⚠️ "+e.message));return}
   if(b=e.target.closest("[data-payok]")){if(confirm("هل وصل المبلغ فعلاً إلى حسابك؟"))act("/api/pay",{tk:b.dataset.payok,ok:true},"✅ تم تأكيد الدفع");return}
   if(b=e.target.closest("[data-payno]")){if(confirm("رفض الإيصال وطلب إيصال جديد من العميل؟"))act("/api/pay",{tk:b.dataset.payno,ok:false},"رُفض الإيصال");return}
+  if(b=e.target.closest("[data-dtab]")){dspTab=b.dataset.dtab;dspLim=30;D.disp=null;drawPage();loadPage();return}
+  if(b=e.target.closest("[data-dmore]")){dspLim+=30;loadPage();return}
   if(b=e.target.closest("[data-dp]")){const[i,a]=b.dataset.dp.split(":");askText(a==="rf"?"قبول الاعتراض":"رفض الاعتراض",a==="rf"?"اكتب رداً للعميل (مثال: قبلنا اعتراضك وسنحوّل لك المبلغ خلال يومين). حوّل المبلغ يدوياً.":"اكتب سبب الرفض، وسيظهر للعميل في «طلباتي».",a==="ok"?3:0).then(rp=>{if(rp===null)return;act("/api/dispute",{id:Number(i),decision:a,reply:rp},"تم ✓")});return}
   if(b=e.target.closest("[data-mg]")){const[i,a]=b.dataset.mg.split(":");const msg={ok:"تفعيل هذا التاجر؟",no:"رفض هذا التاجر؟",off:"إيقاف هذا التاجر؟ ستختفي منتجاته من المتجر."}[a];if(confirm(msg))act("/api/merchant",{id:Number(i),action:a},"تم ✓");return}
   if(b=e.target.closest("[data-csave]")){const v=document.querySelector(`[data-cin="${b.dataset.csave}"]`).value;act("/api/merchant",{id:Number(b.dataset.csave),action:"commission",commission:Number(v)},"تم حفظ العمولة ✓");return}
