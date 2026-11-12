@@ -441,21 +441,22 @@ function askText(title,hint,min){return new Promise(res=>{
   bg.querySelector(".ok").onclick=()=>{const v=ta.value.trim();if(v.length<min){bg.querySelector(".ask-err").textContent=min>3?"اكتب وصفاً أوضح للمشكلة":"اكتب السبب ليصل للعميل";return}done(v)};
   bg.addEventListener("click",e=>{if(e.target===bg)done(null)});
 })}
+function pickImgFit(file,maxW){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{URL.revokeObjectURL(u);let w=Math.min(maxW,im.width),q=.86;for(let t=0;t<6;t++){const h=Math.round(im.height*w/im.width),c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,w,h);x.drawImage(im,0,0,w,h);const d=c.toDataURL("image/jpeg",q);if(d.length<820000||t===5){res(d);return}q=Math.max(.6,q-.08);w=Math.round(w*.88)}};im.onerror=()=>rej(new Error("تعذّر قراءة الصورة"));im.src=u})}
 function pickImg(file,w,h){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,w,h);const k=Math.max(w/im.width,h/im.height),dw=im.width*k,dh=im.height*k;x.drawImage(im,(w-dw)/2,(h-dh)/2,dw,dh);URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.85))};im.onerror=()=>rej(new Error("تعذّر قراءة الصورة"));im.src=u})}
 async function bannerForm(b){b=b||{};let cats=[];try{cats=(await api("/api/cats")).categories||[]}catch(e){}
   if(!PRODS.length)await loadProds();
   const lk=b.link||"",lt=lk.slice(0,2)==="p:"?"p":lk.slice(0,2)==="c:"?"c":lk.slice(0,2)==="u:"?"u":"",lv=lk.slice(2);let img="";
   const bg=document.createElement("div");bg.className="sheetbg";
   bg.innerHTML=`<div class="sheet"><b style="font-size:16px">${b.id?"تعديل البانر":"إضافة بانر"}</b>
-  <label>الصورة (يُفضّل 1300×1000، وضع المهم في الوسط)</label><div id="bn-prev">${b.img?`<img src="${esc(b.img)}" style="width:100%;border-radius:10px;margin-bottom:6px">`:""}</div><input id="bn-file" type="file" accept="image/*">
-  <label>العنوان على الصورة (اختياري)</label><input id="bn-title" value="${esc(b.title||"")}" maxlength="80">
-  <label>سطر صغير تحته (اختياري)</label><input id="bn-sub" value="${esc(b.sub||"")}" maxlength="120">
+  <label>صورة البانر (ارفع تصميمك كما هو بأي مقاس، يظهر بأبعاده دون قص)</label><div id="bn-prev">${b.img?`<img src="${esc(b.img)}" style="width:100%;border-radius:10px;margin-bottom:6px">`:""}</div><input id="bn-file" type="file" accept="image/*">
+  <label>عنوان فوق الصورة (اتركه فارغاً إن كان النص داخل التصميم)</label><input id="bn-title" value="${esc(b.title||"")}" maxlength="80">
+  <label>سطر صغير تحته (اتركه فارغاً إن كان النص داخل التصميم)</label><input id="bn-sub" value="${esc(b.sub||"")}" maxlength="120">
   <label>عند الضغط على البانر</label><select id="bn-lt"><option value="" ${lt===""?"selected":""}>لا شيء</option><option value="c" ${lt==="c"?"selected":""}>فتح قسم</option><option value="p" ${lt==="p"?"selected":""}>فتح منتج</option><option value="u" ${lt==="u"?"selected":""}>فتح رابط</option></select><div id="bn-lv"></div>
   <button class="go" id="bn-save">حفظ</button><button class="go" id="bn-x" style="background:var(--bg);color:var(--ink);margin-top:8px">إلغاء</button></div>`;
   document.body.appendChild(bg);
   const drawLv=(t,v)=>{const el=bg.querySelector("#bn-lv");el.innerHTML=t==="c"?`<select id="bn-v">${cats.map(c=>`<option value="${esc(c.id)}" ${c.id===v?"selected":""}>${esc((c.emoji||"")+" "+c.name)}</option>`).join("")}</select>`:t==="p"?`<select id="bn-v">${PRODS.map(p=>`<option value="${esc(p.id)}" ${p.id===v?"selected":""}>${esc(p.title.slice(0,50))}</option>`).join("")}</select>`:t==="u"?`<input id="bn-v" dir="ltr" value="${esc(v||"")}" placeholder="https://...">`:""};
   drawLv(lt,lv);bg.querySelector("#bn-lt").onchange=e=>drawLv(e.target.value,"");
-  bg.querySelector("#bn-file").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{img=await pickImg(f,1300,1000);bg.querySelector("#bn-prev").innerHTML=`<img src="${img}" style="width:100%;border-radius:10px;margin-bottom:6px">`}catch(er){toast("⚠️ "+er.message)}};
+  bg.querySelector("#bn-file").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{img=await pickImgFit(f,1600);bg.querySelector("#bn-prev").innerHTML=`<img src="${img}" style="width:100%;border-radius:10px;margin-bottom:6px">`}catch(er){toast("⚠️ "+er.message)}};
   bg.querySelector("#bn-x").onclick=()=>bg.remove();bg.addEventListener("click",e=>{if(e.target===bg)bg.remove()});
   bg.querySelector("#bn-save").onclick=async()=>{const t=bg.querySelector("#bn-lt").value,v=((bg.querySelector("#bn-v")||{}).value||"").trim();let link="";if(t&&v){if(t==="u"&&!/^https:\/\//.test(v)){toast("الرابط يجب أن يبدأ بـ https://");return}link=t+":"+v}
     if(!b.id&&!img){toast("اختر صورة البانر");return}
