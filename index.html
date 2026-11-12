@@ -982,25 +982,60 @@ const sub=t=>`<div class="backbar"><button class="bk" data-pgclose aria-label="�
 let BOTU="",VFT=null;
 async function botName(){if(BOTU||!apiBase())return BOTU;try{const j=await (await fetch(apiBase()+"/verify/info")).json();BOTU=j.bot||""}catch(e){}return BOTU}
 function vfMsg(h){const m=$("#ac-msg");if(m){m.innerHTML=h;m.style.color="#111"}}
+async function vfCheck(vt,name,manual){
+  try{const j=await (await fetch(apiBase()+"/verify/check?vt="+vt,{cache:"no-store"})).json();
+    if(j.phone){clearInterval(VFT);LS.set("hs_acct",{phone:j.phone,name:name||"",verified:1});LS.del("hs_vt");toast("✅ تم التحقق من رقمك");render();return true}
+    if(manual)toast("لم يصلنا تأكيدك بعد — تأكد أنك ضغطت Start ثم زر مشاركة الرقم في تيليجرام")}
+  catch(e){if(manual)toast("تعذّر الاتصال، حاول مرة أخرى")}
+  return false;
+}
+function vfPoll(vt,name,t0){
+  clearInterval(VFT);
+  VFT=setInterval(()=>{if(Date.now()-t0>600000){clearInterval(VFT);LS.del("hs_vt");return}vfCheck(vt,name)},2500);
+}
+function vfUi(link){return `⏳ بانتظار تأكيد رقمك…<br><a href="${link}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;padding:10px 14px;background:#111;color:#ffd500;font-weight:800;text-decoration:none">افتح تيليجرام</a><br><small>اضغط «Start» ثم زر مشاركة الرقم، ثم ارجع هنا.</small><br><button type="button" data-acct="vcheck" style="margin-top:10px;padding:10px 14px;background:#ffd500;font-weight:800;border:0;width:100%">✅ أكملت الخطوة في تيليجرام — تحقق الآن</button>`}
+let WAON=null,OTPS={name:"",cc:"967",ph:""};
+async function waOn(){if(WAON!==null)return WAON;try{const j=await (await fetch(apiBase()+"/verify/info")).json();WAON=!!j.wa}catch(e){return false}return WAON}
+function otpUi(name,step){
+  OTPS.name=name||OTPS.name;
+  const st="width:100%;padding:12px;border:1.5px solid #ddd;font-size:16px;margin-top:8px;box-sizing:border-box";
+  if(step===1) vfMsg(`<b>أدخل رقم جوالك على واتساب</b><div style="display:flex;gap:8px;direction:ltr"><select id="otp-cc" style="${st};width:110px"><option value="967" ${OTPS.cc==="967"?"selected":""}>🇾🇪 +967</option><option value="966" ${OTPS.cc==="966"?"selected":""}>🇸🇦 +966</option></select><input id="otp-ph" inputmode="numeric" placeholder="7XXXXXXXX" value="${esc(OTPS.ph)}" style="${st}"></div><button type="button" data-acct="otpsend" style="margin-top:10px;padding:12px;background:#25d366;color:#fff;font-weight:800;border:0;width:100%">📲 أرسل الكود على واتساب</button>`);
+  else vfMsg(`<b>أرسلنا كوداً من 6 أرقام على واتساب</b><br><small dir="ltr">+${esc(OTPS.cc+OTPS.ph)}</small><input id="otp-code" inputmode="numeric" maxlength="6" placeholder="------" autocomplete="one-time-code" style="${st};text-align:center;letter-spacing:8px;font-size:22px;direction:ltr"><button type="button" data-acct="otpgo" style="margin-top:10px;padding:12px;background:#ffd500;font-weight:800;border:0;width:100%">✅ تأكيد الكود</button><button type="button" data-acct="otpback" style="margin-top:8px;padding:10px;background:#f2f2f2;border:0;width:100%">تغيير الرقم / إعادة الإرسال</button>`);
+}
+async function otpPost(path,body){const r=await fetch(apiBase()+path,{method:"POST",headers:{"content-type":"text/plain"},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"تعذّر الإرسال");return j}
+async function otpSendNow(){
+  const cc=($("#otp-cc")||{}).value||"967";let ph=(($("#otp-ph")||{}).value||"").replace(/\D/g,"").replace(/^0+/,"");if(ph.startsWith(cc))ph=ph.slice(cc.length);
+  if(ph.length<7){toast("اكتب رقم الجوال بشكل صحيح");return}
+  OTPS.cc=cc;OTPS.ph=ph;toast("جارٍ إرسال الكود…");
+  try{await otpPost("/otp/send",{phone:cc+ph});otpUi(OTPS.name,2)}catch(e){toast("⚠️ "+e.message)}
+}
+async function otpGo(){
+  const code=(($("#otp-code")||{}).value||"").replace(/\D/g,"");if(code.length!==6){toast("اكتب الكود المكوّن من 6 أرقام");return}
+  try{const j=await otpPost("/otp/verify",{phone:OTPS.cc+OTPS.ph,code});LS.set("hs_acct",{phone:j.phone,name:OTPS.name,verified:1});toast("✅ تم التحقق من رقمك");render()}catch(e){toast("⚠️ "+e.message)}
+}
 async function acVerify(name){
   if(!apiBase()){toast("التسجيل غير متاح الآن");return}
+  if(await waOn()){otpUi(name,1);return}
   const vt=Array.from(crypto.getRandomValues(new Uint8Array(20)),x=>(x%36).toString(36)).join("");
   clearInterval(VFT);const bu=await botName();if(!bu){vfMsg("تعذّر الاتصال بالبوت، حاول بعد قليل");return}
   const link=`https://t.me/${bu}?start=v_${vt}`;
-  vfMsg(`⏳ بانتظار تأكيد رقمك…<br><a href="${link}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;padding:10px 14px;background:#111;color:#ffd500;font-weight:800;text-decoration:none">افتح تيليجرام</a><br><small>اضغط «Start» ثم زر مشاركة الرقم، وارجع هنا.</small>`);
+  LS.set("hs_vt",{vt,name,link,t:Date.now()});
+  vfMsg(vfUi(link));
   try{window.open(link,"_blank")}catch(e){}
-  const t0=Date.now();
-  VFT=setInterval(async()=>{
-    if(Date.now()-t0>600000||view.name!=="account"){clearInterval(VFT);return}
-    try{const j=await (await fetch(apiBase()+"/verify/check?vt="+vt,{cache:"no-store"})).json();
-      if(j.phone){clearInterval(VFT);LS.set("hs_acct",{phone:j.phone,name,verified:1});toast("✅ تم التحقق من رقمك");render()}}catch(e){}
-  },2500);
+  vfPoll(vt,name,Date.now());
 }
+function vfResume(){
+  const P=LS.get("hs_vt",null); if(!P||ACC()) return;
+  if(Date.now()-P.t>600000){LS.del("hs_vt");return}
+  vfMsg(vfUi(P.link)); vfPoll(P.vt,P.name,P.t); vfCheck(P.vt,P.name);
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){const P=LS.get("hs_vt",null);if(P&&!ACC())vfCheck(P.vt,P.name)}});
 function accountView(){
+  if(!ACC()) setTimeout(vfResume,60);
   const A=ACC(),isM=(()=>{try{return !!localStorage.getItem("hm_tk")}catch(e){return false}})();
   const top=A?`<div class="accard"><div class="prof"><div class="av2">${esc((A.name||"").trim().charAt(0))||ico("user")}</div><div><b>${esc(A.name||"عميل")}</b><div dir="ltr" class="ph2">+${esc(A.phone)}</div><span class="role">${A.verified?"✅ رقم موثّق":"عميل"}${isM?" · تاجر":""}</span></div></div></div>`:
   `<div class="accard"><div class="prof"><div class="av2">${ico("user")}</div><div><b>أهلاً بك</b><small>سجّل برقم جوالك لتسهيل طلباتك</small></div></div>
-    <label>الاسم (اختياري)</label><input id="ac-name" placeholder="اسمك"><button class="btn buy" data-acct="login" style="width:100%;margin-top:12px">التسجيل بتأكيد رقمي عبر تيليجرام</button><small style="display:block;margin-top:8px;color:#777;line-height:1.7">يفتح لك بوت المتجر في تيليجرام، تشارك رقمك بزر واحد ثم ترجع هنا تلقائياً. نتحقق أن الرقم رقمك فعلاً.</small><div class="msg" id="ac-msg"></div></div>`;
+    <label>الاسم (اختياري)</label><input id="ac-name" placeholder="اسمك"><button class="btn buy" data-acct="login" style="width:100%;margin-top:12px">التسجيل بتأكيد رقمي</button><small style="display:block;margin-top:8px;color:#777;line-height:1.7">نرسل لك كود تحقق على واتساب لنتأكد أن الرقم رقمك فعلاً.</small><div class="msg" id="ac-msg"></div></div>`;
   return `<div class="backbar"><h2>حسابي</h2></div>${top}
   <div class="mg" style="margin-top:14px">${A?mrow("user","الملف الشخصي","",'data-go="prof"'):""}${mrow("box","طلباتي","",'data-go="orders"')}${mrow("heart","المفضلة","",'data-go="favs"')}</div>
   <div class="mg" style="margin-top:14px">${isM?mlink("store","حساب المتجر","","merchant.html"):mlink("plus","فتح حساب تاجر","","merchant.html#reg")}</div>
@@ -1066,6 +1101,8 @@ document.addEventListener("click",e=>{
   else if(k==="delask"){acDel=true;render()}
   else if(k==="delno"){acDel=false;render()}
   else if(k==="delyes"){LS.del("hs_acct");LS.del("hs_cust");acDel=false;acEdit=false;toast("🗑 تم حذف حسابك");nav({name:"account"},false);history.replaceState({name:"account"},"")}
+  else if(k==="otpsend")otpSendNow();else if(k==="otpgo")otpGo();else if(k==="otpback")otpUi(OTPS.name,1);
+  else if(k==="vcheck"){const P=LS.get("hs_vt",null);if(P)vfCheck(P.vt,P.name,true);else toast("ابدأ التسجيل من جديد")}
   else if(k==="logout"){LS.del("hs_acct");acEdit=false;acDel=false;toast("تم تسجيل الخروج");render()}
 });
 function drawRcv(){
