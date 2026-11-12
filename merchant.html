@@ -465,7 +465,7 @@ function productForm(p){
   <label>اسم المنتج</label><input id="p-title" value="${esc(p.title||"")}">
   <div class="row"><div><label>السعر</label><input id="p-price" type="number" inputmode="decimal" value="${p.price||""}"></div><div><label>العملة</label><select id="p-cur"><option value="SAR" ${p.cur!=="YER"?"selected":""}>ريال سعودي</option><option value="YER" ${p.cur==="YER"?"selected":""}>ريال يمني</option></select></div></div>
   <div class="row"><div><label>السعر القديم (اختياري)</label><input id="p-old" type="number" inputmode="decimal" value="${p.old||""}"></div><div><label>سعر بالريال اليمني (اختياري)</label><input id="p-yer" type="number" inputmode="decimal" value="${p.price_yer||""}"></div></div>
-  <label>القسم</label><select id="p-cat"><option value="">— اختر القسم —</option>${CATS.filter(c=>c.id!=="general"||p.cat==="general").map(c=>`<option value="${esc(c.id)}" ${p.cat===c.id?"selected":""}>${esc((c.emoji||"")+" "+c.name)}</option>`).join("")}</select>
+  <label>القسم</label><select id="p-cat"><option value="">— اختر القسم —</option>${CATS.filter(c=>(c.id!=="general"||p.cat==="general")&&(!c.hidden||p.cat===c.id)).map(c=>`<option value="${esc(c.id)}" ${p.cat===c.id?"selected":""}>${esc((c.emoji||"")+" "+c.name)}</option>`).join("")}</select>
   <label>وصف المنتج (المقاس، الخامة، اللون...)</label><textarea id="p-desc">${esc(p.desc||"")}</textarea>
   <div class="earn" id="earn"></div>
   <label>الخيارات المتوفرة (مقاسات، ألوان، أحجام...) — اختياري</label>
