@@ -256,7 +256,7 @@ function card(o){
   return `<div class="card ${sel.has(o.id)?"sel":""}" style="--c:${col}"><div class="hd"><input class="ck" type="checkbox" data-ck="${o.id}" ${sel.has(o.id)?"checked":""}><span class="id">#${o.id}</span><span class="badge">${lab}</span></div>
   <div class="tm">🕒 ${esc(o.time)} · ⏱ منذ ${ago(o.created)}${o.mid&&o.mname?" · 🏪 "+esc(o.mname):""}${o.hidden?" · 🙈 مخفي":""}${o.recv==="yes"?" · ✅ العميل أكّد الاستلام":o.recv==="no"?" · ⚠️ العميل لم يستلم":""}</div>
   <div class="bd"><div class="nm">👤 ${esc(o.name||"—")}${o.phone?` <span dir="ltr" style="color:var(--muted);font-weight:700;font-size:13px">+${esc(o.phone)}</span>`:""}</div><div class="ad">📍 ${esc(o.addr||"—")}</div>${o.center?`<div class="ad">🏬 مركز الاستلام: ${esc(o.center.name)} — ${esc(o.center.city)}</div>`:""}
-  <div class="its">${its}</div><div class="tot"><span>الإجمالي</span><b>${esc(o.total)}</b></div>${o.note?`<div class="note">📝 ${esc(o.note)}</div>`:""}</div>
+  <div class="its">${its}</div><div class="tot"><span>الإجمالي</span><b>${esc(o.total)}</b></div>${o.coupon?`<div class="note">🎟 كوبون ${esc(o.coupon)}: خصم ${[o.disc_sar?nf(o.disc_sar)+" ر.س":"",o.disc_yer?nf(o.disc_yer)+" ر.ي":""].filter(Boolean).join(" + ")} (على حساب وفر)</div>`:""}${o.note?`<div class="note">📝 ${esc(o.note)}</div>`:""}</div>
   <div class="act">${mw}${wa}${btns}<button class="prt" data-print="${o.id}">🖨 طباعة بوليصة الشحن</button>${o.hidden||o.status==="done"||o.status==="cancel"?`<button style="flex-basis:100%" data-${o.hidden?"unhide":"hide"}="${o.id}">${o.hidden?"👁 إظهار الطلب":"🙈 إخفاء الطلب (يبقى محفوظاً)"}</button>`:""}</div></div>`;
 }
 const ago=t=>{if(!t)return"—";const m=Math.max(0,Math.round((Date.now()-t)/6e4));if(m<60)return m+" دقيقة";const h=Math.round(m/60);if(h<48)return h+" ساعة";return Math.round(h/24)+" يوم"};
@@ -440,6 +440,25 @@ function askText(title,hint,min){return new Promise(res=>{
   bg.querySelector(".ok").onclick=()=>{const v=ta.value.trim();if(v.length<min){bg.querySelector(".ask-err").textContent=min>3?"اكتب وصفاً أوضح للمشكلة":"اكتب السبب ليصل للعميل";return}done(v)};
   bg.addEventListener("click",e=>{if(e.target===bg)done(null)});
 })}
+function couponForm(c){c=c||{};const bg=document.createElement("div");bg.className="sheetbg";
+  const exp=c.expires?new Date(c.expires+3*3600e3).toISOString().slice(0,10):"";
+  bg.innerHTML=`<div class="sheet"><b style="font-size:16px">${c.id?"تعديل كوبون":"إنشاء كوبون خصم"}</b>
+  <label>كود الخصم (حروف وأرقام إنجليزية)</label><input id="cp-code" dir="ltr" value="${esc(c.code||"")}" maxlength="30" placeholder="WAFR10" style="text-transform:uppercase">
+  <label>نوع الخصم</label><select id="cp-type"><option value="pct" ${c.type!=="fixed"?"selected":""}>نسبة مئوية %</option><option value="fixed" ${c.type==="fixed"?"selected":""}>مبلغ ثابت</option></select>
+  <label>قيمة الخصم</label><input id="cp-value" type="number" inputmode="decimal" value="${c.value||""}">
+  <label>العملة التي يخصها الكوبون</label><select id="cp-cur"><option value="ر.س" ${c.cur!=="ر.ي"?"selected":""}>ريال سعودي</option><option value="ر.ي" ${c.cur==="ر.ي"?"selected":""}>ريال يمني</option></select>
+  <label>الحد الأدنى للطلب (اختياري)</label><input id="cp-min" type="number" inputmode="decimal" value="${c.min_total||""}">
+  <label>أقصى مبلغ خصم (اختياري، مفيد مع النسبة)</label><input id="cp-maxoff" type="number" inputmode="decimal" value="${c.max_off||""}">
+  <label>عدد مرات الاستخدام الكلي (اختياري)</label><input id="cp-uses" type="number" inputmode="numeric" value="${c.max_uses||""}">
+  <label>ينتهي في (اختياري)</label><input id="cp-exp" type="date" value="${exp}">
+  <div style="font-size:12px;color:var(--muted);margin-top:8px">الخصم تتحمّله وفر، ويحصل التاجر على مستحقه كاملاً. ويُستخدم الكود مرة واحدة لكل رقم جوال.</div>
+  <button class="go" id="cp-save">حفظ</button><button class="go" id="cp-x" style="background:var(--bg);color:var(--ink);margin-top:8px">إلغاء</button></div>`;
+  document.body.appendChild(bg);
+  bg.querySelector("#cp-x").onclick=()=>bg.remove();
+  bg.addEventListener("click",e=>{if(e.target===bg)bg.remove()});
+  bg.querySelector("#cp-save").onclick=async()=>{const g=i=>bg.querySelector("#cp-"+i).value.trim();
+    try{await api("/api/coupon",{method:"POST",body:JSON.stringify({id:c.id||0,code:g("code"),type:g("type"),value:g("value"),cur:g("cur"),min_total:g("min"),max_off:g("maxoff"),max_uses:g("uses"),expires:g("exp"),status:c.status||"active"})});bg.remove();toast("تم الحفظ ✓");loadPage(true)}catch(e){toast("⚠️ "+e.message)}}
+}
 function centerForm(c){c=c||{};const bg=document.createElement("div");bg.className="sheetbg";
   bg.innerHTML=`<div class="sheet"><b style="font-size:16px">${c.id?"تعديل مركز الاستلام":"إضافة مركز استلام"}</b>
   <label>اسم المركز</label><input id="cf-name" value="${esc(c.name||"")}" maxlength="80">
@@ -458,8 +477,8 @@ function centerForm(c){c=c||{};const bg=document.createElement("div");bg.classNa
 }
 let dspTab="open",dspLim=30,auditQ="",auditLim=40;
 let page=LS.get("ho_page","orders"),D={},psrc="store",pq="",openC="";
-const PAGES=[["orders","🧾","الطلبات"],["pay","💳","الدفعات"],["merch","🏪","التجار"],["settle","💼","التسويات"],["disp","⚠️","الاعتراضات"],["centers","📍","المراكز"],["audit","📜","السجل"],["prods","📦","المنتجات"],["chat","💬","الدردشة"],["rev","⭐","التقييمات"]];
-const EP={pay:"/api/payments",merch:"/api/merchants",settle:"/api/settle",disp:"/api/disputes",centers:"/api/centers",audit:"/api/audit",prods:"/api/products",chat:"/api/chats",rev:"/api/reviews"};
+const PAGES=[["orders","🧾","الطلبات"],["pay","💳","الدفعات"],["merch","🏪","التجار"],["settle","💼","التسويات"],["disp","⚠️","الاعتراضات"],["centers","📍","المراكز"],["coupons","🎟","الكوبونات"],["audit","📜","السجل"],["prods","📦","المنتجات"],["chat","💬","الدردشة"],["rev","⭐","التقييمات"]];
+const EP={pay:"/api/payments",merch:"/api/merchants",settle:"/api/settle",disp:"/api/disputes",centers:"/api/centers",audit:"/api/audit",coupons:"/api/coupons",prods:"/api/products",chat:"/api/chats",rev:"/api/reviews"};
 function drawNav(){
   const nb={pay:(D.pay&&D.pay.payments||[]).length,merch:((D.merch&&D.merch.merchants)||[]).filter(m=>m.status==="pending").length,settle:(D.settle&&D.settle.settle||[]).length,disp:(D.disp&&D.disp.counts&&D.disp.counts.open)||0,chat:(D.chat&&D.chat.waiting)||0};
   $("#pnav").style.display="flex";
@@ -479,6 +498,12 @@ const imgOf=u=>u?(/^https?:|^data:/.test(u)?u:new URL(u,location.href).href):"";
 function pageBody(){
   const d=D[page];
   if(!d)return `<div class="empty">جارٍ التحميل…</div>`;
+  if(page==="coupons"){const L=d.coupons||[];
+    return `<button data-cpadd style="width:100%;background:#ffd500;color:#111;font-weight:900;border-radius:12px;padding:12px;margin-bottom:10px">➕ إنشاء كوبون خصم</button>`+(L.length?L.map(c=>{const dead=c.status!=="active"||(c.expires&&Date.now()>c.expires)||(c.max_uses&&c.used>=c.max_uses);
+    return `<div class="pc"><h3>🎟 <span dir="ltr">${esc(c.code)}</span> <span class="tag">${dead?(c.status!=="active"?"موقوف":"منتهٍ"):"فعّال"}</span></h3>
+    <div class="sub" style="font-weight:800;color:var(--ink)">خصم ${c.type==="pct"?c.value+"%":c.value+" "+esc(c.cur)} ${c.type==="pct"?"على منتجات "+esc(c.cur):""}</div>
+    <div class="sub">${c.min_total?"الحد الأدنى "+c.min_total+" "+esc(c.cur)+" · ":""}${c.max_off?"أقصى خصم "+c.max_off+" "+esc(c.cur)+" · ":""}استُخدم ${c.used||0}${c.max_uses?" من "+c.max_uses:""} مرة${c.expires?" · ينتهي "+new Date(c.expires).toLocaleDateString("ar-SA",{dateStyle:"medium"}):""}</div>
+    <div class="row"><button data-cpedit="${c.id}">✏️ تعديل</button><button data-cptog="${c.id}">${c.status==="active"?"⏸ إيقاف":"▶️ تفعيل"}</button><button class="no" data-cpdel="${c.id}">🗑 حذف</button></div></div>`}).join(""):`<div class="empty">لا توجد كوبونات بعد.</div>`)}
   if(page==="audit"){const L=d.log||[];
     const bar=`<div style="display:flex;gap:8px;margin-bottom:10px"><input id="aq" value="${esc(auditQ)}" placeholder="بحث: رقم الطلب أو اسم التاجر أو نوع العملية" style="flex:1;padding:11px;border:1px solid var(--line);border-radius:12px;font:inherit;background:var(--card);color:var(--ink)"><button data-asearch style="background:#ffd500;color:#111;font-weight:800;border-radius:12px;padding:0 16px">بحث</button></div>`;
     const more=d.more?`<button data-amore style="width:100%;padding:12px;border-radius:12px;font-weight:800;background:var(--card);border:1px solid var(--line);margin-top:8px">عرض المزيد</button>`:"";
@@ -564,6 +589,10 @@ document.addEventListener("click",async e=>{
   if(b=e.target.closest("[data-csend]")){const cid=b.dataset.csend,ta=document.querySelector(`[data-cin2="${cid}"]`),t=(ta&&ta.value||"").trim();if(!t){toast("اكتب الرد أولاً");return}api("/api/chatreply",{method:"POST",body:JSON.stringify({cid,txt:t})}).then(async()=>{ta.value="";toast("✅ وصل الرد للعميل");await loadPage(true)}).catch(e=>toast("⚠️ "+e.message));return}
   if(b=e.target.closest("[data-payok]")){if(confirm("هل وصل المبلغ فعلاً إلى حسابك؟"))act("/api/pay",{tk:b.dataset.payok,ok:true},"✅ تم تأكيد الدفع");return}
   if(b=e.target.closest("[data-payno]")){if(confirm("رفض الإيصال وطلب إيصال جديد من العميل؟"))act("/api/pay",{tk:b.dataset.payno,ok:false},"رُفض الإيصال");return}
+  if(b=e.target.closest("[data-cpadd]")){couponForm();return}
+  if(b=e.target.closest("[data-cpedit]")){const c=((D.coupons||{}).coupons||[]).find(x=>x.id===Number(b.dataset.cpedit));if(c)couponForm(c);return}
+  if(b=e.target.closest("[data-cptog]")){const c=((D.coupons||{}).coupons||[]).find(x=>x.id===Number(b.dataset.cptog));if(c)act("/api/coupon",{...c,status:c.status==="active"?"off":"active",toggle:1,expires:c.expires?new Date(c.expires+3*3600e3).toISOString().slice(0,10):""},"تم ✓");return}
+  if(b=e.target.closest("[data-cpdel]")){const id=Number(b.dataset.cpdel);if(confirm("حذف هذا الكوبون؟"))act("/api/coupon",{id,del:1},"تم الحذف");return}
   if(b=e.target.closest("[data-asearch]")){auditQ=($("#aq")||{}).value||"";auditLim=40;loadPage();return}
   if(b=e.target.closest("[data-amore]")){auditLim+=40;loadPage();return}
   if(b=e.target.closest("[data-cadd]")){centerForm();return}
