@@ -181,6 +181,7 @@ header .in{max-width:1700px!important;padding:0 24px}
 .nav,.pnav{left:50%!important;right:auto!important;width:760px!important}
 .stats{gap:10px}.st{padding:12px 4px;font-size:13px}.st b{font-size:26px}
 }
+.pnav{overflow-x:auto;justify-content:flex-start!important;scrollbar-width:none}.pnav::-webkit-scrollbar{display:none}.pnav button{flex:0 0 auto!important;min-width:62px!important;padding-left:4px!important;padding-right:4px!important}
 </style>
 </head>
 <body>
@@ -440,6 +441,37 @@ function askText(title,hint,min){return new Promise(res=>{
   bg.querySelector(".ok").onclick=()=>{const v=ta.value.trim();if(v.length<min){bg.querySelector(".ask-err").textContent=min>3?"اكتب وصفاً أوضح للمشكلة":"اكتب السبب ليصل للعميل";return}done(v)};
   bg.addEventListener("click",e=>{if(e.target===bg)done(null)});
 })}
+function pickImg(file,w,h){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,w,h);const k=Math.max(w/im.width,h/im.height),dw=im.width*k,dh=im.height*k;x.drawImage(im,(w-dw)/2,(h-dh)/2,dw,dh);URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.85))};im.onerror=()=>rej(new Error("تعذّر قراءة الصورة"));im.src=u})}
+async function bannerForm(b){b=b||{};let cats=[];try{cats=(await api("/api/cats")).categories||[]}catch(e){}
+  if(!PRODS.length)await loadProds();
+  const lk=b.link||"",lt=lk.slice(0,2)==="p:"?"p":lk.slice(0,2)==="c:"?"c":lk.slice(0,2)==="u:"?"u":"",lv=lk.slice(2);let img="";
+  const bg=document.createElement("div");bg.className="sheetbg";
+  bg.innerHTML=`<div class="sheet"><b style="font-size:16px">${b.id?"تعديل البانر":"إضافة بانر"}</b>
+  <label>الصورة (عريضة، يُفضّل 1600×500)</label><div id="bn-prev">${b.img?`<img src="${esc(b.img)}" style="width:100%;border-radius:10px;margin-bottom:6px">`:""}</div><input id="bn-file" type="file" accept="image/*">
+  <label>العنوان على الصورة (اختياري)</label><input id="bn-title" value="${esc(b.title||"")}" maxlength="80">
+  <label>سطر صغير تحته (اختياري)</label><input id="bn-sub" value="${esc(b.sub||"")}" maxlength="120">
+  <label>عند الضغط على البانر</label><select id="bn-lt"><option value="" ${lt===""?"selected":""}>لا شيء</option><option value="c" ${lt==="c"?"selected":""}>فتح قسم</option><option value="p" ${lt==="p"?"selected":""}>فتح منتج</option><option value="u" ${lt==="u"?"selected":""}>فتح رابط</option></select><div id="bn-lv"></div>
+  <button class="go" id="bn-save">حفظ</button><button class="go" id="bn-x" style="background:var(--bg);color:var(--ink);margin-top:8px">إلغاء</button></div>`;
+  document.body.appendChild(bg);
+  const drawLv=(t,v)=>{const el=bg.querySelector("#bn-lv");el.innerHTML=t==="c"?`<select id="bn-v">${cats.map(c=>`<option value="${esc(c.id)}" ${c.id===v?"selected":""}>${esc((c.emoji||"")+" "+c.name)}</option>`).join("")}</select>`:t==="p"?`<select id="bn-v">${PRODS.map(p=>`<option value="${esc(p.id)}" ${p.id===v?"selected":""}>${esc(p.title.slice(0,50))}</option>`).join("")}</select>`:t==="u"?`<input id="bn-v" dir="ltr" value="${esc(v||"")}" placeholder="https://...">`:""};
+  drawLv(lt,lv);bg.querySelector("#bn-lt").onchange=e=>drawLv(e.target.value,"");
+  bg.querySelector("#bn-file").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{img=await pickImg(f,1600,500);bg.querySelector("#bn-prev").innerHTML=`<img src="${img}" style="width:100%;border-radius:10px;margin-bottom:6px">`}catch(er){toast("⚠️ "+er.message)}};
+  bg.querySelector("#bn-x").onclick=()=>bg.remove();bg.addEventListener("click",e=>{if(e.target===bg)bg.remove()});
+  bg.querySelector("#bn-save").onclick=async()=>{const t=bg.querySelector("#bn-lt").value,v=((bg.querySelector("#bn-v")||{}).value||"").trim();let link="";if(t&&v){if(t==="u"&&!/^https:\/\//.test(v)){toast("الرابط يجب أن يبدأ بـ https://");return}link=t+":"+v}
+    if(!b.id&&!img){toast("اختر صورة البانر");return}
+    try{await api("/api/banner",{method:"POST",body:JSON.stringify({id:b.id||0,title:bg.querySelector("#bn-title").value,sub:bg.querySelector("#bn-sub").value,link,status:b.status||"active",image:img||undefined})});bg.remove();toast("تم الحفظ ✓");loadPage(true)}catch(e){toast("⚠️ "+e.message)}}
+}
+function catForm(c){c=c||{};let img="";const bg=document.createElement("div");bg.className="sheetbg";
+  bg.innerHTML=`<div class="sheet"><b style="font-size:16px">${c.id?"تعديل القسم":"إضافة قسم"}</b>
+  <label>اسم القسم</label><input id="ct-name" value="${esc(c.name||"")}" maxlength="60">
+  <label>رمز تعبيري (اختياري)</label><input id="ct-emoji" value="${esc(c.emoji||"")}" maxlength="4" placeholder="👗">
+  <label>صورة القسم (مربعة)</label><div id="ct-prev">${c.img?`<img src="${esc(c.img)}" style="width:90px;height:90px;object-fit:cover;border-radius:12px;margin-bottom:6px">`:""}</div><input id="ct-file" type="file" accept="image/*">
+  <button class="go" id="ct-save">حفظ</button><button class="go" id="ct-x" style="background:var(--bg);color:var(--ink);margin-top:8px">إلغاء</button></div>`;
+  document.body.appendChild(bg);
+  bg.querySelector("#ct-file").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{img=await pickImg(f,400,400);bg.querySelector("#ct-prev").innerHTML=`<img src="${img}" style="width:90px;height:90px;object-fit:cover;border-radius:12px;margin-bottom:6px">`}catch(er){toast("⚠️ "+er.message)}};
+  bg.querySelector("#ct-x").onclick=()=>bg.remove();bg.addEventListener("click",e=>{if(e.target===bg)bg.remove()});
+  bg.querySelector("#ct-save").onclick=async()=>{try{await api("/api/cat",{method:"POST",body:JSON.stringify({id:c.id||"",name:bg.querySelector("#ct-name").value,emoji:bg.querySelector("#ct-emoji").value,hidden:!!c.hidden,image:img||undefined})});bg.remove();toast("تم الحفظ ✓ (يظهر في المتجر خلال دقائق)");loadPage(true)}catch(e){toast("⚠️ "+e.message)}}
+}
 function couponForm(c){c=c||{};const bg=document.createElement("div");bg.className="sheetbg";
   const exp=c.expires?new Date(c.expires+3*3600e3).toISOString().slice(0,10):"";
   bg.innerHTML=`<div class="sheet"><b style="font-size:16px">${c.id?"تعديل كوبون":"إنشاء كوبون خصم"}</b>
@@ -477,8 +509,8 @@ function centerForm(c){c=c||{};const bg=document.createElement("div");bg.classNa
 }
 let dspTab="open",dspLim=30,auditQ="",auditLim=40;
 let page=LS.get("ho_page","orders"),D={},psrc="store",pq="",openC="";
-const PAGES=[["orders","🧾","الطلبات"],["pay","💳","الدفعات"],["merch","🏪","التجار"],["settle","💼","التسويات"],["disp","⚠️","الاعتراضات"],["centers","📍","المراكز"],["coupons","🎟","الكوبونات"],["audit","📜","السجل"],["prods","📦","المنتجات"],["chat","💬","الدردشة"],["rev","⭐","التقييمات"]];
-const EP={pay:"/api/payments",merch:"/api/merchants",settle:"/api/settle",disp:"/api/disputes",centers:"/api/centers",audit:"/api/audit",coupons:"/api/coupons",prods:"/api/products",chat:"/api/chats",rev:"/api/reviews"};
+const PAGES=[["orders","🧾","الطلبات"],["pay","💳","الدفعات"],["merch","🏪","التجار"],["settle","💼","التسويات"],["disp","⚠️","الاعتراضات"],["centers","📍","المراكز"],["banners","🖼","البانرات"],["cats","🗂","الأقسام"],["coupons","🎟","الكوبونات"],["audit","📜","السجل"],["prods","📦","المنتجات"],["chat","💬","الدردشة"],["rev","⭐","التقييمات"]];
+const EP={pay:"/api/payments",merch:"/api/merchants",settle:"/api/settle",disp:"/api/disputes",centers:"/api/centers",audit:"/api/audit",coupons:"/api/coupons",banners:"/api/banners",cats:"/api/cats",prods:"/api/products",chat:"/api/chats",rev:"/api/reviews"};
 function drawNav(){
   const nb={pay:(D.pay&&D.pay.payments||[]).length,merch:((D.merch&&D.merch.merchants)||[]).filter(m=>m.status==="pending").length,settle:(D.settle&&D.settle.settle||[]).length,disp:(D.disp&&D.disp.counts&&D.disp.counts.open)||0,chat:(D.chat&&D.chat.waiting)||0};
   $("#pnav").style.display="flex";
@@ -498,6 +530,13 @@ const imgOf=u=>u?(/^https?:|^data:/.test(u)?u:new URL(u,location.href).href):"";
 function pageBody(){
   const d=D[page];
   if(!d)return `<div class="empty">جارٍ التحميل…</div>`;
+  if(page==="banners"){const L=d.banners||[];
+    return `<button data-bnadd style="width:100%;background:#ffd500;color:#111;font-weight:900;border-radius:12px;padding:12px;margin-bottom:10px">➕ إضافة بانر</button>`+(L.length?L.map((b,i)=>`<div class="pc"><img src="${esc(b.img)}" alt="" style="width:100%;border-radius:10px;display:block"><h3 style="margin-top:8px">${esc(b.title||"بدون عنوان")} <span class="tag">${b.status==="active"?"ظاهر":"مخفي"}</span></h3>${b.sub?`<div class="sub">${esc(b.sub)}</div>`:""}<div class="sub">${b.link?"🔗 "+({p:"يفتح منتج",c:"يفتح قسم",u:"يفتح رابط"}[b.link.slice(0,1)]||""):"بدون رابط"}</div>
+    <div class="row"><button data-bnmv="${b.id}:up" ${i===0?"disabled":""}>⬆️</button><button data-bnmv="${b.id}:down" ${i===L.length-1?"disabled":""}>⬇️</button><button data-bnedit="${b.id}">✏️ تعديل</button><button data-bntog="${b.id}">${b.status==="active"?"🙈 إخفاء":"👁 إظهار"}</button><button class="no" data-bndel="${b.id}">🗑</button></div></div>`).join(""):`<div class="empty">لا توجد بانرات. عند عدم وجودها يعرض المتجر منتجات مختارة تلقائياً.</div>`)}
+  if(page==="cats"){const L=d.categories||[];
+    return `<button data-ctadd style="width:100%;background:#ffd500;color:#111;font-weight:900;border-radius:12px;padding:12px;margin-bottom:10px">➕ إضافة قسم</button>`+L.map((c,i)=>`<div class="pc" style="display:flex;gap:10px;align-items:center">${c.img?`<img src="${esc(c.img)}" alt="" style="width:56px;height:56px;border-radius:12px;object-fit:cover;flex:none">`:`<div style="width:56px;height:56px;border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:26px;flex:none">${esc(c.emoji||"📦")}</div>`}
+    <div style="flex:1;min-width:0"><h3 style="margin:0">${esc((c.emoji||"")+" "+c.name)} ${c.hidden?`<span class="tag">مخفي</span>`:""}</h3><div class="sub">${c.n} منتج</div>
+    <div class="row" style="margin-top:6px"><button data-ctmv="${esc(c.id)}:up" ${i===0?"disabled":""}>⬆️</button><button data-ctmv="${esc(c.id)}:down" ${i===L.length-1?"disabled":""}>⬇️</button><button data-ctedit="${esc(c.id)}">✏️</button><button data-cttog="${esc(c.id)}">${c.hidden?"👁":"🙈"}</button><button class="no" data-ctdel="${esc(c.id)}">🗑</button></div></div></div>`).join("")}
   if(page==="coupons"){const L=d.coupons||[];
     return `<button data-cpadd style="width:100%;background:#ffd500;color:#111;font-weight:900;border-radius:12px;padding:12px;margin-bottom:10px">➕ إنشاء كوبون خصم</button>`+(L.length?L.map(c=>{const dead=c.status!=="active"||(c.expires&&Date.now()>c.expires)||(c.max_uses&&c.used>=c.max_uses);
     return `<div class="pc"><h3>🎟 <span dir="ltr">${esc(c.code)}</span> <span class="tag">${dead?(c.status!=="active"?"موقوف":"منتهٍ"):"فعّال"}</span></h3>
@@ -589,6 +628,16 @@ document.addEventListener("click",async e=>{
   if(b=e.target.closest("[data-csend]")){const cid=b.dataset.csend,ta=document.querySelector(`[data-cin2="${cid}"]`),t=(ta&&ta.value||"").trim();if(!t){toast("اكتب الرد أولاً");return}api("/api/chatreply",{method:"POST",body:JSON.stringify({cid,txt:t})}).then(async()=>{ta.value="";toast("✅ وصل الرد للعميل");await loadPage(true)}).catch(e=>toast("⚠️ "+e.message));return}
   if(b=e.target.closest("[data-payok]")){if(confirm("هل وصل المبلغ فعلاً إلى حسابك؟"))act("/api/pay",{tk:b.dataset.payok,ok:true},"✅ تم تأكيد الدفع");return}
   if(b=e.target.closest("[data-payno]")){if(confirm("رفض الإيصال وطلب إيصال جديد من العميل؟"))act("/api/pay",{tk:b.dataset.payno,ok:false},"رُفض الإيصال");return}
+  if(b=e.target.closest("[data-bnadd]")){bannerForm();return}
+  if(b=e.target.closest("[data-bnedit]")){const x=((D.banners||{}).banners||[]).find(y=>y.id===Number(b.dataset.bnedit));if(x)bannerForm(x);return}
+  if(b=e.target.closest("[data-bntog]")){const x=((D.banners||{}).banners||[]).find(y=>y.id===Number(b.dataset.bntog));if(x)act("/api/banner",{id:x.id,title:x.title,sub:x.sub,link:x.link,status:x.status==="active"?"off":"active",toggle:1},"تم ✓");return}
+  if(b=e.target.closest("[data-bndel]")){if(confirm("حذف هذا البانر؟"))act("/api/banner",{id:Number(b.dataset.bndel),del:1},"تم الحذف");return}
+  if(b=e.target.closest("[data-bnmv]")){const[i,m]=b.dataset.bnmv.split(":");act("/api/banner",{id:Number(i),move:m},"تم ✓");return}
+  if(b=e.target.closest("[data-ctadd]")){catForm();return}
+  if(b=e.target.closest("[data-ctedit]")){const x=((D.cats||{}).categories||[]).find(y=>y.id===b.dataset.ctedit);if(x)catForm(x);return}
+  if(b=e.target.closest("[data-cttog]")){const x=((D.cats||{}).categories||[]).find(y=>y.id===b.dataset.cttog);if(x)act("/api/cat",{id:x.id,name:x.name,emoji:x.emoji,hidden:!x.hidden,toggle:1},"تم ✓ (يظهر التغيير في المتجر خلال دقائق)");return}
+  if(b=e.target.closest("[data-ctdel]")){if(confirm("حذف هذا القسم؟"))act("/api/cat",{id:b.dataset.ctdel,del:1},"تم الحذف");return}
+  if(b=e.target.closest("[data-ctmv]")){const[i,m]=b.dataset.ctmv.split(":");act("/api/cat",{id:i,move:m},"تم ✓ (يظهر التغيير في المتجر خلال دقائق)");return}
   if(b=e.target.closest("[data-cpadd]")){couponForm();return}
   if(b=e.target.closest("[data-cpedit]")){const c=((D.coupons||{}).coupons||[]).find(x=>x.id===Number(b.dataset.cpedit));if(c)couponForm(c);return}
   if(b=e.target.closest("[data-cptog]")){const c=((D.coupons||{}).coupons||[]).find(x=>x.id===Number(b.dataset.cptog));if(c)act("/api/coupon",{...c,status:c.status==="active"?"off":"active",toggle:1,expires:c.expires?new Date(c.expires+3*3600e3).toISOString().slice(0,10):""},"تم ✓");return}
