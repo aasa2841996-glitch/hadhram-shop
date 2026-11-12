@@ -1047,8 +1047,9 @@ async function sendRecv(tk,id,ans){
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-rcv]");if(b)sendRecv(b.dataset.tk,Number(b.dataset.oid),b.dataset.rcv)});
 function dspBox(t){
   if(t.dsp==="open")return `<div class="rcvd no">⚠️ اعتراضك قيد المراجعة — أوقفنا تحويل مستحقات التاجر حتى نبتّ فيه</div>`;
-  if(t.dsp==="refunded")return `<div class="rcvd">↩️ قُبل اعتراضك — سنتواصل معك لإرجاع المبلغ</div>`;
-  if(t.dsp==="closed")return `<div class="rcvd">✔️ تمت مراجعة اعتراضك وأُغلق</div>`;
+  const rp=t.dsp_reply?`<div class="rcvd" style="font-weight:600">💬 رد الإدارة: ${esc(t.dsp_reply)}</div>`:"";
+  if(t.dsp==="refunded")return `<div class="rcvd">↩️ قُبل اعتراضك — سنتواصل معك لإرجاع المبلغ</div>${rp}`;
+  if(t.dsp==="closed")return `<div class="rcvd">✔️ تمت مراجعة اعتراضك وأُغلق</div>${rp}`;
   if(t.insp_until&&Date.now()<t.insp_until){const d=new Date(t.insp_until).toLocaleDateString("ar",{day:"numeric",month:"long"});
     return `<div class="rcvd">🔍 فترة الفحص حتى ${d}</div><button class="rbtn dspb" data-dsp data-tk="${esc(t.tk)}" data-oid="${t.id}">⚠️ أبلغ عن مشكلة في الطلب</button>`}
   return ""}
@@ -1090,7 +1091,7 @@ function ordersView(){
       ${t.pay_status==="unpaid"||t.pay_status==="rejected"?`<div class="od">💳 بانتظار الدفع</div>`:t.pay_status==="review"?`<div class="od">⏳ الإيصال قيد المراجعة</div>`:st==="cancel"?`<div class="ocan">❌ تم إلغاء الطلب</div>`:`<div class="stp">${OSTEPS.map((x,k)=>`<div class="s ${k<=idx?"dn":""} ${k===idx?"cur":""}"><i>${k<=idx?"✓":k+1}</i>${x[1]}</div>`).join("")}</div>`}
       ${t.ship_info?`<div class="tkship">🚚 ${esc(t.ship_info)}</div>`:""}${t.recv==="yes"?`<div class="rcvd">✅ أكّدت استلام الطلب</div>${dspBox(t)}${t.rated?`<div class="rcvd">⭐ شكراً لتقييمك</div>`:`<button class="rbtn" data-rate data-tk="${esc(t.tk)}" data-oid="${t.id}">⭐ قيّم الطلب</button>`}`:t.recv==="no"?`<div class="rcvd no">⚠️ أبلغت أنك لم تستلم الطلب — سنتواصل معك</div>`:""}</div>`}).join(""):`<div class="od">جارٍ التحقق من حالة الطلب…</div>`;
     const wa=subs[0];
-    return `<div class="ord"><div class="oh"><span>طلب ${subs.length===1?"#"+subs[0].id:""}</span><span style="color:var(--hot)">${esc(o.total)}</span></div><div class="od">${esc(when)}</div>
+    return `<div class="ord"><div class="oh"><span>${subs.length>1?"طلب مقسّم على "+subs.length+" متاجر":"طلب "+(subs.length?"#"+subs[0].id:"")}</span><span style="color:var(--hot)">${esc(o.total)}</span></div><div class="od">${esc(when)}</div>
     <div class="oi">${o.items.slice(0,6).map(i=>i.image?`<img src="${esc(safeUrl(i.image))}" alt="">`:"").join("")}</div>${payBox}${parts}
     ${S.whatsapp?`<a class="owa" target="_blank" rel="noopener" href="https://wa.me/${esc(S.whatsapp)}?text=${encodeURIComponent("بخصوص طلبي"+(wa?" رقم #"+wa.id:""))}">💬 تواصل بخصوص هذا الطلب</a>`:""}</div>`}).join("")+contactBox();
 }
