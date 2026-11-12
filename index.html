@@ -885,16 +885,28 @@ function checkout(items){
   m+=`\nالإجمالي: ${Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + ")}\n`;
   if(cust.name) m+=`\nالاسم: ${cust.name}`; if(cust.phone) m+=`\nالجوال: ${cust.phone}`; if(cust.city) m+=`\nالمدينة: ${cust.city}${cust.area?" - "+cust.area:""}`; if(cust.addr) m+=`\nالعنوان: ${cust.addr}`; if(cust.note) m+=`\nملاحظات: ${cust.note}`;
   const tk=Array.from(crypto.getRandomValues(new Uint8Array(10)),b=>"abcdefghjkmnpqrstuvwxyz23456789"[b%31]).join("");
-  if(S.orderApi){try{fetch(S.orderApi.replace(/\/$/,"")+"/order",{method:"POST",headers:{"content-type":"text/plain"},keepalive:true,body:JSON.stringify({tk,items:items.map(({p,q,sel})=>({sel:sel||undefined,id:p.id,img:p.image?new URL(p.image,location.href).href:"",title:p.title,q,price:p.price,cur:p.cur})),total:Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + "),name:cust.name,phone:cust.phone,city:cust.city,area:cust.area,addr:cust.addr,note:cust.note,center:Number(cust.center)||undefined,coupon:cpOk?CPN.code:undefined})}).catch(()=>{})}catch(e){}}
+  let posted=Promise.resolve();if(S.orderApi){try{posted=fetch(S.orderApi.replace(/\/$/,"")+"/order",{method:"POST",headers:{"content-type":"text/plain"},keepalive:true,body:JSON.stringify({tk,items:items.map(({p,q,sel})=>({sel:sel||undefined,id:p.id,img:p.image?new URL(p.image,location.href).href:"",title:p.title,q,price:p.price,cur:p.cur})),total:Object.entries(tot).map(([c,v])=>nf(v)+" "+c).join(" + "),name:cust.name,phone:cust.phone,city:cust.city,area:cust.area,addr:cust.addr,note:cust.note,center:Number(cust.center)||undefined,coupon:cpOk?CPN.code:undefined})}).catch(()=>{})}catch(e){}}
   if(S.orderApi){
     const ol=LS.get("hs_orders",[]);ol.unshift({tk,t:Date.now(),total:Object.entries(ntot).map(([c,v])=>nf(v)+" "+c).join(" + "),items:items.map(({p,q,sel})=>({title:p.title+(sel?" ("+selTxt(sel)+")":""),q,image:p.image||""}))});
     LS.set("hs_orders",ol.slice(0,30));
     CART=[];saveCart();CPN={};
   }
   if(!S.orderApi)window.open(`https://wa.me/${S.whatsapp}?text=${encodeURIComponent(m)}`,"_blank","noopener");
-  if(S.orderApi){toast("تم استلام طلبك ✅ أكمل الدفع من «طلباتي»");nav({name:"orders"})}
+  if(S.orderApi){toast("تم استلام طلبك ✅ أكمل الدفع الآن");nav({name:"orders"});PAYPROMPT=tk;posted.then(()=>{trkAt=0;trackOrders()})}
 }
-const TRK={}; let trkAt=0, PAYINFO="";
+const TRK={}; let trkAt=0, PAYINFO="", PAYPROMPT="";
+function payPrompt(){
+  const tk=PAYPROMPT; if(!tk) return;
+  const subs=TRK[tk]||[], need=subs.filter(t=>t.pay_status==="unpaid"||t.pay_status==="rejected");
+  if(!need.length) return;
+  PAYPROMPT=""; if($("#psheet")) return;
+  const dS=need.reduce((a,t)=>a+(t.sar||0),0), dY=need.reduce((a,t)=>a+(t.yer||0),0), due=[dS?nf(dS)+" ر.س":"",dY?nf(dY)+" ر.ي":""].filter(Boolean).join(" + ");
+  const sh=document.createElement("div"); sh.id="psheet"; sh.className="rsheet";
+  sh.innerHTML=`<div class="rin"><div class="rhd"><b>💳 أكمل الدفع ليصل طلبك للتاجر</b><button data-px>✕</button></div><div class="paybox" style="margin-top:10px"><div class="due">المبلغ المطلوب: <b>${esc(due)}</b></div><div class="pi">${esc(PAYINFO||"تواصل معنا للحصول على بيانات التحويل.")}</div><div class="pnote">رسوم الشحن غير مشمولة، يتفق عليها التاجر معك.</div><label class="upl">📎 ارفع صورة إيصال التحويل<input type="file" accept="image/*" data-pay="${esc(tk)}" hidden></label></div><button class="rgo" data-px style="margin-top:10px;background:#f2f2f2;color:#333">لاحقاً من «طلباتي»</button></div>`;
+  sh.addEventListener("click",e=>{if(e.target===sh||e.target.closest("[data-px]"))sh.remove()});
+  sh.addEventListener("change",e=>{if(e.target.closest("[data-pay]"))setTimeout(()=>sh.remove(),300)});
+  document.body.appendChild(sh);
+}
 let RAT=LS.get("hs_rat",{p:{},m:{}}), REVC={};
 function applyRat(){ALL.forEach(p=>{const r=RAT.p[p.id];p.rate=r?r.a:0;p.rc=r?r.n:0;p.mr=p.mid&&RAT.m[p.mid]?RAT.m[p.mid]:null})}
 async function loadRatings(){
@@ -1174,7 +1186,7 @@ async function trackOrders(){
   try{
     const r=await fetch(S.orderApi.replace(/\/$/,"")+"/track?t="+ol.map(o=>o.tk).join(","),{cache:"no-store"});
     const j=await r.json(); PAYINFO=j.payinfo||PAYINFO; Object.keys(TRK).forEach(k=>delete TRK[k]); (j.orders||[]).forEach(o=>(TRK[o.tk]=TRK[o.tk]||[]).push(o));
-    drawRcv(); if(view.name==="orders") render();
+    drawRcv(); if(view.name==="orders") render(); payPrompt();
     if(ol.some(o=>!(TRK[o.tk]||[]).length&&Date.now()-o.t<120000)) setTimeout(()=>{trkAt=Date.now();trackOrders()},3500);
   }catch(e){}
 }
