@@ -443,7 +443,7 @@ function askText(title,hint,min){return new Promise(res=>{
 function centerForm(c){c=c||{};const bg=document.createElement("div");bg.className="sheetbg";
   bg.innerHTML=`<div class="sheet"><b style="font-size:16px">${c.id?"تعديل مركز الاستلام":"إضافة مركز استلام"}</b>
   <label>اسم المركز</label><input id="cf-name" value="${esc(c.name||"")}" maxlength="80">
-  <label>المدينة</label><input id="cf-city" value="${esc(c.city||"")}" maxlength="60">
+  <label>المحافظة / المدينة (اختر من القائمة ليتطابق الاسم)</label><input id="cf-city" list="cf-gov" value="${esc(c.city||"")}" maxlength="60"><datalist id="cf-gov">${["عدن","صنعاء","أمانة العاصمة","حضرموت","شبوة","تعز","إب","الحديدة","لحج","أبين","الضالع","مأرب","ذمار","البيضاء","المهرة","سقطرى","عمران","حجة","صعدة","الجوف","المحويت","ريمة"].map(x=>`<option value="${x}">`).join("")}</datalist>
   <label>المنطقة / الحي</label><input id="cf-area" value="${esc(c.area||"")}" maxlength="80">
   <label>العنوان (أقرب معلم)</label><input id="cf-addr" value="${esc(c.addr||"")}" maxlength="200">
   <label>رابط الموقع (خرائط جوجل ← مشاركة ← نسخ الرابط)</label><input id="cf-map" dir="ltr" value="${esc(c.map||"")}" placeholder="https://maps.app.goo.gl/...">
