@@ -456,10 +456,10 @@ function centerForm(c){c=c||{};const bg=document.createElement("div");bg.classNa
   bg.querySelector("#cf-save").onclick=async()=>{const g=i=>bg.querySelector("#cf-"+i).value.trim();
     try{await api("/api/center",{method:"POST",body:JSON.stringify({id:c.id||0,name:g("name"),city:g("city"),area:g("area"),addr:g("addr"),map:g("map"),phone:g("phone"),hours:g("hours"),status:c.status||"active"})});bg.remove();toast("تم الحفظ ✓");loadPage(true)}catch(e){toast("⚠️ "+e.message)}}
 }
-let dspTab="open",dspLim=30;
+let dspTab="open",dspLim=30,auditQ="",auditLim=40;
 let page=LS.get("ho_page","orders"),D={},psrc="store",pq="",openC="";
-const PAGES=[["orders","🧾","الطلبات"],["pay","💳","الدفعات"],["merch","🏪","التجار"],["settle","💼","التسويات"],["disp","⚠️","الاعتراضات"],["centers","📍","المراكز"],["prods","📦","المنتجات"],["chat","💬","الدردشة"],["rev","⭐","التقييمات"]];
-const EP={pay:"/api/payments",merch:"/api/merchants",settle:"/api/settle",disp:"/api/disputes",centers:"/api/centers",prods:"/api/products",chat:"/api/chats",rev:"/api/reviews"};
+const PAGES=[["orders","🧾","الطلبات"],["pay","💳","الدفعات"],["merch","🏪","التجار"],["settle","💼","التسويات"],["disp","⚠️","الاعتراضات"],["centers","📍","المراكز"],["audit","📜","السجل"],["prods","📦","المنتجات"],["chat","💬","الدردشة"],["rev","⭐","التقييمات"]];
+const EP={pay:"/api/payments",merch:"/api/merchants",settle:"/api/settle",disp:"/api/disputes",centers:"/api/centers",audit:"/api/audit",prods:"/api/products",chat:"/api/chats",rev:"/api/reviews"};
 function drawNav(){
   const nb={pay:(D.pay&&D.pay.payments||[]).length,merch:((D.merch&&D.merch.merchants)||[]).filter(m=>m.status==="pending").length,settle:(D.settle&&D.settle.settle||[]).length,disp:(D.disp&&D.disp.counts&&D.disp.counts.open)||0,chat:(D.chat&&D.chat.waiting)||0};
   $("#pnav").style.display="flex";
@@ -467,7 +467,8 @@ function drawNav(){
 }
 async function loadPage(silent){
   if(page==="orders")return;
-  try{D[page]=await api(page==="disp"?EP.disp+"?state="+dspTab+"&limit="+dspLim:EP[page])}catch(e){if(e.message==="401")return loginView("كلمة السر غير صحيحة");if(!silent)toast("⚠️ "+e.message)}
+  if(page==="audit"&&silent&&document.activeElement&&document.activeElement.id==="aq")return;
+  try{D[page]=await api(page==="disp"?EP.disp+"?state="+dspTab+"&limit="+dspLim:page==="audit"?EP.audit+"?limit="+auditLim+"&q="+encodeURIComponent(auditQ):EP[page])}catch(e){if(e.message==="401")return loginView("كلمة السر غير صحيحة");if(!silent)toast("⚠️ "+e.message)}
   if(page==="chat"&&[...document.querySelectorAll("[data-cin2]")].some(i=>i.value))return drawNav();
   if(page!==""&&document.querySelector("#app")&&page!=="orders")drawPage();drawNav();
 }
@@ -478,6 +479,11 @@ const imgOf=u=>u?(/^https?:|^data:/.test(u)?u:new URL(u,location.href).href):"";
 function pageBody(){
   const d=D[page];
   if(!d)return `<div class="empty">جارٍ التحميل…</div>`;
+  if(page==="audit"){const L=d.log||[];
+    const bar=`<div style="display:flex;gap:8px;margin-bottom:10px"><input id="aq" value="${esc(auditQ)}" placeholder="بحث: رقم الطلب أو اسم التاجر أو نوع العملية" style="flex:1;padding:11px;border:1px solid var(--line);border-radius:12px;font:inherit;background:var(--card);color:var(--ink)"><button data-asearch style="background:#ffd500;color:#111;font-weight:800;border-radius:12px;padding:0 16px">بحث</button></div>`;
+    const more=d.more?`<button data-amore style="width:100%;padding:12px;border-radius:12px;font-weight:800;background:var(--card);border:1px solid var(--line);margin-top:8px">عرض المزيد</button>`:"";
+    return bar+(L.length?L.map(x=>`<div class="pc" style="padding:10px 12px"><div style="display:flex;justify-content:space-between;gap:8px;font-weight:800"><span>${esc(x.action)}</span><span style="color:var(--muted);font-size:12px;font-weight:700">${esc(new Date(x.at).toLocaleString("ar-SA",{dateStyle:"short",timeStyle:"short"}))}</span></div>
+    ${x.ref?`<div class="sub">${esc(x.ref)}</div>`:""}${x.detail?`<div class="sub">${esc(x.detail)}</div>`:""}<div class="sub" style="font-size:11.5px">بواسطة: ${esc(x.actor)}</div></div>`).join("")+more:`<div class="empty">لا توجد عمليات مسجّلة${auditQ?" لهذا البحث":" بعد"}</div>`)}
   if(page==="centers"){const L=d.centers||[];
     return `<button data-cadd style="width:100%;background:#ffd500;color:#111;font-weight:900;border-radius:12px;padding:12px;margin-bottom:10px">➕ إضافة مركز استلام</button>`+(L.length?L.map(c=>`<div class="pc"><h3>📍 ${esc(c.name)} <span class="tag">${c.status==="active"?"نشط":"موقوف"}</span></h3>
     <div class="sub">${esc(c.city)}${c.area?" — "+esc(c.area):""}${c.addr?" · "+esc(c.addr):""}</div>${c.hours?`<div class="sub">🕘 ${esc(c.hours)}</div>`:""}${c.phone?`<div class="sub" dir="ltr">📞 ${esc(c.phone)}</div>`:""}
@@ -558,9 +564,11 @@ document.addEventListener("click",async e=>{
   if(b=e.target.closest("[data-csend]")){const cid=b.dataset.csend,ta=document.querySelector(`[data-cin2="${cid}"]`),t=(ta&&ta.value||"").trim();if(!t){toast("اكتب الرد أولاً");return}api("/api/chatreply",{method:"POST",body:JSON.stringify({cid,txt:t})}).then(async()=>{ta.value="";toast("✅ وصل الرد للعميل");await loadPage(true)}).catch(e=>toast("⚠️ "+e.message));return}
   if(b=e.target.closest("[data-payok]")){if(confirm("هل وصل المبلغ فعلاً إلى حسابك؟"))act("/api/pay",{tk:b.dataset.payok,ok:true},"✅ تم تأكيد الدفع");return}
   if(b=e.target.closest("[data-payno]")){if(confirm("رفض الإيصال وطلب إيصال جديد من العميل؟"))act("/api/pay",{tk:b.dataset.payno,ok:false},"رُفض الإيصال");return}
+  if(b=e.target.closest("[data-asearch]")){auditQ=($("#aq")||{}).value||"";auditLim=40;loadPage();return}
+  if(b=e.target.closest("[data-amore]")){auditLim+=40;loadPage();return}
   if(b=e.target.closest("[data-cadd]")){centerForm();return}
   if(b=e.target.closest("[data-cedit]")){const c=((D.centers||{}).centers||[]).find(x=>x.id===Number(b.dataset.cedit));if(c)centerForm(c);return}
-  if(b=e.target.closest("[data-ctog]")){const c=((D.centers||{}).centers||[]).find(x=>x.id===Number(b.dataset.ctog));if(c)act("/api/center",{...c,status:c.status==="active"?"off":"active"},"تم ✓");return}
+  if(b=e.target.closest("[data-ctog]")){const c=((D.centers||{}).centers||[]).find(x=>x.id===Number(b.dataset.ctog));if(c)act("/api/center",{...c,status:c.status==="active"?"off":"active",toggle:1},"تم ✓");return}
   if(b=e.target.closest("[data-cdel]")){const id=Number(b.dataset.cdel);if(confirm("حذف هذا المركز؟ الطلبات القديمة لن تعرض اسمه."))act("/api/center",{id,del:1},"تم الحذف");return}
   if(b=e.target.closest("[data-dtab]")){dspTab=b.dataset.dtab;dspLim=30;D.disp=null;drawPage();loadPage();return}
   if(b=e.target.closest("[data-dmore]")){dspLim+=30;loadPage();return}
