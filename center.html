@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffd500">
+<meta name="robots" content="noindex,nofollow">
+<title>مركز استلام وفر</title>
+<link rel="icon" href="icon-192.png?v=4">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#161616;--muted:#6f6f6f;--line:#e6e6e6;--bg:#f5f5f5;--card:#fff;--y:#ffd500;--ok:#12803c;--no:#d92d20;--blue:#2563eb}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Tajawal","Segoe UI",Tahoma,sans-serif}
+button,input{font-family:inherit}
+button{cursor:pointer;border:0;color:inherit;background:none}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#ffd500,#ffe14a);padding:calc(10px + env(safe-area-inset-top)) 14px 10px;box-shadow:0 3px 12px rgba(0,0,0,.12)}
+header .in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px}
+header img{height:40px}
+header h1{margin:0;font-size:17px;font-weight:900;flex:1;line-height:1.3}
+header h1 small{display:block;font-size:12px;font-weight:700;opacity:.75}
+.rf{width:38px;height:38px;border-radius:50%;background:#0002;font-size:18px}
+.wrap{max-width:760px;margin:0 auto;padding:12px 12px 40px}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{flex:1;padding:10px 4px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-weight:800;font-size:13px}
+.tabs button.on{background:var(--y);border-color:var(--y)}
+.tabs b{display:inline-block;min-width:20px;background:var(--no);color:#fff;border-radius:10px;font-size:11px;padding:1px 5px;margin-right:3px}
+.tabs button.on b{background:#111}
+.bar{display:flex;gap:8px;margin-bottom:10px}
+.bar input{flex:1;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:15px;background:var(--card)}
+.bar button{padding:0 16px;border-radius:12px;font-weight:800;background:var(--y)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.card h3{margin:0 0 4px;font-size:17px;display:flex;justify-content:space-between;gap:8px}
+.card .sub{font-size:13px;color:var(--muted);line-height:1.7}
+.card .it{font-size:13.5px;font-weight:700;margin-top:6px;line-height:1.7}
+.card .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.card .row a,.card .row button{flex:1;min-width:120px;padding:12px;border-radius:12px;font-weight:900;font-size:14px;text-align:center;text-decoration:none;color:#111;background:var(--bg);border:1px solid var(--line)}
+.card .row .ok{background:var(--ok);color:#fff;border-color:var(--ok)}
+.card .row .blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.empty{text-align:center;color:var(--muted);padding:40px 10px;font-weight:700}
+.login{max-width:420px;margin:60px auto;padding:20px;text-align:center}
+.login h2{margin:0 0 8px}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#111;color:var(--y);padding:11px 18px;border-radius:999px;font-weight:800;font-size:14px;z-index:300;max-width:90vw;text-align:center}
+.bg{position:fixed;inset:0;background:#000a;z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.box{background:#fff;width:100%;max-width:400px;border-radius:18px;padding:18px}
+.box h3{margin:0 0 6px;font-size:17px}
+.box p{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.box input{width:100%;padding:14px;border:2px solid var(--line);border-radius:12px;font-size:24px;letter-spacing:6px;text-align:center;direction:ltr}
+.box .err{color:var(--no);font-size:13px;font-weight:700;min-height:20px;margin-top:6px;text-align:center}
+.box .bt{display:flex;gap:8px;margin-top:6px}
+.box .bt button{flex:1;padding:13px;border-radius:12px;font-weight:900;font-size:15px;background:var(--bg)}
+.box .bt .go{background:var(--y)}
+video{width:100%;border-radius:14px;background:#000;max-height:60vh}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v}catch{return d}},set(k,v){try{localStorage.setItem(k,v)}catch{}},del(k){try{localStorage.removeItem(k)}catch{}}};
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let API=LS.get("hc_api","https://hadhram-bot.aasa2841996.workers.dev"),KEY=LS.get("hc_key","");
+{const m=location.hash.match(/[#&]k=([A-Za-z0-9]{24,40})/);if(m){KEY=m[1];LS.set("hc_key",KEY);try{history.replaceState(null,"",location.pathname)}catch(e){}}}
+let CENTER=null,tab="incoming",q="",D={orders:[],counts:{}},timer=null;
+function toast(t){const e=document.createElement("div");e.className="toast";e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2600)}
+async function api(path,opt){
+  const r=await fetch(API.replace(/\/$/,"")+path,{...(opt||{}),headers:{"x-center-key":KEY,...(opt&&opt.body?{"content-type":"application/json"}:{})}});
+  let j={};try{j=await r.json()}catch{}
+  if(r.status===401){LS.del("hc_key");KEY="";clearInterval(timer);loginView("الرابط غير صالح أو أُلغي، اطلب رابطاً جديداً من الإدارة");throw new Error("401")}
+  if(!r.ok)throw new Error(j.error||("خطأ "+r.status));
+  return j;
+}
+function loginView(msg){
+  $("#app").innerHTML=`<div class="login"><h2>📍 مركز استلام وفر</h2><p style="color:#666;line-height:1.8">${esc(msg||"افتح الرابط الخاص بمركزك الذي أرسلته لك إدارة وفر.")}</p></div>`;
+}
+function shell(){
+  $("#app").innerHTML=`<header><div class="in"><img src="logo-wafer.png?v=1" alt=""><h1>${esc(CENTER.name)}<small>${esc(CENTER.city)}${CENTER.area?" — "+esc(CENTER.area):""}</small></h1><button class="rf" id="rf" aria-label="تحديث">⟳</button></div></header>
+  <div class="wrap"><div class="tabs" id="tabs"></div>
+  <div class="bar"><input id="q" inputmode="numeric" placeholder="ابحث برقم الطلب" value="${esc(q)}"><button id="go">بحث</button><button id="scan">📷 مسح</button></div>
+  <div id="list"></div></div>`;
+  $("#rf").onclick=()=>load();
+  $("#go").onclick=()=>{q=$("#q").value.replace(/\D/g,"");load()};
+  $("#q").onkeydown=e=>{if(e.key==="Enter")$("#go").click()};
+  $("#scan").onclick=scan;
+  draw();
+}
+function draw(){
+  const c=D.counts||{};
+  $("#tabs").innerHTML=[["incoming","⬇️ قادمة",c.incoming],["ready","📦 جاهزة للتسليم",c.ready],["done","✅ المُسلَّمة",0]].map(([k,l,n])=>`<button data-t="${k}" class="${tab===k?"on":""}">${l}${n?` <b>${n}</b>`:""}</button>`).join("");
+  document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tab=b.dataset.t;q="";const i=$("#q");if(i)i.value="";load()});
+  const L=D.orders||[];
+  $("#list").innerHTML=L.length?L.map(o=>`<div class="card"><h3><span>طلب #${o.id}</span><span style="font-size:13px;color:var(--muted)">${esc(o.merchant)}</span></h3>
+    <div class="sub">👤 ${esc(o.name||"—")}${o.phone?` · <a href="tel:+${esc(o.phone)}" dir="ltr">+${esc(o.phone)}</a>`:""}</div>
+    <div class="it">${o.items.map(esc).join("<br>")}</div><div class="sub" style="margin-top:4px">💰 ${esc(o.total)}</div>
+    ${o.handed_at?`<div class="sub" style="color:var(--ok);font-weight:800">✅ سُلِّم ${esc(new Date(o.handed_at).toLocaleString("ar-SA",{dateStyle:"short",timeStyle:"short"}))}</div>`:o.arrived_at?`<div class="sub" style="color:var(--blue);font-weight:800">📦 وصل ${esc(new Date(o.arrived_at).toLocaleString("ar-SA",{dateStyle:"short",timeStyle:"short"}))}</div>`:`<div class="sub">${o.status==="ship"?"🚚 في الطريق إلى المركز":"⏳ قيد التجهيز عند التاجر"}</div>`}
+    <div class="row">${!o.arrived_at?`<button class="ok" data-arr="${o.id}">✅ استلمت الطرد</button>`:!o.handed_at?`<button class="blue" data-hand="${o.id}">🤝 تسليم للعميل</button>`:""}${o.phone&&!o.handed_at?`<a href="https://wa.me/${esc(o.phone)}" target="_blank" rel="noopener">💬 واتساب العميل</a>`:""}</div></div>`).join(""):`<div class="empty">${q?"لا يوجد طلب بهذا الرقم في هذا التبويب":tab==="incoming"?"لا توجد طرود قادمة الآن":tab==="ready"?"لا توجد طرود بانتظار العملاء":"لا توجد طرود مُسلَّمة بعد"}</div>`;
+  document.querySelectorAll("[data-arr]").forEach(b=>b.onclick=()=>arrive(Number(b.dataset.arr)));
+  document.querySelectorAll("[data-hand]").forEach(b=>b.onclick=()=>handover(Number(b.dataset.hand)));
+}
+async function load(silent){
+  try{D=await api(`/c/orders?state=${tab}&q=${encodeURIComponent(q)}`);if(!CENTER)return;draw()}
+  catch(e){if(e.message!=="401"&&!silent)toast("⚠️ "+e.message)}
+}
+function modal(html){const bg=document.createElement("div");bg.className="bg";bg.innerHTML=`<div class="box">${html}</div>`;document.body.appendChild(bg);bg.addEventListener("click",e=>{if(e.target===bg)bg.remove()});return bg}
+function arrive(id){
+  const bg=modal(`<h3>تأكيد استلام الطرد</h3><p>هل وصل الطرد #${id} إلى مركزك وتحققت منه؟ سيصل العميل إشعار بأن طلبه جاهز للاستلام.</p><div class="bt"><button class="go" id="y">نعم، استلمته</button><button id="n">إلغاء</button></div>`);
+  bg.querySelector("#n").onclick=()=>bg.remove();
+  bg.querySelector("#y").onclick=async()=>{try{await api("/c/arrive",{method:"POST",body:JSON.stringify({id})});bg.remove();toast("تم تسجيل وصول الطرد ✓");load()}catch(e){toast("⚠️ "+e.message)}};
+}
+function handover(id){
+  const bg=modal(`<h3>تسليم الطلب #${id}</h3><p>اطلب من العميل رمز الاستلام (6 أرقام) الظاهر في «طلباتي» عنده، وتأكد من هويته.</p><input id="code" inputmode="numeric" maxlength="6" placeholder="••••••"><div class="err" id="err"></div><div class="bt"><button class="go" id="y">تسليم</button><button id="n">إلغاء</button></div>`);
+  const inp=bg.querySelector("#code");setTimeout(()=>inp.focus(),50);
+  bg.querySelector("#n").onclick=()=>bg.remove();
+  bg.querySelector("#y").onclick=async()=>{const code=inp.value.trim();if(code.length!==6){bg.querySelector("#err").textContent="اكتب الرمز المكوّن من 6 أرقام";return}
+    try{await api("/c/handover",{method:"POST",body:JSON.stringify({id,code})});bg.remove();toast("تم التسليم ✓");load()}catch(e){bg.querySelector("#err").textContent=e.message}};
+}
+async function scan(){
+  if(!("BarcodeDetector" in window)){toast("جوالك لا يدعم المسح، اكتب رقم الطلب في مربع البحث");return}
+  let stream;const bg=modal(`<h3>📷 امسح رمز البوليصة</h3><video id="v" playsinline muted></video><div class="bt"><button id="x">إغلاق</button></div>`);
+  const stop=()=>{try{stream&&stream.getTracks().forEach(t=>t.stop())}catch(e){}bg.remove()};
+  bg.querySelector("#x").onclick=stop;
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});const v=bg.querySelector("#v");v.srcObject=stream;await v.play();
+    const det=new BarcodeDetector({formats:["qr_code"]});
+    const tick=async()=>{if(!bg.isConnected)return;try{const r=await det.detect(v);const m=r.length&&/WFR-(\d{1,9})/.exec(r[0].rawValue||"");if(m){stop();found(Number(m[1]));return}}catch(e){}setTimeout(tick,300)};tick()}
+  catch(e){stop();toast("تعذّر فتح الكاميرا، اسمح لها من إعدادات المتصفح")}
+}
+async function found(id){
+  for(const s of ["incoming","ready","done"]){
+    try{const j=await api(`/c/orders?state=${s}&q=${id}`);if((j.orders||[]).length){tab=s;q=String(id);D=j;const i=$("#q");if(i)i.value=q;draw();toast("تم العثور على الطلب #"+id);return}}catch(e){if(e.message==="401")return}
+  }
+  toast("الطلب #"+id+" ليس لهذا المركز أو غير مؤكد الدفع");
+}
+async function boot(){
+  if(!KEY)return loginView();
+  try{const j=await api("/c/me");CENTER=j.center;shell();await load();clearInterval(timer);timer=setInterval(()=>{if(!document.hidden&&!document.querySelector(".bg"))load(true)},30000)}
+  catch(e){if(e.message!=="401")loginView(e.message)}
+}
+boot();
+</script>
+</body>
+</html>
