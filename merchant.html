@@ -346,6 +346,63 @@ async function loadProds(){try{prods=(await api("/m/products")).products}catch(e
 function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.2)}catch{}}
 
 /* ---------- طباعة بوليصة الشحن (تُلصق على الطرد) ---------- */
+/* مولّد QR صغير (بايتات ASCII، تصحيح M، الإصدارات 1–4) */
+function wfrQR(text){
+  const data=Array.from(unescape(encodeURIComponent(String(text))),c=>c.charCodeAt(0));
+  const VS=[null,{n:21,d:16,e:10,b:1},{n:25,d:28,e:16,b:1},{n:29,d:44,e:26,b:1},{n:33,d:32,e:18,b:2}];
+  let ver=0;for(let v=1;v<=4;v++){if(data.length<=VS[v].d*VS[v].b-2){ver=v;break}}
+  if(!ver)return null;
+  const V=VS[ver],n=V.n,total=V.d*V.b;
+  // بتات البيانات
+  const bits=[];const put=(val,len)=>{for(let i=len-1;i>=0;i--)bits.push((val>>i)&1)};
+  put(4,4);put(data.length,8);data.forEach(b=>put(b,8));
+  for(let i=0;i<4&&bits.length<total*8;i++)bits.push(0);
+  while(bits.length%8)bits.push(0);
+  const cw=[];for(let i=0;i<bits.length;i+=8){let x=0;for(let j=0;j<8;j++)x=x<<1|bits[i+j];cw.push(x)}
+  for(let p=0;cw.length<total;p++)cw.push(p%2?0x11:0xEC);
+  // GF(256)
+  const EXP=new Array(512),LOG=new Array(256);let x=1;for(let i=0;i<255;i++){EXP[i]=x;LOG[x]=i;x<<=1;if(x&256)x^=0x11d}for(let i=255;i<512;i++)EXP[i]=EXP[i-255];
+  const mul=(a,b)=>a&&b?EXP[LOG[a]+LOG[b]]:0;
+  let g=[1];for(let i=0;i<V.e;i++){const ng=new Array(g.length+1).fill(0);for(let j=0;j<g.length;j++){ng[j]^=g[j];ng[j+1]^=mul(g[j],EXP[i])}g=ng}
+  const rs=blk=>{const r=blk.concat(new Array(V.e).fill(0));for(let i=0;i<blk.length;i++){const c=r[i];if(c)for(let j=0;j<g.length;j++)r[i+j]^=mul(g[j],c)}return r.slice(blk.length)};
+  const blocks=[],ecs=[];for(let b=0;b<V.b;b++){const bl=cw.slice(b*V.d,(b+1)*V.d);blocks.push(bl);ecs.push(rs(bl))}
+  const fin=[];for(let i=0;i<V.d;i++)blocks.forEach(b=>fin.push(b[i]));for(let i=0;i<V.e;i++)ecs.forEach(e=>fin.push(e[i]));
+  const fb=[];fin.forEach(b=>{for(let i=7;i>=0;i--)fb.push((b>>i)&1)});
+  // المصفوفة
+  const M=[],F=[];for(let i=0;i<n;i++){M.push(new Array(n).fill(0));F.push(new Array(n).fill(false))}
+  const set=(r,c,v)=>{if(r>=0&&c>=0&&r<n&&c<n){M[r][c]=v?1:0;F[r][c]=true}};
+  const finder=(r,c)=>{for(let i=-1;i<=7;i++)for(let j=-1;j<=7;j++){const on=i>=0&&i<=6&&j>=0&&j<=6&&(i==0||i==6||j==0||j==6||(i>=2&&i<=4&&j>=2&&j<=4));set(r+i,c+j,on)}};
+  finder(0,0);finder(0,n-7);finder(n-7,0);
+  for(let i=8;i<n-8;i++){set(6,i,i%2==0);set(i,6,i%2==0)}
+  if(ver>=2){const p=n-7;for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++)set(p+i,p+j,Math.max(Math.abs(i),Math.abs(j))!=1)}
+  set(n-8,8,1);
+  // مناطق معلومات الصيغة محجوزة
+  const resv=[];for(let i=0;i<9;i++){resv.push([8,i],[i,8])}for(let i=0;i<8;i++){resv.push([8,n-1-i],[n-1-i,8])}
+  resv.forEach(([r,c])=>{if(!F[r][c]){F[r][c]=true;M[r][c]=0}});
+  M[n-8][8]=1;
+  // وضع البيانات
+  const dpos=[];let up=true;for(let c=n-1;c>0;c-=2){if(c==6)c--;for(let k=0;k<n;k++){const r=up?n-1-k:k;for(let d=0;d<2;d++){const cc=c-d;if(!F[r][cc])dpos.push([r,cc])}}up=!up}
+  const masks=[(i,j)=>(i+j)%2==0,(i,j)=>i%2==0,(i,j)=>j%3==0,(i,j)=>(i+j)%3==0,(i,j)=>(Math.floor(i/2)+Math.floor(j/3))%2==0,(i,j)=>(i*j)%2+(i*j)%3==0,(i,j)=>((i*j)%2+(i*j)%3)%2==0,(i,j)=>((i+j)%2+(i*j)%3)%2==0];
+  const bch=(d)=>{let v=d<<10;for(let i=14;i>=10;i--)if((v>>i)&1)v^=0x537<<(i-10);return((d<<10)|v)^0x5412};
+  const build=m=>{
+    const A=M.map(r=>r.slice());
+    dpos.forEach(([r,c],i)=>{let b=i<fb.length?fb[i]:0;if(masks[m](r,c))b^=1;A[r][c]=b});
+    const f=bch((0<<3)|m); // M = 00
+    for(let i=0;i<15;i++){const v=(f>>i)&1;
+      if(i<6)A[i][8]=v;else if(i<8)A[i+1][8]=v;else A[n-15+i][8]=v;
+      if(i<8)A[8][n-1-i]=v;else if(i<9)A[8][15-i]=v;else A[8][15-i-1]=v}
+    A[n-8][8]=1;return A};
+  const pen=A=>{let s=0;
+    for(let t=0;t<2;t++){for(let i=0;i<n;i++){let run=1;for(let j=1;j<n;j++){const a=t?A[j][i]:A[i][j],b=t?A[j-1][i]:A[i][j-1];if(a==b){run++;if(j==n-1&&run>=5)s+=run-2}else{if(run>=5)s+=run-2;run=1}}}}
+    for(let i=0;i<n-1;i++)for(let j=0;j<n-1;j++){const v=A[i][j];if(v==A[i][j+1]&&v==A[i+1][j]&&v==A[i+1][j+1])s+=3}
+    const pat=[1,0,1,1,1,0,1,0,0,0,0],pr=pat.slice().reverse();
+    const chk=(get)=>{for(let i=0;i<n;i++)for(let j=0;j<=n-11;j++){let a=true,b=true;for(let k=0;k<11;k++){const v=get(i,j+k);if(v!=pat[k])a=false;if(v!=pr[k])b=false}if(a||b)s+=40}};
+    chk((i,j)=>A[i][j]);chk((i,j)=>A[j][i]);
+    let dk=0;A.forEach(r=>r.forEach(v=>dk+=v));s+=Math.floor(Math.abs(dk*100/(n*n)-50)/5)*10;return s};
+  let best=null,bs=1e9;for(let m=0;m<8;m++){const A=build(m),p=pen(A);if(p<bs){bs=p;best=A}}
+  return best;
+}
+function wfrQRsvg(text,px){const A=wfrQR(text);if(!A)return"";const n=A.length,q=4;let d="";A.forEach((r,i)=>r.forEach((v,j)=>{if(v)d+=`M${j+q} ${i+q}h1v1h-1z`}));return`<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 ${n+2*q} ${n+2*q}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`}
 function labelHtml(o,sender){
   const e=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const items=(o.items||[]).map(i=>`<li>${e(i.title)}${i.opt?` <i>(${e(i.opt)})</i>`:""} <b>× ${e(i.q)}</b></li>`).join("");
@@ -370,14 +427,14 @@ body{margin:0;font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;color:#000;
 .items ul{margin:1mm 0 0;padding:0 5mm}
 .items .t{font-weight:900;border-bottom:.3mm dashed #000}
 .note{font-size:10pt;font-weight:800;border:.4mm solid #000;border-radius:2mm;padding:1.5mm 2.5mm}
-.ft{display:flex;justify-content:space-between;font-size:8.5pt;font-weight:700;border-top:.4mm solid #000;padding-top:1.5mm}
+.ft{display:flex;justify-content:space-between;align-items:flex-end;font-size:8.5pt;font-weight:700;border-top:.4mm solid #000;padding-top:1.5mm}.ft .qr svg{display:block;width:24mm;height:24mm}.ft .cd{font-size:10pt;font-weight:900;direction:ltr;text-align:right}
 </style></head><body><div class="l">
 <div class="top"><div class="sh">${e(sender.platform)}</div><div class="no">#${e(o.id)}</div></div>
 <div class="from">المرسل: <b>${e(sender.name)}</b>${sender.city?" — "+e(sender.city):""}</div>
 <div class="to"><div class="lb">إلى المستلم</div><div class="nm">${e(o.name||"—")}</div>${o.phone?`<div class="ph">+${e(o.phone)}</div>`:""}<div class="pl">${e(place||"—")}</div>${o.addr?`<div class="ad">${e(o.addr)}</div>`:""}</div>
 <div class="items"><div class="t">محتويات الطرد</div><ul>${items}</ul></div>
 ${o.ship_info?`<div class="note">🚚 ${e(o.ship_info)}</div>`:""}${o.note?`<div class="note">📝 ${e(o.note)}</div>`:""}
-<div class="ft"><span>${e(o.time||"")}</span><span>${e(sender.platform)}</span></div>
+<div class="ft"><div><div>${e(o.time||"")}</div><div>${e(sender.platform)}</div><div class="cd">WFR-${e(o.id)}</div></div><div class="qr">${wfrQRsvg("WFR-"+o.id,96)}</div></div>
 </div><script>window.onload=()=>setTimeout(()=>{window.focus();window.print()},350)<\/script></body></html>`;
 }
 function printLabel(o,sender){
