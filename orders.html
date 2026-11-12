@@ -398,7 +398,7 @@ function pageBody(){
     return L.length?L.map(x=>`<div class="pc"><h3>⚠️ اعتراض على طلب #${x.id} <span class="tag">${lab[x.state]||""}</span></h3>
     <div class="sub">👤 ${esc(x.name||"—")}${x.phone?" · +"+esc(x.phone):""}${x.merchant?" · 🏪 "+esc(x.merchant):""}</div>
     <div class="sub">${x.items.map(esc).join("<br>")}</div><div class="big">${esc(x.amount)}</div>
-    <div class="sub" style="color:var(--ink);font-weight:700">📝 ${esc(x.txt)}</div>
+    <div class="sub" style="color:var(--ink);font-weight:700">📝 ${esc(x.txt)}</div>${x.reply?`<div class="sub">💬 ردّك: ${esc(x.reply)}</div>`:""}
     ${x.state==="open"?`<div class="sub">قبول الاعتراض: حوّل المبلغ للعميل يدوياً، ويخرج الطلب من مستحقات التاجر. رفضه: يعود الطلب لمستحقات التاجر بعد فترة الفحص.</div>
     <div class="row"><button class="ok" data-dp="${x.id}:rf">↩️ قبول (استرداد)</button><button class="no" data-dp="${x.id}:ok">✔️ رفض الاعتراض</button>${phLink(x.phone)}${phLink(x.mphone)}</div>`:""}</div>`).join(""):`<div class="empty">لا توجد اعتراضات ✅</div>`}
   if(page==="pay"){const L=d.payments||[];return L.length?L.map(p=>`<div class="pc"><h3>💳 إيصال من ${esc(p.name||"—")}</h3><div class="sub">${p.phone?"+"+esc(p.phone)+" · ":""}${p.orders.map(o=>"#"+o.id+(o.merchant?" ("+esc(o.merchant)+")":"")).join("، ")}</div>
@@ -467,7 +467,7 @@ document.addEventListener("click",async e=>{
   if(b=e.target.closest("[data-csend]")){const cid=b.dataset.csend,ta=document.querySelector(`[data-cin2="${cid}"]`),t=(ta&&ta.value||"").trim();if(!t){toast("اكتب الرد أولاً");return}api("/api/chatreply",{method:"POST",body:JSON.stringify({cid,txt:t})}).then(async()=>{ta.value="";toast("✅ وصل الرد للعميل");await loadPage(true)}).catch(e=>toast("⚠️ "+e.message));return}
   if(b=e.target.closest("[data-payok]")){if(confirm("هل وصل المبلغ فعلاً إلى حسابك؟"))act("/api/pay",{tk:b.dataset.payok,ok:true},"✅ تم تأكيد الدفع");return}
   if(b=e.target.closest("[data-payno]")){if(confirm("رفض الإيصال وطلب إيصال جديد من العميل؟"))act("/api/pay",{tk:b.dataset.payno,ok:false},"رُفض الإيصال");return}
-  if(b=e.target.closest("[data-dp]")){const[i,a]=b.dataset.dp.split(":");if(confirm(a==="rf"?"قبول الاعتراض واسترداد المبلغ للعميل؟":"رفض الاعتراض لصالح التاجر؟"))act("/api/dispute",{id:Number(i),decision:a},"تم ✓");return}
+  if(b=e.target.closest("[data-dp]")){const[i,a]=b.dataset.dp.split(":");const rp=prompt(a==="rf"?"اكتب رداً للعميل (مثال: قبلنا اعتراضك وسنحوّل لك المبلغ خلال يومين):":"اكتب رداً للعميل يوضح سبب رفض الاعتراض:");if(rp===null)return;if(a==="ok"&&rp.trim().length<3){toast("اكتب سبب الرفض ليصل للعميل");return}act("/api/dispute",{id:Number(i),decision:a,reply:rp.trim()},"تم ✓");return}
   if(b=e.target.closest("[data-mg]")){const[i,a]=b.dataset.mg.split(":");const msg={ok:"تفعيل هذا التاجر؟",no:"رفض هذا التاجر؟",off:"إيقاف هذا التاجر؟ ستختفي منتجاته من المتجر."}[a];if(confirm(msg))act("/api/merchant",{id:Number(i),action:a},"تم ✓");return}
   if(b=e.target.closest("[data-csave]")){const v=document.querySelector(`[data-cin="${b.dataset.csave}"]`).value;act("/api/merchant",{id:Number(b.dataset.csave),action:"commission",commission:Number(v)},"تم حفظ العمولة ✓");return}
   if(b=e.target.closest("[data-copy]")){try{await navigator.clipboard.writeText(b.dataset.copy);toast("📋 تم نسخ رقم الحساب")}catch{toast(b.dataset.copy)}return}
