@@ -673,6 +673,7 @@ main{max-width:1800px;margin:0 auto}
 .pc .pimg .fav.on{color:#e5281c!important}
 .pc .pimg .fav:active{transform:scale(.85)}
 @media(min-width:900px){.pc .pr b{font-size:14px!important;padding:4px 11px!important}.pc .pr s{font-size:12px!important}}
+.dspb{background:#fff!important;color:#c0392b!important;border:1px solid #c0392b!important;margin-top:6px}
 </style>
 </head>
 <body>
@@ -1044,6 +1045,21 @@ async function sendRecv(tk,id,ans){
   catch(e){toast("تعذّر الإرسال، حاول مرة أخرى")}
 }
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-rcv]");if(b)sendRecv(b.dataset.tk,Number(b.dataset.oid),b.dataset.rcv)});
+function dspBox(t){
+  if(t.dsp==="open")return `<div class="rcvd no">⚠️ اعتراضك قيد المراجعة — أوقفنا تحويل مستحقات التاجر حتى نبتّ فيه</div>`;
+  if(t.dsp==="refunded")return `<div class="rcvd">↩️ قُبل اعتراضك — سنتواصل معك لإرجاع المبلغ</div>`;
+  if(t.dsp==="closed")return `<div class="rcvd">✔️ تمت مراجعة اعتراضك وأُغلق</div>`;
+  if(t.insp_until&&Date.now()<t.insp_until){const d=new Date(t.insp_until).toLocaleDateString("ar",{day:"numeric",month:"long"});
+    return `<div class="rcvd">🔍 فترة الفحص حتى ${d}</div><button class="rbtn dspb" data-dsp data-tk="${esc(t.tk)}" data-oid="${t.id}">⚠️ أبلغ عن مشكلة في الطلب</button>`}
+  return ""}
+async function sendDsp(tk,id){
+  const txt=(prompt("اشرح المشكلة (تلف، نقص، منتج مختلف عن الوصف...)")||"").trim();
+  if(!txt)return; if(txt.length<5){toast("اكتب وصفاً أوضح للمشكلة");return}
+  try{const r=await fetch(S.orderApi.replace(/\/$/,"")+"/dispute",{method:"POST",headers:{"content-type":"text/plain"},body:JSON.stringify({tk,id,txt})});const j=await r.json();if(!j.ok)throw new Error(j.error||"");
+    toast("وصل اعتراضك وسنراجعه قريباً");trkAt=0;await trackOrders();if(view.name==="orders")render()}
+  catch(e){toast(e.message||"تعذّر الإرسال، حاول مرة أخرى")}
+}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-dsp]");if(b)sendDsp(b.dataset.tk,Number(b.dataset.oid))});
 const OSTEPS=[["new","استلمنا طلبك"],["prep","قيد التجهيز"],["ship","في الطريق"],["done","تم التوصيل"]];
 async function trackOrders(){
   const ol=LS.get("hs_orders",[]); if(!ol.length||!S.orderApi) return;
@@ -1072,7 +1088,7 @@ function ordersView(){
     const parts=subs.length?subs.map(t=>{const st=t.status,idx=OSTEPS.findIndex(x=>x[0]===st);
       return `<div class="tkpart"><div class="tkseller">🏪 ${esc(t.merchant||S.name)} <span style="color:var(--muted);font-weight:700">· طلب #${t.id}</span></div>
       ${t.pay_status==="unpaid"||t.pay_status==="rejected"?`<div class="od">💳 بانتظار الدفع</div>`:t.pay_status==="review"?`<div class="od">⏳ الإيصال قيد المراجعة</div>`:st==="cancel"?`<div class="ocan">❌ تم إلغاء الطلب</div>`:`<div class="stp">${OSTEPS.map((x,k)=>`<div class="s ${k<=idx?"dn":""} ${k===idx?"cur":""}"><i>${k<=idx?"✓":k+1}</i>${x[1]}</div>`).join("")}</div>`}
-      ${t.ship_info?`<div class="tkship">🚚 ${esc(t.ship_info)}</div>`:""}${t.recv==="yes"?`<div class="rcvd">✅ أكّدت استلام الطلب</div>${t.rated?`<div class="rcvd">⭐ شكراً لتقييمك</div>`:`<button class="rbtn" data-rate data-tk="${esc(t.tk)}" data-oid="${t.id}">⭐ قيّم الطلب</button>`}`:t.recv==="no"?`<div class="rcvd no">⚠️ أبلغت أنك لم تستلم الطلب — سنتواصل معك</div>`:""}</div>`}).join(""):`<div class="od">جارٍ التحقق من حالة الطلب…</div>`;
+      ${t.ship_info?`<div class="tkship">🚚 ${esc(t.ship_info)}</div>`:""}${t.recv==="yes"?`<div class="rcvd">✅ أكّدت استلام الطلب</div>${dspBox(t)}${t.rated?`<div class="rcvd">⭐ شكراً لتقييمك</div>`:`<button class="rbtn" data-rate data-tk="${esc(t.tk)}" data-oid="${t.id}">⭐ قيّم الطلب</button>`}`:t.recv==="no"?`<div class="rcvd no">⚠️ أبلغت أنك لم تستلم الطلب — سنتواصل معك</div>`:""}</div>`}).join(""):`<div class="od">جارٍ التحقق من حالة الطلب…</div>`;
     const wa=subs[0];
     return `<div class="ord"><div class="oh"><span>طلب ${subs.length===1?"#"+subs[0].id:""}</span><span style="color:var(--hot)">${esc(o.total)}</span></div><div class="od">${esc(when)}</div>
     <div class="oi">${o.items.slice(0,6).map(i=>i.image?`<img src="${esc(safeUrl(i.image))}" alt="">`:"").join("")}</div>${payBox}${parts}
