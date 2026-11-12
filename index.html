@@ -1045,6 +1045,16 @@ async function sendRecv(tk,id,ans){
   catch(e){toast("تعذّر الإرسال، حاول مرة أخرى")}
 }
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-rcv]");if(b)sendRecv(b.dataset.tk,Number(b.dataset.oid),b.dataset.rcv)});
+function askText(title,hint,min){return new Promise(res=>{
+  if(!document.getElementById("ask-css")){const st=document.createElement("style");st.id="ask-css";st.textContent=".ask-bg{position:fixed;inset:0;background:#0008;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}.ask{background:var(--card,#fff);color:var(--ink,#222);width:100%;max-width:420px;border-radius:18px;padding:18px;font-family:inherit;box-shadow:0 10px 40px #0005}.ask h3{margin:0 0 6px;font-size:17px}.ask p{margin:0 0 10px;font-size:13px;color:var(--muted,#777)}.ask textarea{width:100%;border:1px solid var(--line,#ddd);background:var(--bg,#f7f7f7);color:inherit;border-radius:12px;padding:11px;font-size:15px;font-family:inherit;resize:none;box-sizing:border-box}.ask-err{color:#c0392b;font-size:12.5px;font-weight:700;min-height:18px;margin-top:4px}.ask-b{display:flex;gap:8px;margin-top:8px}.ask-b button{flex:1;border:0;border-radius:12px;padding:12px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer}.ask-b .ok{background:#ffd500;color:#111}.ask-b .cn{background:var(--bg,#eee);color:inherit}";document.head.appendChild(st)}
+  const bg=document.createElement("div");bg.className="ask-bg";
+  bg.innerHTML=`<div class="ask"><h3>${title}</h3><p>${hint}</p><textarea rows="3" maxlength="300"></textarea><div class="ask-err"></div><div class="ask-b"><button class="ok">إرسال</button><button class="cn">إلغاء</button></div></div>`;
+  document.body.appendChild(bg);const ta=bg.querySelector("textarea");setTimeout(()=>ta.focus(),50);
+  const done=v=>{bg.remove();res(v)};
+  bg.querySelector(".cn").onclick=()=>done(null);
+  bg.querySelector(".ok").onclick=()=>{const v=ta.value.trim();if(v.length<min){bg.querySelector(".ask-err").textContent=min>3?"اكتب وصفاً أوضح للمشكلة":"اكتب السبب ليصل للعميل";return}done(v)};
+  bg.addEventListener("click",e=>{if(e.target===bg)done(null)});
+})}
 function dspBox(t){
   if(t.dsp==="open")return `<div class="rcvd no">⚠️ اعتراضك قيد المراجعة — أوقفنا تحويل مستحقات التاجر حتى نبتّ فيه</div>`;
   const rp=t.dsp_reply?`<div class="rcvd" style="font-weight:600">💬 رد الإدارة: ${esc(t.dsp_reply)}</div>`:"";
@@ -1054,8 +1064,8 @@ function dspBox(t){
     return `<div class="rcvd">🔍 فترة الفحص حتى ${d}</div><button class="rbtn dspb" data-dsp data-tk="${esc(t.tk)}" data-oid="${t.id}">⚠️ أبلغ عن مشكلة في الطلب</button>`}
   return ""}
 async function sendDsp(tk,id){
-  const txt=(prompt("اشرح المشكلة (تلف، نقص، منتج مختلف عن الوصف...)")||"").trim();
-  if(!txt)return; if(txt.length<5){toast("اكتب وصفاً أوضح للمشكلة");return}
+  const txt=await askText("أبلغ عن مشكلة في الطلب","اشرح المشكلة: تلف، نقص، منتج مختلف عن الوصف...",5);
+  if(txt===null)return;
   try{const r=await fetch(S.orderApi.replace(/\/$/,"")+"/dispute",{method:"POST",headers:{"content-type":"text/plain"},body:JSON.stringify({tk,id,txt})});const j=await r.json();if(!j.ok)throw new Error(j.error||"");
     toast("وصل اعتراضك وسنراجعه قريباً");trkAt=0;await trackOrders();if(view.name==="orders")render()}
   catch(e){toast(e.message||"تعذّر الإرسال، حاول مرة أخرى")}
